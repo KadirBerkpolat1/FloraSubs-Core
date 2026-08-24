@@ -1,0 +1,24 @@
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Tauri / Rust
+src-tauri/target/
+src-tauri/bin/*.exe
+src-tauri/bin/*.zip
+src-tauri/bin/ffmpeg
+src-tauri/bin/ffprobe
+release-package/
+*.tar.gz
+*.zip
+*.deb
+*.AppImage
+
+# Backups & Logs
+Backups/
+*.log
+.DS_Store
+.env
+.env.*

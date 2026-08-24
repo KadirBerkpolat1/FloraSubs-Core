@@ -1,0 +1,530 @@
+import { useState, useEffect } from 'react';
+import { Sidebar } from './components/Sidebar';
+import { Header } from './components/Header';
+import { EncodingView } from './components/EncodingView';
+import { FileQueue } from './components/FileQueue';
+import { SubtitleView } from './components/SubtitleView';
+import { PreviewView } from './components/PreviewView';
+import { ConverterView } from './components/ConverterView';
+import { ConsoleView } from './components/ConsoleView';
+import { SettingsView } from './components/SettingsView';
+import {
+  EncodeJobConfig,
+  EncodeProgress,
+  HardwareProfile,
+  JobLogMessage,
+  PresetProfile,
+  QueueItem,
+} from './types';
+import { listen } from '@tauri-apps/api/event';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import {
+  cancelEncode,
+  getHardwareProfile,
+  getPresets,
+  onEncodeLog,
+  onEncodeProgress,
+  pauseEncode,
+  probeMedia,
+  resumeEncode,
+  selectMultipleMediaFiles,
+  startEncode,
+} from './services/tauri';
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState<string>('home');
+  const [hardware, setHardware] = useState<HardwareProfile | null>(null);
+  const [presets, setPresets] = useState<PresetProfile[]>([]);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('anime_web_x264');
+
+  // Queue and Selection
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Global Config Form State
+  const [config, setConfig] = useState<EncodeJobConfig>({
+    id: `job_${Date.now()}`,
+    input_path: '',
+    output_path: '',
+    container: 'mp4',
+    encoder: 'h264_nvenc',
+    threads: 0,
+    use_bitrate: false,
+    average_bitrate_kbps: 4000,
+    crf: 22,
+    preset: 'p4',
+    pixel_format: 'yuv420p',
+    b_frames: 4,
+    custom_video_args: null,
+    audio_track_index: 0,
+    audio_codec: 'aac',
+    audio_bitrate_kbps: 192,
+    hardsub_enabled: true,
+    subtitle_source: 'embedded',
+    subtitle_track_index: 0,
+    external_subtitle_path: null,
+    resolved_subtitle_path: null,
+    fonts_dir: null,
+    intro_enabled: false,
+    intro_video_path: null,
+    model_settings: {
+      upscale_enabled: false,
+      upscale_model: '2x_Adore_renarchi_fp16_DML_onnxslim',
+      backend: 'DML',
+      frame_gen_enabled: false,
+      frame_gen_model: 'SVP',
+      target_fps: 60,
+    },
+    filter_settings: {
+      line_darkening_enabled: false,
+      line_darkening_value: 128,
+      sharpness_enabled: false,
+      sharpness_value: 128,
+      grain_enabled: false,
+      grain_value: 15,
+    },
+    faststart: true,
+  });
+
+  // Logs
+  const [logs, setLogs] = useState<JobLogMessage[]>([]);
+
+  // Window close confirmation state
+  const [showCloseConfirm, setShowCloseConfirm] = useState<boolean>(false);
+
+  // Initialize hardware profile, presets and event listeners
+  useEffect(() => {
+    async function initSystem() {
+      try {
+        const hw = await getHardwareProfile();
+        setHardware(hw);
+
+        if (hw) {
+          setConfig((prev) => ({
+            ...prev,
+            encoder: hw.recommended_encoder || prev.encoder,
+            preset: hw.recommended_encoder?.includes('nvenc') ? 'p4' : 'slow',
+            threads: hw.cpu_threads || prev.threads,
+          }));
+        }
+
+        const pr = await getPresets();
+        setPresets(pr);
+      } catch (err) {
+        console.error('Donanım algılama hatası:', err);
+      }
+    }
+
+    initSystem();
+
+    // Tauri Event Listeners
+    let unlistenProgress: (() => void) | null = null;
+    let unlistenLog: (() => void) | null = null;
+
+    onEncodeProgress((progress: EncodeProgress) => {
+      setQueue((prev) =>
+        prev.map((item) => {
+          if (item.id === progress.job_id) {
+            let status = item.status;
+            if (progress.status === 'completed') status = 'completed';
+            else if (progress.status === 'error') status = 'error';
+            else if (progress.status === 'running') status = 'encoding';
+            else if (progress.status === 'paused') status = 'paused';
+
+            return {
+              ...item,
+              status,
+              progress,
+            };
+          }
+          return item;
+        })
+      );
+    }).then((un) => {
+      unlistenProgress = un;
+    });
+
+    onEncodeLog((log: JobLogMessage) => {
+      setLogs((prev) => [...prev.slice(-999), log]);
+    }).then((un) => {
+      unlistenLog = un;
+    });
+
+    // Native Tauri Drag and Drop Event Listener
+    let unlistenDragDrop: (() => void) | null = null;
+    listen<{ paths: string[] }>('tauri://drag-drop', async (event) => {
+      if (event.payload && event.payload.paths && event.payload.paths.length > 0) {
+        await handleAddFilePaths(event.payload.paths);
+      }
+    }).then((un) => {
+      unlistenDragDrop = un;
+    });
+
+    return () => {
+      if (unlistenProgress) unlistenProgress();
+      if (unlistenLog) unlistenLog();
+      if (unlistenDragDrop) unlistenDragDrop();
+    };
+  }, []);
+
+
+  const handleAddFilePaths = async (files: string[]) => {
+    try {
+      if (files.length === 0) return;
+
+      const newItems: QueueItem[] = [];
+
+      for (const file of files) {
+        const fileName = file.split(/[\\/]/).pop() || file;
+        const itemId = `job_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+        let metadata = null;
+        try {
+          metadata = await probeMedia(file);
+        } catch (probeErr) {
+          console.warn('Dosya analizi başarısız:', probeErr);
+        }
+
+        const baseStem = fileName.replace(/\.[^/.]+$/, '');
+        const parentDir = file.substring(0, file.lastIndexOf(/[\\/]/.exec(file)?.[0] || '/'));
+        const sep = parentDir.includes('\\') ? '\\' : '/';
+        const defaultOut = `${parentDir}${sep}${baseStem}_FloraSubs.${config.container}`;
+
+        const itemConfig: EncodeJobConfig = {
+          ...config,
+          id: itemId,
+          input_path: file,
+          output_path: defaultOut,
+        };
+
+        newItems.push({
+          id: itemId,
+          filePath: file,
+          fileName,
+          fileSize: metadata?.file_size || 0,
+          metadata,
+          status: 'waiting',
+          progress: {
+            job_id: itemId,
+            frame: 0,
+            fps: 0,
+            q: 0,
+            size_bytes: 0,
+            time_secs: 0,
+            time_formatted: '00:00:00',
+            bitrate_kbps: 0,
+            speed: 0,
+            percentage: 0,
+            eta_secs: 0,
+            eta_formatted: '--:--:--',
+            status: 'idle',
+            error_message: null,
+          },
+          config: itemConfig,
+        });
+      }
+
+      setQueue((prev) => [...prev, ...newItems]);
+      if (!selectedId && newItems.length > 0) {
+        handleSelectItem(newItems[0]);
+      }
+    } catch (err) {
+      console.error('Dosya ekleme hatası:', err);
+    }
+  };
+
+  // Handle file addition via dialog
+  const handleAddFiles = async () => {
+    const files = await selectMultipleMediaFiles();
+    await handleAddFilePaths(files);
+  };
+
+  const handleSelectItem = (item: QueueItem) => {
+    setSelectedId(item.id);
+    setConfig((prev) => ({
+      ...prev,
+      id: item.id,
+      input_path: item.filePath,
+      output_path: item.config.output_path,
+    }));
+  };
+
+  const handleRemoveItem = (id: string) => {
+    setQueue((prev) => prev.filter((i) => i.id !== id));
+    if (selectedId === id) {
+      const remaining = queue.filter((i) => i.id !== id);
+      setSelectedId(remaining.length > 0 ? remaining[0].id : null);
+    }
+  };
+
+  const handleClearQueue = () => {
+    setQueue([]);
+    setSelectedId(null);
+  };
+
+  // Start single encode
+  const handleStartSingle = async () => {
+    if (!selectedId) {
+      alert('Lütfen kuyruktan bir video seçin.');
+      return;
+    }
+
+    const currentItem = queue.find((i) => i.id === selectedId);
+    if (!currentItem) return;
+
+    const jobConfig: EncodeJobConfig = {
+      ...config,
+      id: currentItem.id,
+      input_path: currentItem.filePath,
+    };
+
+    setQueue((prev) =>
+      prev.map((i) => (i.id === currentItem.id ? { ...i, status: 'encoding', config: jobConfig } : i))
+    );
+
+    try {
+      await startEncode(jobConfig);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`Kodlama başlatılamadı: ${msg}`);
+      setQueue((prev) =>
+        prev.map((i) => (i.id === currentItem.id ? { ...i, status: 'error' } : i))
+      );
+    }
+  };
+
+  // Batch Encode All
+  const handleStartBatch = async () => {
+    const waitingItems = queue.filter((i) => i.status === 'waiting');
+    if (waitingItems.length === 0) {
+      alert('Kuyrukta bekleyen dosya bulunamadı.');
+      return;
+    }
+
+    for (const item of waitingItems) {
+      const itemConfig: EncodeJobConfig = {
+        ...config,
+        id: item.id,
+        input_path: item.filePath,
+      };
+
+      setQueue((prev) =>
+        prev.map((i) => (i.id === item.id ? { ...i, status: 'encoding', config: itemConfig } : i))
+      );
+
+      try {
+        await startEncode(itemConfig);
+      } catch (err) {
+        console.error('Batch encode hatası:', err);
+      }
+    }
+  };
+
+  // Process Controls
+  const handleStartItem = async (id: string) => {
+    const item = queue.find((i) => i.id === id);
+    if (!item) return;
+
+    const jobConfig: EncodeJobConfig = {
+      ...config,
+      id: item.id,
+      input_path: item.filePath,
+    };
+
+    setQueue((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, status: 'encoding', config: jobConfig } : i))
+    );
+
+    try {
+      await startEncode(jobConfig);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`Kodlama başlatılamadı: ${msg}`);
+    }
+  };
+
+  const handlePauseItem = async (id: string) => {
+    try {
+      await pauseEncode(id);
+      setQueue((prev) =>
+        prev.map((i) => (i.id === id ? { ...i, status: 'paused' } : i))
+      );
+    } catch (err) {
+      console.error('Duraklatma hatası:', err);
+    }
+  };
+
+  const handleResumeItem = async (id: string) => {
+    try {
+      await resumeEncode(id);
+      setQueue((prev) =>
+        prev.map((i) => (i.id === id ? { ...i, status: 'encoding' } : i))
+      );
+    } catch (err) {
+      console.error('Devam ettirme hatası:', err);
+    }
+  };
+
+  const handleCancelItem = async (id: string) => {
+    try {
+      await cancelEncode(id);
+      setQueue((prev) =>
+        prev.map((i) => (i.id === id ? { ...i, status: 'waiting' } : i))
+      );
+    } catch (err) {
+      console.error('İptal hatası:', err);
+    }
+  };
+
+  // Preset Selection
+  const handleSelectPreset = (preset: PresetProfile) => {
+    setSelectedPresetId(preset.id);
+    setConfig((prev) => ({
+      ...prev,
+      container: preset.container,
+      encoder: preset.encoder,
+      use_bitrate: preset.use_bitrate,
+      average_bitrate_kbps: preset.average_bitrate_kbps,
+      crf: preset.crf,
+      preset: preset.preset,
+      pixel_format: preset.pixel_format,
+      audio_codec: preset.audio_codec,
+      audio_bitrate_kbps: preset.audio_bitrate_kbps,
+      b_frames: preset.b_frames,
+      faststart: preset.faststart,
+    }));
+  };
+
+  // Handle window close with confirmation if jobs are running
+  useEffect(() => {
+    const handleClose = async (e: any) => {
+      e.preventDefault();
+      const runningJobs = queue.filter(
+        (item) => item.status === 'encoding' || item.status === 'paused'
+      );
+      if (runningJobs.length > 0) {
+        setShowCloseConfirm(true);
+      } else {
+        getCurrentWindow().close();
+      }
+    };
+
+    let unlisten: (() => void) | null = null;
+    getCurrentWindow().onCloseRequested(handleClose).then((fn) => { unlisten = fn; });
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, [queue]);
+
+  const activeCount = queue.filter((i) => i.status === 'encoding').length;
+  const selectedItem = queue.find((i) => i.id === selectedId) || null;
+
+  const confirmClose = () => {
+    getCurrentWindow().close();
+  };
+
+  const cancelClose = () => {
+    setShowCloseConfirm(false);
+  };
+  return (
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-gray-100 font-sans">
+      {/* Close Confirmation Modal */}
+      {showCloseConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={cancelClose}
+        >
+          <div
+            className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full mx-4 animate-in fade-in-0 zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-slate-100 mb-2">
+              Kodlama İşlemleri Devam Ediyor
+            </h3>
+            <p className="text-slate-400 text-sm mb-4">
+              {activeCount} kodlama işlemi aktif. Uygulamayı kapatırsanız işlemler durdurulacak.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={cancelClose}
+                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 font-medium text-sm border border-slate-600 transition"
+              >
+                İptal
+              </button>
+              <button
+                onClick={confirmClose}
+                className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-medium text-sm shadow-md shadow-rose-600/30 transition"
+              >
+                İşlemleri Durdur ve Kapat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Left Navigation Sidebar */}
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} hardware={hardware} />
+
+      {/* Main Workspace */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <Header
+          presets={presets}
+          selectedPresetId={selectedPresetId}
+          onSelectPreset={handleSelectPreset}
+          activeCount={activeCount}
+          totalQueue={queue.length}
+        />
+
+        {/* Tab Viewport */}
+        <div className="flex-1 flex overflow-hidden">
+          {activeTab === 'home' && (
+            <div className="flex-1 flex h-full overflow-hidden">
+              <EncodingView
+                config={config}
+                setConfig={setConfig}
+                selectedItem={selectedItem}
+                hardware={hardware}
+                onStartSingle={handleStartSingle}
+                onStartBatch={handleStartBatch}
+                isEncoding={activeCount > 0}
+              />
+              <FileQueue
+                queue={queue}
+                selectedId={selectedId}
+                onSelect={handleSelectItem}
+                onAddFiles={handleAddFiles}
+                onAddFilePaths={handleAddFilePaths}
+                onRemoveItem={handleRemoveItem}
+                onClearQueue={handleClearQueue}
+                onStartItem={handleStartItem}
+                onPauseItem={handlePauseItem}
+                onResumeItem={handleResumeItem}
+                onCancelItem={handleCancelItem}
+              />
+            </div>
+          )}
+
+          {activeTab === 'subtitle' && (
+            <SubtitleView
+              selectedItem={selectedItem}
+              config={config}
+              setConfig={setConfig}
+            />
+          )}
+
+          {activeTab === 'preview' && (
+            <PreviewView selectedItem={selectedItem} config={config} />
+          )}
+
+          {activeTab === 'converter' && <ConverterView />}
+
+          {activeTab === 'console' && (
+            <ConsoleView logs={logs} onClearLogs={() => setLogs([])} />
+          )}
+
+          {activeTab === 'settings' && <SettingsView hardware={hardware} />}
+        </div>
+      </div>
+    </div>
+  );
+}
