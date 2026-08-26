@@ -3,7 +3,7 @@
 **Son Güncelleme:** 2026-08-26  
 **Mimar:** Jony (Baş Yazılım Mimarı)  
 **Kullanıcı:** Berk  
-**Durum:** v1.1.0 Tam Doğrulandı (Tüm Pipeline, Font/Upscale/Hardsub/Pause Testleri & Windows Bundler Hazır)
+**Durum:** v1.2.0 Tam Doğrulandı (18 ONNX Modeli Kataloğu, 2K/4K Lanczos Çözünürlük Duyarlı Ölçekleme, Windows Thread Sınırlandırması & Çoklu Platform GitHub Release)
 
 ---
 
@@ -59,3 +59,18 @@ v1.0.0 sürümü ile birlikte:
   2. **Yapay Zeka Upscale + Hardsub Sıralaması:** `scale`/`libplacebo` filtresi filtre grafiğinde birinci sıraya, `subtitles` filtresi ikinci sıraya yerleştirilerek ölçekleme sonrası altyazıların kaybolması veya pikselleşmesi engellendi.
   3. **Windows & Linux Süreç Kontrolü:** `ProcessManager` Unix (`SIGSTOP`/`SIGCONT`) ve Windows (`NtSuspendProcess`/`NtResumeProcess`) API'leri ile aktif kodlama süreçlerini bellek sızıntısı ve CPU tüketimi olmadan duraklatır ve sürdürür.
   4. **Doğrulama:** 24/24 Cargo testleri başarıyla geçti ✅ • Frontend Vite build 0 hata ✅.
+
+## 6. v1.2.0 — ONNX Anime Model Ekosistemi & Windows Kararlılık Güncellemesi (2026-08-26)
+* **Windows Filtre Grafiği ve Kodlayıcı Kararlılığı:**
+  - **Thread Clamping:** FFmpeg `-threads` parametresi $\le 16$ olarak sınırlandı (`config.threads.min(16)`), Windows ve çok çekirdekli sistemlerde decoder thread aşımı ve kilitlenmeler kalıcı olarak önlendi.
+  - **Lanczos 2K/4K Scaling Pipeline:** `libplacebo` GLSL filtresinin FFmpeg `subtitles` ve `curves` ile Vulkan tahsisi olmadan çakışması önlendi; çözünürlük duyarlı yüksek hassasiyetli Lanczos ölçekleme hattına (`scale=-2:1440:flags=lanczos+accurate_rnd` / `2160` / `iw*4` / `iw*2`) geçirildi.
+  - **Altyazı Çizim Sırası:** Ölçekleme filtresi `subtitles` filtresinden önceye alınarak altyazıların hedef 1440p / 2160p çözünürlükte pikselleşmesiz ve keskin render edilmesi sağlandı.
+* **18 Neural Model Kataloğu & İndirici (`models.rs`):**
+  - **AnimeJaNai V3 Ailesi:** `2x_AnimeJaNai_HD_V3_Compact`, `UltraCompact`, `SuperUltraCompact`, `V3Sharp1_Compact`, `V3Sharp1_UltraCompact`, `V3Sharp1_SuperUltraCompact`, `SD_V1beta34_Compact`.
+  - **Adore & Fallin Ailesi:** `2x_Adore_renarchi_fp16_DML_onnxslim`, `2x_Adore_renarchi_fp32`, `2x_fallin_soft_renarchi_fp16`, `2x_fallin_strong_renarchi_fp16`.
+  - **Özel Video & Çizgi Upscaler Modelleri:** `2x_AniScale_Compact`, `2x_LD-Anime-Compact`, `4x-RealESRGAN-AnimeVideoV3-Compact`, `4x-RealESRGAN-v2-Compact`, `RealESRGANv2-animevideo-xsx2`, `sudo_shuffle_cugan_fp16_op18_clamped_9.584.969`, `Anime4K_Restore_UL`, `Anime4K_Upscale_HD`.
+* **Frontend Kategorize Edilmiş Model Seçici (`EncodingView.tsx` & `Select.tsx`):**
+  - `<optgroup>` destekli görsel kategori gruplandırması: En Çok Tercih Edilen, Ultra Hızlı Gerçek Zamanlı, Keskin Çizgili, SD / Retro Anime & Restorasyon, 4x Video & Özel Efektler.
+  - Format (`ONNX FP16 DirectML`, `ONNX Compact`, `GLSL Shader`), dosya boyutu ve indirme durumu rozetleri eklendi.
+  - Model seçimi ile 2K (1440p) / 4K (2160p) çözünürlük hapları otomatik senkronize edildi.
+* **Doğrulama:** 26/26 Cargo testleri başarıyla geçti ✅ • Frontend Vite build 0 hata ✅ • GitHub Release v1.2.0 yayınlandı ✅.
