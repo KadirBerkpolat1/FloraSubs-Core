@@ -66,9 +66,11 @@ jobs:
         with:
           name: linux-release
           path: |
+            src-tauri/target/release/bundle/FloraSubs-Reborn-*-linux-x86_64.deb
+            src-tauri/target/release/bundle/FloraSubs-Reborn-*-linux-x86_64.AppImage
+            src-tauri/target/release/bundle/FloraSubs-Reborn-*-linux-x86_64.tar.gz
             src-tauri/target/release/bundle/deb/*.deb
             src-tauri/target/release/bundle/appimage/*.AppImage
-            src-tauri/target/release/bundle/release-package/FloraSubs-Reborn-${{ github.ref_name }}-linux-x86_64.tar.gz
 
   build-windows:
     name: Build Windows
@@ -178,8 +180,13 @@ jobs:
           draft: false
           prerelease: false
           files: |
+            ./linux-artifacts/**/*.deb
+            ./linux-artifacts/**/*.AppImage
+            ./linux-artifacts/**/*.tar.gz
             ./linux-artifacts/*.deb
             ./linux-artifacts/*.AppImage
             ./linux-artifacts/*.tar.gz
+            ./windows-artifacts/**/*.exe
+            ./windows-artifacts/**/*.zip
             ./windows-artifacts/*.exe
             ./windows-artifacts/*.zip
