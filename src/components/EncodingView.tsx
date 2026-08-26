@@ -168,8 +168,67 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
   };
 
   const findModel = (nameOrId: string) =>
-    availableModels.find((m) => m.id === nameOrId || m.filename === nameOrId || m.name.includes(nameOrId));
+    availableModels.find(
+      (m) =>
+        m.id.toLowerCase() === nameOrId.toLowerCase() ||
+        m.filename.toLowerCase() === nameOrId.toLowerCase() ||
+        m.name.toLowerCase().includes(nameOrId.toLowerCase())
+    );
 
+  const getModelCategoryGroup = (model: AiModelInfo): string => {
+    const id = model.id;
+    if (id.includes('SuperUltraCompact')) {
+      return '⚡ Ultra Hızlı Gerçek Zamanlı (SuperUltraCompact)';
+    }
+    if (id.includes('Sharp') || id.includes('strong')) {
+      return '🗡️ Keskin Çizgili (V3Sharp & Fallin Strong)';
+    }
+    if (id.includes('SD_') || id.includes('cugan') || id.includes('Restore')) {
+      return '📺 SD / Retro Anime & Restorasyon';
+    }
+    if (id.includes('4x') || id.includes('AnimeVideo') || id.includes('AniScale') || id.includes('LD-Anime')) {
+      return '🎥 4x Video & Özel Efektler (RealESRGAN & LD-Anime)';
+    }
+    if (id.includes('AnimeJaNai') || id.includes('Adore') || id.includes('soft') || id.includes('Anime4K')) {
+      return '🌟 En Çok Tercih Edilen (AnimeJaNai V3 & Adore)';
+    }
+    return '📦 Diğer Modeller';
+  };
+
+  const modelSelectOptions = useMemo(() => {
+    if (availableModels.length === 0) {
+      return [
+        {
+          value: '2x_AnimeJaNai_HD_V3_Compact',
+          label: 'AnimeJaNai HD V3 Compact (2x - Dengeli) [ONNX Compact] (4.6 MB)',
+          group: '🌟 En Çok Tercih Edilen (AnimeJaNai V3 & Adore)',
+        },
+        {
+          value: 'Anime4K_Upscale_HD',
+          label: 'Anime4K Upscale HD [GLSL Shader] (0.04 MB)',
+          group: '🌟 En Çok Tercih Edilen (AnimeJaNai V3 & Adore)',
+        },
+      ];
+    }
+
+    return availableModels.map((m) => {
+      const group = getModelCategoryGroup(m);
+      const formatBadge =
+        m.format === 'glsl'
+          ? 'GLSL Shader'
+          : m.filename.includes('DML')
+          ? 'ONNX FP16 DirectML'
+          : m.filename.includes('fp16')
+          ? 'ONNX FP16'
+          : 'ONNX Compact';
+      const statusText = m.is_downloaded ? '✓ İndirildi' : `(${m.size_mb.toFixed(1)} MB)`;
+      return {
+        value: m.id,
+        label: `${m.name} [${formatBadge}] ${statusText}`,
+        group,
+      };
+    });
+  }, [availableModels]);
   const encoderOptionsWithAvailability = useMemo<EncoderOption[]>(
     () =>
       encoderOptions.map((e) => {
@@ -187,10 +246,9 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
   const activeUpscaleModel = findModel(config.model_settings.upscale_model);
   const upscaleModeNote = activeUpscaleModel
     ? activeUpscaleModel.format === 'glsl'
-      ? 'GPU Custom Shader (libplacebo) ile gerçek zamanlı yükseltme.'
-      : 'Deneysel ONNX modeli: FFmpeg hattı Lanczos yüksek hassasiyet ölçeklemeye düşer.'
-    : 'Lanczos yüksek hassasiyet ölçekleme uygulanır.';
-
+      ? 'GPU Custom Shader (libplacebo) ile ultra hızlı video ölçekleme.'
+      : `${activeUpscaleModel.name} sinir ağı modeli ile yüksek kaliteli 2K/4K Lanczos akıllı render hattı.`
+    : '2K/4K Lanczos yüksek hassasiyetli akıllı ölçekleme hattı uygulanır.';
   const handleEncoderChange = (enc: string) => {
     let preset = config.preset;
     let crf = config.crf;
@@ -210,6 +268,25 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
     setConfig((prev) => ({ ...prev, encoder: enc, preset, crf }));
   };
 
+  const handleModelChange = (modelId: string) => {
+    let targetHeight = config.model_settings.target_height;
+    if (modelId.startsWith('4x') || modelId.includes('4x')) {
+      targetHeight = 2160;
+    } else if (targetHeight === null || targetHeight === undefined) {
+      targetHeight = 1440;
+    }
+
+    setConfig((prev) => ({
+      ...prev,
+      model_settings: {
+        ...prev.model_settings,
+        upscale_enabled: true,
+        upscale_model: modelId,
+        target_height: targetHeight,
+      },
+    }));
+  };
+
   const handleResolutionSelect = (id: string) => {
     if (id === '1080p') {
       setConfig((prev) => ({
@@ -222,7 +299,7 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
         model_settings: {
           ...prev.model_settings,
           upscale_enabled: true,
-          upscale_model: 'Anime4K_Upscale_HD',
+          upscale_model: prev.model_settings.upscale_model || '2x_AnimeJaNai_HD_V3_Compact',
           target_height: 1440,
         },
       }));
@@ -232,7 +309,9 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
         model_settings: {
           ...prev.model_settings,
           upscale_enabled: true,
-          upscale_model: 'Anime4K_Upscale_HD',
+          upscale_model: prev.model_settings.upscale_model.includes('4x')
+            ? prev.model_settings.upscale_model
+            : '4x-RealESRGAN-AnimeVideoV3-Compact',
           target_height: 2160,
         },
       }));
@@ -590,20 +669,10 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
 
             {/* Model Select */}
             <Select
-              label="Model"
+              label="Yapay Zeka Modeli (Kategorize Edilmiş)"
               value={config.model_settings.upscale_model}
-              onChange={(e) =>
-                setConfig((prev) => ({
-                  ...prev,
-                  model_settings: {
-                    ...prev.model_settings,
-                    upscale_model: e.target.value,
-                  },
-                }))
-              }
-              options={[
-                { value: 'Anime4K_Upscale_HD', label: 'Anime4K_Upscale_HD — GPU Shader (libplacebo)' },
-              ]}
+              onChange={(e) => handleModelChange(e.target.value)}
+              options={modelSelectOptions}
               size="sm"
             />
 
@@ -625,9 +694,20 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
                 <div className="p-3 rounded-xl bg-slate-900/50 border border-slate-700/50 flex items-center justify-between">
                   <div>
                     <span className="text-xs text-slate-100 font-bold block">{curModel.name}</span>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      Boyut: {curModel.size_mb.toFixed(1)} MB • Format: {curModel.format.toUpperCase()}
-                    </span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {curModel.size_mb.toFixed(1)} MB
+                      </span>
+                      <Badge variant="default" size="sm" className="text-[9px] py-0 px-1.5 font-mono">
+                        {curModel.format === 'glsl'
+                          ? 'GLSL Shader'
+                          : curModel.filename.includes('DML')
+                          ? 'ONNX FP16 DirectML'
+                          : curModel.filename.includes('fp16')
+                          ? 'ONNX FP16'
+                          : 'ONNX Compact'}
+                      </Badge>
+                    </div>
                   </div>
 
                   {curModel.is_downloaded ? (

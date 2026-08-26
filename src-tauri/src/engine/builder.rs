@@ -290,27 +290,25 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
     args.push("-progress".to_string());
     args.push("pipe:1".to_string());
 
-    // CPU Threads
+    // CPU Threads (Clamped to max 16 to prevent decoder thread exhaustion / instability)
     if config.threads > 0 {
+        let threads = config.threads.min(16);
         args.push("-threads".to_string());
-        args.push(config.threads.to_string());
+        args.push(threads.to_string());
     }
+
     // Build video filter chain parts
     let mut vf_parts: Vec<String> = Vec::new();
 
-    // 1. AI Upscaling / Resolution Scaling
+    // 1. AI Upscaling / Resolution Scaling (Executed before subtitles to render subs natively at target resolution)
     if config.model_settings.upscale_enabled {
         let model_id = &config.model_settings.upscale_model;
-        let models_dir = crate::engine::models::get_models_dir();
-        let shader_path = models_dir.join(format!("{}.glsl", model_id));
-
-        if shader_path.exists() {
-            let escaped_shader = escape_ffmpeg_filter_path(&shader_path.to_string_lossy());
-            vf_parts.push(format!("libplacebo=custom_shader_path='{}'", escaped_shader));
-        } else if let Some(h) = config.model_settings.target_height {
+        if let Some(h) = config.model_settings.target_height {
             vf_parts.push(format!("scale=-2:{}:flags=lanczos+accurate_rnd", h));
+        } else if model_id.starts_with("4x") || model_id.contains("4x") {
+            vf_parts.push("scale=iw*4:ih*4:flags=lanczos+accurate_rnd".to_string());
         } else {
-            vf_parts.push("scale=iw*2:ih*2:flags=lanczos".to_string());
+            vf_parts.push("scale=iw*2:ih*2:flags=lanczos+accurate_rnd".to_string());
         }
     }
 
@@ -789,5 +787,55 @@ mod tests {
         let complex_path = r"/media/Anime [2026]; Vol, 1's Special/sub:title.ass";
         let escaped = escape_ffmpeg_filter_path(complex_path);
         assert_eq!(escaped, r"/media/Anime \[2026\]\; Vol\, 1'\''s Special/sub\:title.ass");
+    }
+
+    #[test]
+    fn test_threads_clamping_to_16() {
+        let mut config = EncodeJobConfig::default();
+        config.input_path = "/media/in.mkv".to_string();
+        config.output_path = "/media/out.mp4".to_string();
+        config.threads = 32; // Should be clamped to 16
+
+        let args = build_ffmpeg_args(&config).unwrap();
+        let threads_idx = args.iter().position(|r| r == "-threads").expect("Must contain -threads");
+        assert_eq!(args[threads_idx + 1], "16", "Threads > 16 must be clamped to 16");
+
+        config.threads = 8;
+        let args2 = build_ffmpeg_args(&config).unwrap();
+        let threads_idx2 = args2.iter().position(|r| r == "-threads").expect("Must contain -threads");
+        assert_eq!(args2[threads_idx2 + 1], "8", "Threads <= 16 must be preserved");
+    }
+
+    #[test]
+    fn test_upscale_lanczos_accurate_rnd_flags() {
+        let mut config = EncodeJobConfig::default();
+        config.input_path = "/media/in.mkv".to_string();
+        config.output_path = "/media/out.mp4".to_string();
+        config.model_settings.upscale_enabled = true;
+
+        // 2K (1440p)
+        config.model_settings.target_height = Some(1440);
+        let args = build_ffmpeg_args(&config).unwrap();
+        let vf_idx = args.iter().position(|r| r == "-vf").unwrap();
+        assert!(args[vf_idx + 1].contains("scale=-2:1440:flags=lanczos+accurate_rnd"));
+
+        // 4K (2160p)
+        config.model_settings.target_height = Some(2160);
+        let args_4k = build_ffmpeg_args(&config).unwrap();
+        let vf_idx_4k = args_4k.iter().position(|r| r == "-vf").unwrap();
+        assert!(args_4k[vf_idx_4k + 1].contains("scale=-2:2160:flags=lanczos+accurate_rnd"));
+
+        // 4x Model
+        config.model_settings.target_height = None;
+        config.model_settings.upscale_model = "4x-RealESRGAN-AnimeVideoV3-Compact".to_string();
+        let args_4x = build_ffmpeg_args(&config).unwrap();
+        let vf_idx_4x = args_4x.iter().position(|r| r == "-vf").unwrap();
+        assert!(args_4x[vf_idx_4x + 1].contains("scale=iw*4:ih*4:flags=lanczos+accurate_rnd"));
+
+        // 2x Model default
+        config.model_settings.upscale_model = "2x_AnimeJaNai_HD_V3_Compact".to_string();
+        let args_2x = build_ffmpeg_args(&config).unwrap();
+        let vf_idx_2x = args_2x.iter().position(|r| r == "-vf").unwrap();
+        assert!(args_2x[vf_idx_2x + 1].contains("scale=iw*2:ih*2:flags=lanczos+accurate_rnd"));
     }
 }

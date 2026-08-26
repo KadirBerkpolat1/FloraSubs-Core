@@ -5,6 +5,7 @@ import { ChevronDown } from 'lucide-react';
 export interface SelectOption {
   value: string;
   label: string;
+  group?: string;
   disabled?: boolean;
 }
 
@@ -71,11 +72,44 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                 {placeholder}
               </option>
             )}
-            {options.map((option) => (
-              <option key={option.value} value={option.value} disabled={option.disabled}>
-                {option.label}
-              </option>
-            ))}
+            {(() => {
+              const hasGroups = options.some((opt) => opt.group);
+              if (!hasGroups) {
+                return options.map((option) => (
+                  <option key={option.value} value={option.value} disabled={option.disabled}>
+                    {option.label}
+                  </option>
+                ));
+              }
+
+              const groups: string[] = [];
+              options.forEach((opt) => {
+                const g = opt.group || '';
+                if (!groups.includes(g)) {
+                  groups.push(g);
+                }
+              });
+
+              return groups.map((groupName) => {
+                const groupOptions = options.filter((opt) => (opt.group || '') === groupName);
+                if (!groupName) {
+                  return groupOptions.map((option) => (
+                    <option key={option.value} value={option.value} disabled={option.disabled}>
+                      {option.label}
+                    </option>
+                  ));
+                }
+                return (
+                  <optgroup key={groupName} label={groupName}>
+                    {groupOptions.map((option) => (
+                      <option key={option.value} value={option.value} disabled={option.disabled}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              });
+            })()}
           </select>
           <ChevronDown
             className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/50 pointer-events-none"

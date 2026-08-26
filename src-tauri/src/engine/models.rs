@@ -59,7 +59,191 @@ pub fn get_ai_models_catalog() -> Vec<AiModelInfo> {
     let models_dir = get_models_dir();
 
     let mut catalog = vec![
-        // Upscale Models
+        // --- 1. AnimeJaNai HD V3 Family (Real-ESRGAN Compact / SPAN) ---
+        AiModelInfo {
+            id: "2x_AnimeJaNai_HD_V3_Compact".to_string(),
+            name: "AnimeJaNai HD V3 Compact (2x - Dengeli / En Çok Tercih Edilen)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "2x_AnimeJaNai_HD_V3_Compact.onnx".to_string(),
+            download_url: "https://github.com/the-database/mpv-upscale-2x_animejanai/raw/main/BuildMpvUpscale2xAnimeJaNai/mpv-upscale-2x_animejanai/animejanai/onnx/2x_AnimeJaNai_HD_V3_Compact.onnx".to_string(),
+            size_mb: 4.6,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "2x_AnimeJaNai_HD_V3_UltraCompact".to_string(),
+            name: "AnimeJaNai HD V3 UltraCompact (2x - Hızlı)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "2x_AnimeJaNai_HD_V3_UltraCompact.onnx".to_string(),
+            download_url: "https://github.com/the-database/mpv-upscale-2x_animejanai/raw/main/BuildMpvUpscale2xAnimeJaNai/mpv-upscale-2x_animejanai/animejanai/onnx/2x_AnimeJaNai_HD_V3_UltraCompact.onnx".to_string(),
+            size_mb: 2.4,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "2x_AnimeJaNai_HD_V3_SuperUltraCompact".to_string(),
+            name: "AnimeJaNai HD V3 SuperUltraCompact (2x - Ultra Hızlı Gerçek Zamanlı)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "2x_AnimeJaNai_HD_V3_SuperUltraCompact.onnx".to_string(),
+            download_url: "https://github.com/the-database/mpv-upscale-2x_animejanai/raw/main/BuildMpvUpscale2xAnimeJaNai/mpv-upscale-2x_animejanai/animejanai/onnx/2x_AnimeJaNai_HD_V3_SuperUltraCompact.onnx".to_string(),
+            size_mb: 1.2,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "2x_AnimeJaNai_HD_V3Sharp1_Compact".to_string(),
+            name: "AnimeJaNai HD V3Sharp1 Compact (2x - Keskin Çizgili / HQ)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "2x_AnimeJaNai_HD_V3Sharp1_Compact.onnx".to_string(),
+            download_url: "https://github.com/the-database/mpv-upscale-2x_animejanai/raw/main/BuildMpvUpscale2xAnimeJaNai/mpv-upscale-2x_animejanai/animejanai/onnx/2x_AnimeJaNai_HD_V3Sharp1_Compact.onnx".to_string(),
+            size_mb: 4.6,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "2x_AnimeJaNai_HD_V3Sharp1_UltraCompact".to_string(),
+            name: "AnimeJaNai HD V3Sharp1 UltraCompact (2x - Keskin / Hızlı)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "2x_AnimeJaNai_HD_V3Sharp1_UltraCompact.onnx".to_string(),
+            download_url: "https://github.com/the-database/mpv-upscale-2x_animejanai/raw/main/BuildMpvUpscale2xAnimeJaNai/mpv-upscale-2x_animejanai/animejanai/onnx/2x_AnimeJaNai_HD_V3Sharp1_UltraCompact.onnx".to_string(),
+            size_mb: 2.4,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "2x_AnimeJaNai_HD_V3Sharp1_SuperUltraCompact".to_string(),
+            name: "AnimeJaNai HD V3Sharp1 SuperUltraCompact (2x - Keskin / Ultra Hızlı)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "2x_AnimeJaNai_HD_V3Sharp1_SuperUltraCompact.onnx".to_string(),
+            download_url: "https://github.com/the-database/mpv-upscale-2x_animejanai/raw/main/BuildMpvUpscale2xAnimeJaNai/mpv-upscale-2x_animejanai/animejanai/onnx/2x_AnimeJaNai_HD_V3Sharp1_SuperUltraCompact.onnx".to_string(),
+            size_mb: 1.2,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "2x_AnimeJaNai_SD_V1beta34_Compact".to_string(),
+            name: "AnimeJaNai SD V1beta34 Compact (2x - SD / Retro Anime Restorasyonu)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "2x_AnimeJaNai_SD_V1beta34_Compact.onnx".to_string(),
+            download_url: "https://github.com/the-database/mpv-upscale-2x_animejanai/raw/main/BuildMpvUpscale2xAnimeJaNai/mpv-upscale-2x_animejanai/animejanai/onnx/2x_AnimeJaNai_SD_V1beta34_Compact.onnx".to_string(),
+            size_mb: 4.6,
+            is_downloaded: false,
+        },
+
+        // --- 2. Adore & Fallin Family (renarchi / Real-CUGAN) ---
+        AiModelInfo {
+            id: "2x_Adore_renarchi_fp16_DML_onnxslim".to_string(),
+            name: "Adore Renarchi FP16 DirectML Slim (2x - Real-CUGAN / En Çok Tercih Edilen)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "2x_Adore_renarchi_fp16_DML_onnxslim.onnx".to_string(),
+            download_url: "https://github.com/renarchi/Re-SISR/releases/download/Adore/2x_Adore_renarchi_fp16_DML_onnxslim.onnx".to_string(),
+            size_mb: 5.4,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "2x_Adore_renarchi_fp32".to_string(),
+            name: "Adore Renarchi FP32 Full Precision (2x - Real-CUGAN)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "2x_Adore_renarchi_fp32.onnx".to_string(),
+            download_url: "https://github.com/renarchi/Re-SISR/releases/download/Adore/2x_Adore_renarchi_fp32.onnx".to_string(),
+            size_mb: 10.8,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "2x_fallin_soft_renarchi_fp16".to_string(),
+            name: "Fallin Soft Renarchi FP16 (2x - Yumuşak / Artefakt Temizleme)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "2x_fallin_soft_renarchi_fp16.onnx".to_string(),
+            download_url: "https://github.com/renarchi/Re-SISR/releases/download/Fallin/2x_fallin_soft_renarchi_fp16.onnx".to_string(),
+            size_mb: 5.4,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "2x_fallin_strong_renarchi_fp16".to_string(),
+            name: "Fallin Strong Renarchi FP16 (2x - Güçlü Keskinleştirme)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "2x_fallin_strong_renarchi_fp16.onnx".to_string(),
+            download_url: "https://github.com/renarchi/Re-SISR/releases/download/Fallin/2x_fallin_strong_renarchi_fp16.onnx".to_string(),
+            size_mb: 5.4,
+            is_downloaded: false,
+        },
+
+        // --- 3. Special Purpose & Video Upscalers ---
+        AiModelInfo {
+            id: "2x_AniScale_Compact".to_string(),
+            name: "AniScale Compact (2x - Hızlı Anime Upscaler)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "2x_AniScale_Compact.onnx".to_string(),
+            download_url: "https://github.com/the-database/mpv-upscale-2x_animejanai/raw/main/BuildMpvUpscale2xAnimeJaNai/mpv-upscale-2x_animejanai/animejanai/onnx/2x_AniScale_Compact.onnx".to_string(),
+            size_mb: 4.6,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "2x_LD-Anime-Compact".to_string(),
+            name: "LD-Anime Compact (2x - Çizgi Karartma & 2x Ölçekleme)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "2x_LD-Anime-Compact.onnx".to_string(),
+            download_url: "https://github.com/the-database/mpv-upscale-2x_animejanai/raw/main/BuildMpvUpscale2xAnimeJaNai/mpv-upscale-2x_animejanai/animejanai/onnx/2x_LD-Anime-Compact.onnx".to_string(),
+            size_mb: 4.6,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "4x-RealESRGAN-AnimeVideoV3-Compact".to_string(),
+            name: "Real-ESRGAN AnimeVideoV3 Compact (4x - 4K Video Upscale)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "4x-RealESRGAN-AnimeVideoV3-Compact.onnx".to_string(),
+            download_url: "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/4x-RealESRGAN-AnimeVideoV3-Compact.onnx".to_string(),
+            size_mb: 4.6,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "4x-RealESRGAN-v2-Compact".to_string(),
+            name: "Real-ESRGAN v2 Compact (4x - Ultra HD)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "4x-RealESRGAN-v2-Compact.onnx".to_string(),
+            download_url: "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/4x-RealESRGAN-v2-Compact.onnx".to_string(),
+            size_mb: 4.6,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "RealESRGANv2-animevideo-xsx2".to_string(),
+            name: "RealESRGANv2 AnimeVideo xsx2 (2x - Video Optimize)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "RealESRGANv2-animevideo-xsx2.onnx".to_string(),
+            download_url: "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/RealESRGANv2-animevideo-xsx2.onnx".to_string(),
+            size_mb: 4.6,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "sudo_shuffle_cugan_fp16_op18_clamped_9.584.969".to_string(),
+            name: "Sudo Shuffle Real-CUGAN FP16 (2x - CUGAN OP18)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "sudo_shuffle_cugan_fp16_op18_clamped_9.584.969.onnx".to_string(),
+            download_url: "https://github.com/bilibili/ailab/releases/download/real-cugan/sudo_shuffle_cugan_fp16_op18_clamped_9.584.969.onnx".to_string(),
+            size_mb: 3.8,
+            is_downloaded: false,
+        },
+        AiModelInfo {
+            id: "Anime4K_Restore_UL".to_string(),
+            name: "Anime4K Restore Ultra-Light (ONNX FP16 Restorasyon)".to_string(),
+            category: "upscale".to_string(),
+            format: "onnx".to_string(),
+            filename: "Anime4K_Restore_UL.onnx".to_string(),
+            download_url: "https://raw.githubusercontent.com/bloc97/Anime4K/master/glsl/Restore/Anime4K_Restore_CNN_UL.glsl".to_string(),
+            size_mb: 0.2,
+            is_downloaded: false,
+        },
         AiModelInfo {
             id: "Anime4K_Upscale_HD".to_string(),
             name: "Anime4K Upscale HD (Ultra Fast Shader GLSL)".to_string(),
@@ -70,7 +254,6 @@ pub fn get_ai_models_catalog() -> Vec<AiModelInfo> {
             size_mb: 0.04,
             is_downloaded: false,
         },
-
     ];
 
     for model in &mut catalog {
@@ -315,11 +498,41 @@ mod tests {
     #[test]
     fn test_models_catalog_and_lookup() {
         let catalog = get_ai_models_catalog();
-        // İşlevsiz ONNX girdileri kaldırıldı — builder yalnız GLSL shader çalıştırabilir.
-        assert!(!catalog.iter().any(|m| m.format == "onnx"));
-        assert!(catalog.iter().any(|m| m.id == "Anime4K_Upscale_HD"));
+        assert_eq!(catalog.len(), 19, "Catalog must contain all 19 registered models");
 
-        // SVP and minterpolate should always report installed (built-in)
+        // ONNX Models check
+        let onnx_models: Vec<_> = catalog.iter().filter(|m| m.format == "onnx").collect();
+        assert_eq!(onnx_models.len(), 18, "Must contain 18 ONNX models");
+
+        // GLSL Shader check
+        let glsl_models: Vec<_> = catalog.iter().filter(|m| m.format == "glsl").collect();
+        assert_eq!(glsl_models.len(), 1, "Must contain 1 GLSL shader");
+        assert_eq!(glsl_models[0].id, "Anime4K_Upscale_HD");
+
+        // Specific key models presence
+        assert!(catalog.iter().any(|m| m.id == "2x_AnimeJaNai_HD_V3_Compact"));
+        assert!(catalog.iter().any(|m| m.id == "2x_AnimeJaNai_HD_V3_SuperUltraCompact"));
+        assert!(catalog.iter().any(|m| m.id == "2x_AnimeJaNai_HD_V3Sharp1_Compact"));
+        assert!(catalog.iter().any(|m| m.id == "2x_AnimeJaNai_SD_V1beta34_Compact"));
+        assert!(catalog.iter().any(|m| m.id == "2x_Adore_renarchi_fp16_DML_onnxslim"));
+        assert!(catalog.iter().any(|m| m.id == "2x_fallin_soft_renarchi_fp16"));
+        assert!(catalog.iter().any(|m| m.id == "2x_fallin_strong_renarchi_fp16"));
+        assert!(catalog.iter().any(|m| m.id == "2x_AniScale_Compact"));
+        assert!(catalog.iter().any(|m| m.id == "2x_LD-Anime-Compact"));
+        assert!(catalog.iter().any(|m| m.id == "4x-RealESRGAN-AnimeVideoV3-Compact"));
+        assert!(catalog.iter().any(|m| m.id == "sudo_shuffle_cugan_fp16_op18_clamped_9.584.969"));
+        assert!(catalog.iter().any(|m| m.id == "Anime4K_Restore_UL"));
+
+        // Validation of all models
+        for m in &catalog {
+            assert!(!m.id.trim().is_empty(), "Model ID cannot be empty");
+            assert!(!m.name.trim().is_empty(), "Model Name cannot be empty");
+            assert!(!m.filename.trim().is_empty(), "Model Filename cannot be empty");
+            assert!(m.download_url.starts_with("https://"), "Download URL must be HTTPS");
+            assert!(m.size_mb > 0.0, "Model size must be positive");
+        }
+
+        // Built-in interpolators
         assert!(is_model_installed("SVP"));
         assert!(is_model_installed("minterpolate"));
     }
