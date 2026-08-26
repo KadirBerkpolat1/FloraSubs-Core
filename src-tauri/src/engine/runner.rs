@@ -156,18 +156,18 @@ impl ProcessManager {
             #[cfg(target_os = "windows")]
             {
                 unsafe {
-                    use windows_sys::Win32::Foundation::CloseHandle;
+                    use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
                     use windows_sys::Win32::System::Threading::{OpenProcess, PROCESS_SUSPEND_RESUME};
 
-                    type NtSuspendProcessFn = unsafe extern "system" fn(isize) -> i32;
+                    type NtSuspendProcessFn = unsafe extern "system" fn(HANDLE) -> i32;
                     let ntdll = windows_sys::Win32::System::LibraryLoader::GetModuleHandleA(b"ntdll.dll\0".as_ptr());
-                    if ntdll != 0 {
+                    if !ntdll.is_null() {
                         let proc = windows_sys::Win32::System::LibraryLoader::GetProcAddress(ntdll, b"NtSuspendProcess\0".as_ptr());
                         if let Some(proc_addr) = proc {
                             let nt_suspend: NtSuspendProcessFn = std::mem::transmute(proc_addr);
                             let handle = OpenProcess(PROCESS_SUSPEND_RESUME, 0, job.pid);
-                            if handle != 0 {
-                                nt_suspend(handle as isize);
+                            if !handle.is_null() {
+                                nt_suspend(handle);
                                 CloseHandle(handle);
                             }
                         }
@@ -200,18 +200,18 @@ impl ProcessManager {
             #[cfg(target_os = "windows")]
             {
                 unsafe {
-                    use windows_sys::Win32::Foundation::CloseHandle;
+                    use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
                     use windows_sys::Win32::System::Threading::{OpenProcess, PROCESS_SUSPEND_RESUME};
 
-                    type NtResumeProcessFn = unsafe extern "system" fn(isize) -> i32;
+                    type NtResumeProcessFn = unsafe extern "system" fn(HANDLE) -> i32;
                     let ntdll = windows_sys::Win32::System::LibraryLoader::GetModuleHandleA(b"ntdll.dll\0".as_ptr());
-                    if ntdll != 0 {
+                    if !ntdll.is_null() {
                         let proc = windows_sys::Win32::System::LibraryLoader::GetProcAddress(ntdll, b"NtResumeProcess\0".as_ptr());
                         if let Some(proc_addr) = proc {
                             let nt_resume: NtResumeProcessFn = std::mem::transmute(proc_addr);
                             let handle = OpenProcess(PROCESS_SUSPEND_RESUME, 0, job.pid);
-                            if handle != 0 {
-                                nt_resume(handle as isize);
+                            if !handle.is_null() {
+                                nt_resume(handle);
                                 CloseHandle(handle);
                             }
                         }
