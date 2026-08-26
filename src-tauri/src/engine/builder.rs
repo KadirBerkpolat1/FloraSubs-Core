@@ -290,11 +290,15 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
     args.push("-progress".to_string());
     args.push("pipe:1".to_string());
 
-    // CPU Threads (Clamped to max 16 to prevent decoder thread exhaustion / instability)
+    // CPU Threads (Decoder threads clamped to max 16 to prevent decoder thread exhaustion / instability)
     if config.threads > 0 {
-        let threads = config.threads.min(16);
+        let dec_threads = config.threads.min(16);
         args.push("-threads".to_string());
-        args.push(threads.to_string());
+        args.push(dec_threads.to_string());
+        args.push("-filter_threads".to_string());
+        args.push(config.threads.to_string());
+        args.push("-filter_complex_threads".to_string());
+        args.push(config.threads.to_string());
     }
 
     // Build video filter chain parts
@@ -454,6 +458,12 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
             args.push(config.preset.clone());
             args.push("-bf".to_string());
             args.push(config.b_frames.to_string());
+            if config.threads > 0 {
+                args.push("-threads:v".to_string());
+                args.push(config.threads.to_string());
+                args.push("-x264-params".to_string());
+                args.push(format!("threads={}", config.threads));
+            }
         }
         "libx265" => {
             if is_bitrate {
@@ -467,6 +477,12 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
             args.push(config.preset.clone());
             args.push("-bf".to_string());
             args.push(config.b_frames.to_string());
+            if config.threads > 0 {
+                args.push("-threads:v".to_string());
+                args.push(config.threads.to_string());
+                args.push("-x265-params".to_string());
+                args.push(format!("pools={}", config.threads));
+            }
         }
         "libsvtav1" => {
             if is_bitrate {
@@ -478,8 +494,9 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
             }
             args.push("-preset".to_string());
             args.push(config.preset.clone());
+            let lp = if config.threads > 0 { config.threads } else { 16 };
             args.push("-svtav1-params".to_string());
-            args.push("tune=0:film-grain=4".to_string());
+            args.push(format!("tune=0:film-grain=4:lp={}", lp));
         }
         "h264_nvenc" | "hevc_nvenc" | "av1_nvenc" => {
             if is_bitrate {
@@ -837,5 +854,34 @@ mod tests {
         let args_2x = build_ffmpeg_args(&config).unwrap();
         let vf_idx_2x = args_2x.iter().position(|r| r == "-vf").unwrap();
         assert!(args_2x[vf_idx_2x + 1].contains("scale=iw*2:ih*2:flags=lanczos+accurate_rnd"));
+    }
+
+    #[test]
+    fn test_encoder_and_filter_thread_controls() {
+        let mut config = EncodeJobConfig::default();
+        config.input_path = "/media/in.mkv".to_string();
+        config.output_path = "/media/out.mp4".to_string();
+        config.encoder = "libx264".to_string();
+        config.threads = 24;
+
+        let args = build_ffmpeg_args(&config).unwrap();
+        assert!(args.contains(&"-filter_threads".to_string()));
+        assert!(args.contains(&"24".to_string()));
+        assert!(args.contains(&"-threads:v".to_string()));
+        assert!(args.contains(&"-x264-params".to_string()));
+        assert!(args.contains(&"threads=24".to_string()));
+
+        // x265 pools check
+        config.encoder = "libx265".to_string();
+        let args_265 = build_ffmpeg_args(&config).unwrap();
+        assert!(args_265.contains(&"-x265-params".to_string()));
+        assert!(args_265.contains(&"pools=24".to_string()));
+
+        // svtav1 lp check
+        config.encoder = "libsvtav1".to_string();
+        let args_av1 = build_ffmpeg_args(&config).unwrap();
+        assert!(args_av1.contains(&"-svtav1-params".to_string()));
+        let svt_idx = args_av1.iter().position(|r| r == "-svtav1-params").unwrap();
+        assert!(args_av1[svt_idx + 1].contains("lp=24"));
     }
 }
