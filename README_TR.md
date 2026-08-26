@@ -45,11 +45,13 @@ Sisteminizdeki GPU donanımını otomatik tespit eder ve optimize edilmiş hazı
 * **Linux:** Doğrudan `/dev/dri/` üzerinden `VAAPI` (NV12 / P010 hwupload)
 * **CPU Master:** `libx264` (Web uyumlu), `libx265` (10-bit Arşiv), `libsvtav1` (Film-grain korumalı AV1)
 
-### 🧠 3. Yapay Zeka Video Ölçekleme & Kare Üretimi
-* **2K / 4K AI Upscaling:** Lanczos ve `libplacebo` GPU custom shader motoru ile yüksek netlikte çözünürlük yükseltme.
+### 🧠 3. 18 Yapay Zeka Modeli & 2K/4K Süper Çözünürlük Ekosistemi
+* **AnimeJaNai V3 Ailesi (Real-ESRGAN Compact):** `2x_AnimeJaNai_HD_V3_Compact`, `UltraCompact`, `SuperUltraCompact`, `V3Sharp1_Compact`, `V3Sharp1_UltraCompact`, `V3Sharp1_SuperUltraCompact`, `SD_V1beta34_Compact`.
+* **Adore & Fallin (Real-CUGAN) Ailesi:** `2x_Adore_renarchi_fp16_DML_onnxslim`, `2x_Adore_renarchi_fp32`, `2x_fallin_soft_renarchi_fp16`, `2x_fallin_strong_renarchi_fp16`.
+* **Özel Video & Çizgi Upscaler Modelleri:** `4x-RealESRGAN-AnimeVideoV3-Compact`, `4x-RealESRGAN-v2-Compact`, `RealESRGANv2-animevideo-xsx2`, `2x_AniScale_Compact`, `2x_LD-Anime-Compact`, `sudo_shuffle_cugan_fp16_op18_clamped`, `Anime4K_Restore_UL`, `Anime4K_Upscale_HD`.
+* **Kategorize Edilmiş Model Seçici:** Görsel `<optgroup>` gruplandırması (En Çok Tercih Edilen, Ultra Hızlı Gerçek Zamanlı, Keskin Çizgili, SD / Retro Restorasyon, 4x Video & Özel Efektler) ve otomatik arka plan indiricisi.
 * **Kare Üretimi (Framegen):** 24 FPS animeleri 60, 120, 144 ve 240 FPS akıcı hızlara dönüştürme desteği.
 * **İleri Filtreler:** Çizgi Koyulaştırma (Line Darkening), Keskinleştirme (Unsharp Mask) ve Film Grain ekleme.
-
 ### 🎬 4. Canlı HTTP 206 Akış & Önizleme
 * Harici oynatıcı bağımlılığı olmadan, dahili token korumalı HTTP 206 Range sunucusu üzerinden anında canlı video oynatma.
 * Çoklu gömülü ve harici (`.ass`, `.srt`, `.vtt`) altyazı parçalarını mikrosaniye senkronuyla video üzerinde canlı önizleme.
@@ -83,11 +85,11 @@ En son kararlı sürümü [GitHub Releases](https://github.com/KadirBerkpolat1/F
 
 | Platform | Format | Açıklama |
 | :--- | :--- | :--- |
-| **Windows 10 / 11** | `FloraSubs-Reborn-v1.1.0-windows-x64-Setup.exe` | Tam NSIS Kurulum Sihirbazı |
-| **Windows Portable** | `FloraSubs-Reborn-v1.1.0-windows-x64-portable.zip` | Kurulumsuz, tıkla-çalıştır zip arşivi |
-| **Linux (Ubuntu/Debian)** | `FloraSubs-Reborn-v1.1.0-linux-x86_64.deb` | Standart Debian sistem paketi |
-| **Linux (Tüm Dağıtımlar)**| `FloraSubs-Reborn-v1.1.0-linux-x86_64.AppImage` | Taşınabilir, bağımsız çalıştırılabilir paket |
-| **Linux (Arşiv)** | `FloraSubs-Reborn-v1.1.0-linux-x86_64.tar.gz` | Ham ikili ve FFmpeg klasörü (Arch/CachyOS/Fedora) |
+| **Windows 10 / 11** | `FloraSubs-Reborn-v1.2.0-windows-x64-Setup.exe` | Tam NSIS Kurulum Sihirbazı |
+| **Windows Portable** | `FloraSubs-Reborn-v1.2.0-windows-x64-portable.zip` | Kurulumsuz, tıkla-çalıştır zip arşivi |
+| **Linux (Ubuntu/Debian)** | `FloraSubs-Reborn-v1.2.0-linux-x86_64.deb` | Standart Debian sistem paketi |
+| **Linux (Tüm Dağıtımlar)**| `FloraSubs-Reborn-v1.2.0-linux-x86_64.AppImage` | Taşınabilir, bağımsız çalıştırılabilir paket |
+| **Linux (Arşiv)** | `FloraSubs-Reborn-v1.2.0-linux-x86_64.tar.gz` | Ham ikili ve FFmpeg klasörü (Arch/CachyOS/Fedora) |
 
 ---
 

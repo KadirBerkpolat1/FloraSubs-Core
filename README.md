@@ -49,11 +49,13 @@ Auto-probes host GPU hardware with fine-tuned presets:
 * **Linux VAAPI:** Native zero-copy DRM `/dev/dri/renderD128` hardware upload (`nv12`/`p010`).
 * **CPU Master Quality:** `libx264` (Web anime standard), `libx265` (10-bit archive), `libsvtav1` (Film-grain tuned AV1).
 
-### 🧠 3. AI Upscaling & Frame Generation
-* **2K / 4K Neural Upscaling:** Lanczos high-accuracy scaling and `libplacebo` GPU custom shaders (`Anime4K`).
+### 🧠 3. 18 AI Neural Models & 2K/4K Upscaling Ecosystem
+* **AnimeJaNai V3 Family (Real-ESRGAN Compact):** `2x_AnimeJaNai_HD_V3_Compact`, `UltraCompact`, `SuperUltraCompact`, `V3Sharp1_Compact`, `V3Sharp1_UltraCompact`, `V3Sharp1_SuperUltraCompact`, `SD_V1beta34_Compact`.
+* **Adore & Fallin (Real-CUGAN) Family:** `2x_Adore_renarchi_fp16_DML_onnxslim`, `2x_Adore_renarchi_fp32`, `2x_fallin_soft_renarchi_fp16`, `2x_fallin_strong_renarchi_fp16`.
+* **Special-Purpose Video Upscalers:** `4x-RealESRGAN-AnimeVideoV3-Compact`, `4x-RealESRGAN-v2-Compact`, `RealESRGANv2-animevideo-xsx2`, `2x_AniScale_Compact`, `2x_LD-Anime-Compact`, `sudo_shuffle_cugan_fp16_op18_clamped`, `Anime4K_Restore_UL`, `Anime4K_Upscale_HD`.
+* **Categorized Model Selector:** Visual `<optgroup>` groupings (Most Popular, Ultra-Fast Real-Time, Sharp Lines, SD/Retro Restoration, 4x Video & Effects) with real-time background downloader.
 * **High-Framerate Interpolation:** Smooth 24 FPS anime to 60, 120, 144, or 240 FPS via `minterpolate` and hardware-efficient rate converters.
 * **Advanced Post-Processing:** Line Darkening (`curves`), Sharpness (`unsharp`), and Film Grain emulation (`noise`).
-
 ### 🎬 4. Synchronized Live Preview & Stream Server
 * Zero-dependency streaming player powered by an internal, token-secured HTTP 206 Range stream server.
 * Real-time multi-track subtitle switching (`.ass`, `.srt`, `.vtt`) with microsecond synchronization.
@@ -87,12 +89,11 @@ Pre-compiled production binaries are available on the [GitHub Releases](https://
 
 | Platform | Format | Description |
 | :--- | :--- | :--- |
-| **Windows 10 / 11** | `FloraSubs-Reborn-v1.1.0-windows-x64-Setup.exe` | Full NSIS Setup Installer |
-| **Windows Portable** | `FloraSubs-Reborn-v1.1.0-windows-x64-portable.zip` | Standalone portable zip (no installation) |
-| **Linux (Ubuntu/Debian)** | `FloraSubs-Reborn-v1.1.0-linux-x86_64.deb` | Standard Debian package |
-| **Linux (Universal)** | `FloraSubs-Reborn-v1.1.0-linux-x86_64.AppImage` | Portable standalone executable for all distros |
-| **Linux (Archive)** | `FloraSubs-Reborn-v1.1.0-linux-x86_64.tar.gz` | Portable binary + bundled FFmpeg archive |
-
+| **Windows (Installer)** | `FloraSubs-Reborn-v1.2.0-windows-x64-Setup.exe` | Recommended native NSIS installer with bundled FFmpeg 7.x |
+| **Windows (Portable)** | `FloraSubs-Reborn-v1.2.0-windows-x64-portable.zip` | Standalone portable executable with zero installation |
+| **Linux (Debian/Ubuntu)** | `FloraSubs-Reborn-v1.2.0-linux-x86_64.deb` | Native DEB package |
+| **Linux (Universal)** | `FloraSubs-Reborn-v1.2.0-linux-x86_64.AppImage` | Portable AppImage for all Linux distributions |
+| **Linux (Archive)** | `FloraSubs-Reborn-v1.2.0-linux-x86_64.tar.gz` | Portable binary + bundled FFmpeg archive |
 ---
 
 ## ⌨️ Keyboard Shortcuts (Preview Player)
