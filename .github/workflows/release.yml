@@ -139,7 +139,7 @@ jobs:
     name: Create GitHub Release
     needs: [build-linux, build-windows]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
     steps:
@@ -163,14 +163,13 @@ jobs:
           body: |
             ## FloraSubs Reborn ${{ github.ref_name }} - Official Multi-Platform Release
             
-            ### What's New
-            - **Windows Platform Support**: Native Windows `setup.exe` installer with NSIS
+            - **18 AI Neural Model Catalog**: Full AnimeJaNai V3 family, Adore & Fallin (Real-CUGAN), AniScale, LD-Anime, Real-ESRGAN Video with categorized UI & downloader
+            - **Windows Encoding Stability**: Clamped CPU decoder threads (<=16) to eliminate thread exhaustion halts
+            - **Lanczos 2K/4K Scaling Pipeline**: High-precision resolution-aware scaling (`lanczos+accurate_rnd`) rendering subtitles crystal clear at native 1440p/2160p
+            - **Windows Native Installer**: Native Windows `setup.exe` installer with NSIS and portable zip
             - **Linux Packages**: DEB, AppImage, and portable tarball
-            - **Hardware Acceleration**: NVIDIA NVENC, AMD AMF, Intel QSV, Linux VAAPI
+            - **Hardware Acceleration**: AMD AMF, NVIDIA NVENC, Intel QSV, Linux VAAPI
             - **FFmpeg 7.x**: Bundled static builds with libass, AMF, NVENC, QSV support
-            - **Removed**: External MPV player button from preview
-            
-            ### Downloads
             - **Windows**: `FloraSubs-Reborn-${{ github.ref_name }}-windows-x64-Setup.exe` (NSIS Installer)
             - **Windows Portable**: `FloraSubs-Reborn-${{ github.ref_name }}-windows-x64-portable.zip`
             - **Linux DEB**: `FloraSubs-Reborn-${{ github.ref_name }}-linux-x86_64.deb`
