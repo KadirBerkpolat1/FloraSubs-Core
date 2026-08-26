@@ -1,0 +1,142 @@
+# 🌸 FloraSubs Reborn
+
+<div align="center">
+
+[![GitHub Release](https://img.shields.io/github/v/release/KadirBerkpolat1/FloraSubs-Core?style=for-the-badge&color=8A2BE2)](https://github.com/KadirBerkpolat1/FloraSubs-Core/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+[![Tauri v2](https://img.shields.io/badge/Tauri-v2.0-24C8D5?style=for-the-badge&logo=tauri&logoColor=white)](https://tauri.app)
+[![Rust](https://img.shields.io/badge/Rust-1.85+-DEA584?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org)
+[![React 19](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
+[![Platforms](https://img.shields.io/badge/Platform-Windows%20|%20Linux-lightgrey?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/KadirBerkpolat1/FloraSubs-Core/releases)
+
+**Modern, Ultra-Fast Fansub & Anime Video Encoding Station**
+
+*Rebuilt from the ground up with Tauri v2, Rust Tokio runtime, React 19, and TailwindCSS.*
+
+[🚀 İndir (Releases)](https://github.com/KadirBerkpolat1/FloraSubs-Core/releases) • [✨ Özellikler](#-ana-özellikler) • [🏗️ Mimari](#%EF%B8%8F-mimari-yapı) • [⌨️ Kısayollar](#%EF%B8%8F-klavye-kısayolları) • [🛠️ Derleme](#%EF%B8%8F-kaynak-koddan-derleme)
+
+</div>
+
+---
+
+## 🌟 Neden FloraSubs Reborn?
+
+FloraSubs Reborn; anime çeviri, fansub ve video kodlama ekipleri için özel olarak tasarlanmış, ultra hafif (~25MB RAM), bağımsız masaüstü iş istasyonudur. 
+
+Geleneksel araçlardaki **"upscale sonrası altyazıların kaybolması"**, **"özel yazı tiplerinin Arial'a düşmesi"**, **"sisteme FFmpeg kurma zorunluluğu"** ve **"işlemi duraklatırken çökme"** gibi tüm kronik sorunları kökten çözen taze bir mimariyle geliştirilmiştir.
+
+---
+
+## ✨ Ana Özellikler
+
+### 🎨 1. Kusursuz Altyazı & Font Koruma (Pre-Extraction Engine)
+* **Otomatik Font Ayrıştırma:** MKV kapsayıcısı içindeki tüm `.ttf` ve `.otf` font eklerini (`-dump_attachment:t ""`) izole sandbox klasörüne döker.
+* **Sıfır Arial Riski:** `fontsdir` parametresi ve tam yol kaçışları (`C\:/...`) sayesinde fansub tabelaları, karaoke efektleri ve özel stiller orijinal haliyle render edilir.
+* **Upscale Uyumlu Hardsub:** Filtre hattında önce video 2K/4K çözünürlüğüne yükseltilir, ardından `subtitles` filtresi uygulanır; böylece altyazı çözünürlüğü pikselleşmeden keskin kalır.
+
+### ⚡ 2. Donanım Hızlandırmalı GPU Kodlama
+Sisteminizdeki GPU donanımını otomatik tespit eder ve optimize edilmiş hazır profiller sunar:
+* **NVIDIA GeForce:** `NVENC` (H.264, HEVC, AV1) + Spatial AQ
+* **AMD Radeon:** `AMF` (H.264, HEVC, AV1)
+* **Intel Arc / Core:** `QuickSync (QSV)`
+* **Linux:** Doğrudan `/dev/dri/` üzerinden `VAAPI` (NV12 / P010 hwupload)
+* **CPU Master:** `libx264` (Web uyumlu), `libx265` (10-bit Arşiv), `libsvtav1` (Film-grain korumalı AV1)
+
+### 🧠 3. Yapay Zeka Video Ölçekleme & Kare Üretimi
+* **2K / 4K AI Upscaling:** Lanczos ve `libplacebo` GPU custom shader motoru ile yüksek netlikte çözünürlük yükseltme.
+* **Kare Üretimi (Framegen):** 24 FPS animeleri 60, 120, 144 ve 240 FPS akıcı hızlara dönüştürme desteği.
+* **İleri Filtreler:** Çizgi Koyulaştırma (Line Darkening), Keskinleştirme (Unsharp Mask) ve Film Grain ekleme.
+
+### 🎬 4. Canlı HTTP 206 Akış & Önizleme
+* Harici oynatıcı bağımlılığı olmadan, dahili token korumalı HTTP 206 Range sunucusu üzerinden anında canlı video oynatma.
+* Çoklu gömülü ve harici (`.ass`, `.srt`, `.vtt`) altyazı parçalarını mikrosaniye senkronuyla video üzerinde canlı önizleme.
+
+### ⏸️ 5. Sıfır Kilitlenme Süreç Yönetimi (Win32 & POSIX)
+* Kodlama esnasında bilgisayarı kasmadan tek tıkla **Duraklat (Pause)** ve **Sürdür (Resume)**.
+* Windows'ta `NtSuspendProcess` / `NtResumeProcess` Win32 API'leri, Linux'ta `SIGSTOP` / `SIGCONT` sinyalleri ile sıfır CPU sömürüsü ve sıfır bellek bozulması.
+
+### 📦 6. Sıfır Yapılandırma & Taşınabilir (Portable)
+* Statik derlenmiş **FFmpeg 7.x** ve **FFprobe** uygulamanın içine gömülüdür. Sistem `PATH` değişkenine hiçbir şey eklemeniz gerekmez.
+
+---
+
+## 🏗️ Mimari Yapı
+
+```mermaid
+graph TD
+    UI[Frontend: React 19 + TypeScript + TailwindCSS + Lucide] <-->|Tauri IPC Events & Commands| Core[Backend: Tauri v2 + Rust Tokio Runtime]
+    Core --> Probe[Hardware GPU Probe: NVENC / AMF / QSV / VAAPI]
+    Core --> Demux[Pre-Extraction: Subtitle & Font Attachment Dumper]
+    Core --> Builder[Resolution-Aware Filter Graph & Command Builder]
+    Core --> Runner[Async Stream Parser & Win32/POSIX Process Controller]
+    Runner --> FFmpeg[Bundled Static FFmpeg 7.x + libass + Hardware Encoders]
+```
+
+---
+
+## 🚀 İndirme & Kurulum
+
+En son kararlı sürümü [GitHub Releases](https://github.com/KadirBerkpolat1/FloraSubs-Core/releases) sayfasından edinebilirsiniz:
+
+| Platform | Format | Açıklama |
+| :--- | :--- | :--- |
+| **Windows 10 / 11** | `FloraSubs-Reborn-v1.1.0-windows-x64-Setup.exe` | Tam NSIS Kurulum Sihirbazı |
+| **Windows Portable** | `FloraSubs-Reborn-v1.1.0-windows-x64-portable.zip` | Kurulumsuz, tıkla-çalıştır zip arşivi |
+| **Linux (Ubuntu/Debian)** | `FloraSubs-Reborn-v1.1.0-linux-x86_64.deb` | Standart Debian sistem paketi |
+| **Linux (Tüm Dağıtımlar)**| `FloraSubs-Reborn-v1.1.0-linux-x86_64.AppImage` | Taşınabilir, bağımsız çalıştırılabilir paket |
+| **Linux (Arşiv)** | `FloraSubs-Reborn-v1.1.0-linux-x86_64.tar.gz` | Ham ikili ve FFmpeg klasörü (Arch/CachyOS/Fedora) |
+
+---
+
+## ⌨️ Klavye Kısayolları (Önizleme Oynatıcısı)
+
+| Tuş | Eylem |
+| :--- | :--- |
+| <kbd>Space</kbd> | Oynat / Duraklat (Play / Pause) |
+| <kbd>←</kbd> / <kbd>→</kbd> | ±5 Saniye Hızlı Atlama |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Ses Seviyesi Ayarı (±%10) |
+| <kbd>M</kbd> | Sesi Kapat / Aç (Mute Toggle) |
+| <kbd>F</kbd> | Tam Ekran (Fullscreen) |
+
+---
+
+## 🛠️ Kaynak Koddan Derleme
+
+### Gereksinimler
+* [Rust](https://www.rust-lang.org/) (v1.85 veya üzeri)
+* [Bun](https://bun.sh/) (v1.1 veya üzeri) veya Node.js (v20+)
+* Linux için: `libwebkit2gtk-4.1-dev`, `libappindicator3-dev`, `librsvg2-dev`
+
+### Adımlar
+
+1. **Depoyu klonlayın:**
+   ```bash
+   git clone https://github.com/KadirBerkpolat1/FloraSubs-Core.git
+   cd FloraSubs-Core
+   ```
+
+2. **Statik FFmpeg ikililerini indirin:**
+   ```bash
+   bash scripts/download-ffmpeg.sh
+   ```
+
+3. **Bağımlılıkları yükleyin ve geliştirici modunda başlatın:**
+   ```bash
+   bun install
+   bun run tauri dev
+   ```
+
+4. **Üretim (Release) paketi oluşturun:**
+   ```bash
+   bun run tauri build
+   ```
+
+---
+
+## 📜 Lisans
+
+Bu proje [MIT Lisansı](LICENSE) altında lisanslanmıştır. Fansub topluluğu ve tüm video geliştiricileri için özgürce kullanılabilir, geliştirilebilir ve paylaşılabilir.
+
+<div align="center">
+  <sub>Developed with ❤️ for fansub groups and video creators worldwide.</sub>
+</div>
