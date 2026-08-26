@@ -190,6 +190,8 @@ export interface EncodeProgress {
   percentage: number;
   eta_secs: number;
   eta_formatted: string;
+  elapsed_secs: number;
+  elapsed_formatted: string;
   status: 'idle' | 'running' | 'paused' | 'completed' | 'error' | 'cancelled';
   error_message: string | null;
 }

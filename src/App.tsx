@@ -251,6 +251,8 @@ export default function App() {
             percentage: 0,
             eta_secs: 0,
             eta_formatted: '--:--:--',
+            elapsed_secs: 0,
+            elapsed_formatted: '00:00:00',
             status: 'idle',
             error_message: null,
           },

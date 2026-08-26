@@ -12,6 +12,7 @@ import {
   Loader2,
   Tv,
   Zap,
+  Clock,
 } from 'lucide-react';
 import {
   AiModelInfo,
@@ -587,6 +588,39 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
                 </Button>
               </div>
             </div>
+
+            {/* Live Encoding Stopwatch / Status Banner */}
+            {selectedItem?.status === 'encoding' && (
+              <div className="p-3 rounded-xl bg-blue-950/30 border border-blue-500/30 space-y-2">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="text-blue-400 font-bold flex items-center gap-1.5">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Kodlanıyor... (%{selectedItem.progress.percentage.toFixed(1)})</span>
+                  </span>
+                  <span className="text-emerald-400 font-bold bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Geçen Süre: {selectedItem.progress.elapsed_formatted || '00:00:00'}</span>
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-[10px] font-mono text-gray-400 bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+                  <div>FPS: <strong className="text-white">{selectedItem.progress.fps.toFixed(1)}</strong></div>
+                  <div>Hız: <strong className="text-white">{selectedItem.progress.speed.toFixed(1)}x</strong></div>
+                  <div className="text-right">Kalan: <strong className="text-amber-300">{selectedItem.progress.eta_formatted}</strong></div>
+                </div>
+              </div>
+            )}
+            {selectedItem?.status === 'completed' && (
+              <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between text-xs font-mono text-emerald-400">
+                <span className="flex items-center gap-1.5 font-bold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Kodlama Tamamlandı!</span>
+                </span>
+                <span className="flex items-center gap-1 bg-emerald-900/40 px-2.5 py-1 rounded-lg border border-emerald-500/30">
+                  <Clock className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>Toplam Süre: <strong className="text-white font-bold">{selectedItem.progress.elapsed_formatted || selectedItem.progress.time_formatted}</strong></span>
+                </span>
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="pt-3 flex items-center space-x-3 border-t border-slate-700/50">

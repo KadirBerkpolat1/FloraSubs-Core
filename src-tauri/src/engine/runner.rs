@@ -27,6 +27,8 @@ pub struct EncodeProgress {
     pub percentage: f64,
     pub eta_secs: f64,
     pub eta_formatted: String,
+    pub elapsed_secs: f64,
+    pub elapsed_formatted: String,
     pub status: String,
     pub error_message: Option<String>,
 }
@@ -46,6 +48,8 @@ impl Default for EncodeProgress {
             percentage: 0.0,
             eta_secs: 0.0,
             eta_formatted: "--:--:--".to_string(),
+            elapsed_secs: 0.0,
+            elapsed_formatted: "00:00:00".to_string(),
             status: "idle".to_string(),
             error_message: None,
         }
@@ -426,6 +430,7 @@ pub async fn start_encoding_job(
 
     let app_handle_progress = app.clone();
     let job_id_progress = job_id.clone();
+    let start_time = std::time::Instant::now();
 
     // Async task reading stdout for real-time progress calculations
     let progress_handle = tokio::spawn(async move {
@@ -436,7 +441,6 @@ pub async fn start_encoding_job(
                 status: "running".to_string(),
                 ..Default::default()
             };
-
             while let Ok(Some(line)) = reader.next_line().await {
                 let trimmed = line.trim();
                 if let Some((k, v)) = trimmed.split_once('=') {
@@ -486,6 +490,9 @@ pub async fn start_encoding_job(
                             }
                         }
                         "progress" => {
+                            let elapsed = start_time.elapsed().as_secs_f64();
+                            progress.elapsed_secs = (elapsed * 10.0).round() / 10.0;
+                            progress.elapsed_formatted = format_duration(elapsed);
                             let _ = app_handle_progress.emit("encode-progress", progress.clone());
                             if v == "end" {
                                 break;
@@ -545,7 +552,7 @@ pub async fn start_encoding_job(
            let _ = remove_file(sub_path);
        }
     }
-
+    let total_elapsed = start_time.elapsed().as_secs_f64();
     match exit_status {
         Ok(status) => {
             if status.success() {
@@ -556,6 +563,8 @@ pub async fn start_encoding_job(
                         status: "completed".to_string(),
                         percentage: 100.0,
                         time_formatted: format_duration(total_duration_secs),
+                        elapsed_secs: total_elapsed,
+                        elapsed_formatted: format_duration(total_elapsed),
                         ..Default::default()
                     },
                 );
@@ -566,6 +575,8 @@ pub async fn start_encoding_job(
                     EncodeProgress {
                         job_id: job_id.clone(),
                         status: "cancelled".to_string(),
+                        elapsed_secs: total_elapsed,
+                        elapsed_formatted: format_duration(total_elapsed),
                         ..Default::default()
                     },
                 );

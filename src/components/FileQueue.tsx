@@ -218,7 +218,7 @@ export const FileQueue: React.FC<FileQueueProps> = ({
                       {isCompleted && (
                         <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold border border-emerald-500/30 flex items-center space-x-1">
                           <CheckCircle2 className="w-3 h-3" />
-                          <span>Tamamlandı</span>
+                          <span>Tamamlandı ({item.progress.elapsed_formatted || item.progress.time_formatted})</span>
                         </span>
                       )}
                       {isError && (
@@ -295,17 +295,28 @@ export const FileQueue: React.FC<FileQueueProps> = ({
 
                   {/* Progress Bar & Live Telemetry when encoding / paused */}
                   {(isEncoding || isPaused) && (
-                    <div className="mt-3 pt-3 border-t border-[#262c3e] space-y-2">
-                      {/* Bar */}
+                    <div className="mt-3 pt-3 border-t border-[#262c3e] space-y-2.5">
+                      {/* Bar & Header */}
+                      <div className="flex items-center justify-between text-xs font-mono">
+                        <span className="text-blue-400 font-bold flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
+                          {isPaused ? 'Duraklatıldı' : 'İşleniyor...'} (%{item.progress.percentage.toFixed(1)})
+                        </span>
+                        <span className="text-emerald-400 font-bold bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-emerald-400" />
+                          <span>Geçen Süre: {item.progress.elapsed_formatted || '00:00:00'}</span>
+                        </span>
+                      </div>
+
                       <div className="w-full h-2 bg-[#1f2638] rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-300 shadow-sm shadow-blue-500/50"
+                          className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500 rounded-full transition-all duration-300 shadow-sm shadow-blue-500/50"
                           style={{ width: `${item.progress.percentage}%` }}
                         />
                       </div>
 
-                      {/* Live Stats */}
-                      <div className="grid grid-cols-4 gap-2 text-[10px] font-mono text-gray-400">
+                      {/* Live Stats Grid */}
+                      <div className="grid grid-cols-4 gap-2 text-[10px] font-mono text-gray-400 bg-[#161c2b] p-2 rounded-lg border border-[#232b40]">
                         <div className="flex items-center space-x-1">
                           <Gauge className="w-3 h-3 text-blue-400" />
                           <span>FPS: <strong className="text-white">{item.progress.fps.toFixed(1)}</strong></span>
@@ -315,13 +326,27 @@ export const FileQueue: React.FC<FileQueueProps> = ({
                           <span>Hız: <strong className="text-white">{item.progress.speed.toFixed(1)}x</strong></span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <Clock className="w-3 h-3 text-emerald-400" />
-                          <span>Süre: <strong className="text-white">{item.progress.time_formatted}</strong></span>
+                          <Clock className="w-3 h-3 text-cyan-400" />
+                          <span>Konum: <strong className="text-white">{item.progress.time_formatted}</strong></span>
                         </div>
                         <div className="flex items-center space-x-1 text-right justify-end">
-                          <span>Kalan: <strong className="text-blue-400">{item.progress.eta_formatted}</strong></span>
+                          <span>Kalan: <strong className="text-amber-300">{item.progress.eta_formatted}</strong></span>
                         </div>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Completed Duration Summary */}
+                  {isCompleted && (
+                    <div className="mt-3 pt-2.5 border-t border-emerald-500/20 flex items-center justify-between text-[11px] font-mono bg-emerald-950/20 px-3 py-2 rounded-lg text-emerald-400 border border-emerald-500/30">
+                      <span className="flex items-center space-x-1.5 font-bold">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                        <span>Kodlama & Upscale Tamamlandı!</span>
+                      </span>
+                      <span className="flex items-center space-x-1.5 bg-emerald-900/40 px-2 py-0.5 rounded border border-emerald-500/20">
+                        <Clock className="w-3.5 h-3.5 text-emerald-300" />
+                        <span>Toplam Süre: <strong className="text-white font-bold">{item.progress.elapsed_formatted || item.progress.time_formatted}</strong></span>
+                      </span>
                     </div>
                   )}
                 </div>
