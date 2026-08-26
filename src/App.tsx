@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { EncodingView } from './components/EncodingView';
@@ -19,6 +19,7 @@ import {
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import {
+  cancelAllJobs,
   cancelEncode,
   getHardwareProfile,
   getPresets,
@@ -33,6 +34,8 @@ import {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('home');
+  const [isBatchRunning, setIsBatchRunning] = useState<boolean>(false);
+  const [currentBatchJobId, setCurrentBatchJobId] = useState<string | null>(null);
   const [hardware, setHardware] = useState<HardwareProfile | null>(null);
   const [presets, setPresets] = useState<PresetProfile[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState<string>('anime_web_x264');
@@ -69,8 +72,9 @@ export default function App() {
     intro_video_path: null,
     model_settings: {
       upscale_enabled: false,
-      upscale_model: '2x_Adore_renarchi_fp16_DML_onnxslim',
+      upscale_model: 'Anime4K_Upscale_HD',
       backend: 'DML',
+      target_height: null,
       frame_gen_enabled: false,
       frame_gen_model: 'SVP',
       target_fps: 60,
@@ -85,6 +89,24 @@ export default function App() {
     },
     faststart: true,
   });
+  // Batch Serialization
+  const startNextInBatch = (currentQueue: QueueItem[]) => {
+    const nextItem = currentQueue.find((i) => i.status === 'waiting');
+    if (nextItem) {
+      setQueue((prev) =>
+        prev.map((i) => (i.id === nextItem.id ? { ...i, status: 'encoding' } : i))
+      );
+      setCurrentBatchJobId(nextItem.id);
+      startEncode({ ...config, id: nextItem.id, input_path: nextItem.filePath }).catch((err) => {
+        console.error('Batch job start error:', err);
+        setTimeout(() => startNextInBatch(currentQueue), 100);
+      });
+    } else {
+      setIsBatchRunning(false);
+      setCurrentBatchJobId(null);
+    }
+  };
+
 
   // Logs
   const [logs, setLogs] = useState<JobLogMessage[]>([]);
@@ -122,24 +144,27 @@ export default function App() {
     let unlistenLog: (() => void) | null = null;
 
     onEncodeProgress((progress: EncodeProgress) => {
-      setQueue((prev) =>
-        prev.map((item) => {
+      setQueue((prev) => {
+        const newQueue = prev.map((item) => {
           if (item.id === progress.job_id) {
             let status = item.status;
             if (progress.status === 'completed') status = 'completed';
             else if (progress.status === 'error') status = 'error';
+            else if (progress.status === 'cancelled') status = 'waiting';
             else if (progress.status === 'running') status = 'encoding';
             else if (progress.status === 'paused') status = 'paused';
 
-            return {
-              ...item,
-              status,
-              progress,
-            };
+            return { ...item, status, progress };
           }
           return item;
-        })
-      );
+        });
+
+        if (isBatchRunning && currentBatchJobId === progress.job_id && (progress.status === 'completed' || progress.status === 'error' || progress.status === 'cancelled')) {
+           setTimeout(() => startNextInBatch(newQueue), 100);
+        }
+        
+        return newQueue;
+      });
     }).then((un) => {
       unlistenProgress = un;
     });
@@ -167,6 +192,12 @@ export default function App() {
     };
   }, []);
 
+  // Keep a ref to the latest config for stale-closure-safe listeners (drag-drop)
+  const configRef = useRef(config);
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
+
 
   const handleAddFilePaths = async (files: string[]) => {
     try {
@@ -186,12 +217,15 @@ export default function App() {
         }
 
         const baseStem = fileName.replace(/\.[^/.]+$/, '');
-        const parentDir = file.substring(0, file.lastIndexOf(/[\\/]/.exec(file)?.[0] || '/'));
-        const sep = parentDir.includes('\\') ? '\\' : '/';
-        const defaultOut = `${parentDir}${sep}${baseStem}_FloraSubs.${config.container}`;
+        const savedOutput = localStorage.getItem('florasubs_default_output');
+        const parentDir = savedOutput
+          ? savedOutput
+          : file.substring(0, file.lastIndexOf(/[\\/]/.exec(file)?.[0] || '/'));
+        const sep = savedOutput ? '/' : (parentDir.includes('\\') ? '\\' : '/');
+        const defaultOut = `${parentDir}${sep}${baseStem}_FloraSubs.${configRef.current.container}`;
 
         const itemConfig: EncodeJobConfig = {
-          ...config,
+          ...configRef.current,
           id: itemId,
           input_path: file,
           output_path: defaultOut,
@@ -300,24 +334,8 @@ export default function App() {
       alert('Kuyrukta bekleyen dosya bulunamadı.');
       return;
     }
-
-    for (const item of waitingItems) {
-      const itemConfig: EncodeJobConfig = {
-        ...config,
-        id: item.id,
-        input_path: item.filePath,
-      };
-
-      setQueue((prev) =>
-        prev.map((i) => (i.id === item.id ? { ...i, status: 'encoding', config: itemConfig } : i))
-      );
-
-      try {
-        await startEncode(itemConfig);
-      } catch (err) {
-        console.error('Batch encode hatası:', err);
-      }
-    }
+    setIsBatchRunning(true);
+    startNextInBatch(queue);
   };
 
   // Process Controls
@@ -397,7 +415,7 @@ export default function App() {
 
   // Handle window close with confirmation if jobs are running
   useEffect(() => {
-    const handleClose = async (e: any) => {
+    const handleClose = async (e: { preventDefault(): void }) => {
       e.preventDefault();
       const runningJobs = queue.filter(
         (item) => item.status === 'encoding' || item.status === 'paused'
@@ -419,12 +437,19 @@ export default function App() {
   const activeCount = queue.filter((i) => i.status === 'encoding').length;
   const selectedItem = queue.find((i) => i.id === selectedId) || null;
 
-  const confirmClose = () => {
-    getCurrentWindow().close();
-  };
 
   const cancelClose = () => {
     setShowCloseConfirm(false);
+  };
+
+  const confirmClose = async () => {
+    try {
+      await cancelAllJobs();
+    } catch (err) {
+      console.error('İşlemler durdurulamadı:', err);
+    }
+    setShowCloseConfirm(false);
+    getCurrentWindow().close();
   };
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-gray-100 font-sans">
@@ -493,7 +518,6 @@ export default function App() {
                 selectedId={selectedId}
                 onSelect={handleSelectItem}
                 onAddFiles={handleAddFiles}
-                onAddFilePaths={handleAddFilePaths}
                 onRemoveItem={handleRemoveItem}
                 onClearQueue={handleClearQueue}
                 onStartItem={handleStartItem}

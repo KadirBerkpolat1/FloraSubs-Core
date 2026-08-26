@@ -8,7 +8,9 @@ interface SettingsViewProps {
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ hardware }) => {
-  const [defaultOutput, setDefaultOutput] = useState<string>('');
+  const [defaultOutput, setDefaultOutput] = useState<string>(
+    () => localStorage.getItem('florasubs_default_output') || ''
+  );
   const [hardwareAccel, setHardwareAccel] = useState<boolean>(true);
   const [saved, setSaved] = useState<boolean>(false);
 
@@ -16,6 +18,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ hardware }) => {
     const dir = await selectOutputDirectory();
     if (dir) {
       setDefaultOutput(dir);
+      localStorage.setItem('florasubs_default_output', dir);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     }

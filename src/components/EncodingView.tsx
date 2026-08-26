@@ -170,6 +170,27 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
   const findModel = (nameOrId: string) =>
     availableModels.find((m) => m.id === nameOrId || m.filename === nameOrId || m.name.includes(nameOrId));
 
+  const encoderOptionsWithAvailability = useMemo<EncoderOption[]>(
+    () =>
+      encoderOptions.map((e) => {
+        const supported = hardware?.supported_encoders?.find((s) => s.id === e.value);
+        const disabled = hardware ? !(supported?.is_available ?? false) : false;
+        return {
+          ...e,
+          disabled,
+          label: disabled ? `${e.label} — Kullanılamaz` : e.label,
+        };
+      }),
+    [hardware]
+  );
+
+  const activeUpscaleModel = findModel(config.model_settings.upscale_model);
+  const upscaleModeNote = activeUpscaleModel
+    ? activeUpscaleModel.format === 'glsl'
+      ? 'GPU Custom Shader (libplacebo) ile gerçek zamanlı yükseltme.'
+      : 'Deneysel ONNX modeli: FFmpeg hattı Lanczos yüksek hassasiyet ölçeklemeye düşer.'
+    : 'Lanczos yüksek hassasiyet ölçekleme uygulanır.';
+
   const handleEncoderChange = (enc: string) => {
     let preset = config.preset;
     let crf = config.crf;
@@ -193,7 +214,7 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
     if (id === '1080p') {
       setConfig((prev) => ({
         ...prev,
-        model_settings: { ...prev.model_settings, upscale_enabled: false },
+        model_settings: { ...prev.model_settings, upscale_enabled: false, target_height: null },
       }));
     } else if (id === '2K') {
       setConfig((prev) => ({
@@ -201,7 +222,8 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
         model_settings: {
           ...prev.model_settings,
           upscale_enabled: true,
-          upscale_model: '2x_Adore_renarchi_fp16_DML_onnxslim',
+          upscale_model: 'Anime4K_Upscale_HD',
+          target_height: 1440,
         },
       }));
     } else if (id === '4K') {
@@ -211,6 +233,7 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
           ...prev.model_settings,
           upscale_enabled: true,
           upscale_model: 'Anime4K_Upscale_HD',
+          target_height: 2160,
         },
       }));
     }
@@ -319,7 +342,7 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
             <EncoderSelect
               value={config.encoder}
               onChange={handleEncoderChange}
-              encoders={encoderOptions}
+              encoders={encoderOptionsWithAvailability}
               size="sm"
             />
 
@@ -554,11 +577,13 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
             {/* Resolution Pills */}
             <ResolutionPills
               options={resolutionOptions}
-              selectedId={config.model_settings.upscale_enabled
-                ? config.model_settings.upscale_model.includes('2x') || config.model_settings.upscale_model.includes('Adore')
-                  ? '2K'
-                  : '4K'
-                : '1080p'}
+              selectedId={
+                config.model_settings.upscale_enabled
+                  ? config.model_settings.target_height === 1440
+                    ? '2K'
+                    : '4K'
+                  : '1080p'
+              }
               onSelect={handleResolutionSelect}
               orientation="horizontal"
             />
@@ -577,35 +602,17 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
                 }))
               }
               options={[
-                { value: 'RealESRGANv2-animevideo-xsx2.onnx', label: 'RealESRGANv2-animevideo-xsx2.onnx (ONNX 2x)' },
-                { value: '2x_Adore_renarchi_fp16_DML_onnxslim', label: '2x_Adore_renarchi_fp16_DML_onnxslim (DirectML)' },
-                { value: 'Anime4K_Upscale_HD', label: 'Anime4K_Upscale_HD (Ultra Hafif 4K Shader)' },
+                { value: 'Anime4K_Upscale_HD', label: 'Anime4K_Upscale_HD — GPU Shader (libplacebo)' },
               ]}
               size="sm"
             />
 
-            {/* Backend Select */}
-            <Select
-              label="Backend"
-              value={config.model_settings.backend}
-              onChange={(e) =>
-                setConfig((prev) => ({
-                  ...prev,
-                  model_settings: {
-                    ...prev.model_settings,
-                    backend: e.target.value,
-                  },
-                }))
-              }
-              options={[
-                { value: 'DirectML', label: 'DirectML (DML - AMD & Intel GPU)' },
-                { value: 'CUDA', label: 'CUDA (NVIDIA Tensor Core)' },
-                { value: 'TensorRT', label: 'TensorRT (NVIDIA Ultra)' },
-                { value: 'Vulkan', label: 'Vulkan (Linux & AMD)' },
-                { value: 'CPU', label: 'CPU Standart' },
-              ]}
-              size="sm"
-            />
+            {/* Upscale mode honesty note */}
+            {config.model_settings.upscale_enabled && (
+              <p className="text-[11px] text-slate-400 font-mono bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-2">
+                ℹ {upscaleModeNote}
+              </p>
+            )}
 
             {/* Model Download Status */}
             {config.model_settings.upscale_enabled && (() => {
@@ -690,18 +697,10 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
                   }))
                 }
                 options={[
-                  { value: 'SVP', label: 'SVP (SmoothVideo Project)' },
-                  { value: 'Rife v4.10', label: 'Rife v4.10' },
-                  { value: 'Rife v4.9', label: 'Rife v4.9' },
-                  { value: 'Rife v4.8', label: 'Rife v4.8' },
-                  { value: 'Rife v4.7', label: 'Rife v4.7' },
-                  { value: 'Rife v4.6', label: 'Rife v4.6' },
-                  { value: 'Rife v4.5', label: 'Rife v4.5' },
-                  { value: 'Rife v4.4', label: 'Rife v4.4' },
-                  { value: 'Rife v4.3', label: 'Rife v4.3' },
-                  { value: 'Rife v4.2', label: 'Rife v4.2' },
-                  { value: 'Rife v4.0', label: 'Rife v4.0' },
-                  { value: 'minterpolate', label: 'minterpolate (FFmpeg Motion Comp)' },
+                  { value: 'SVP', label: 'FPS Filtresi (kare çoğaltma — interpolasyon değil)' },
+                  { value: 'minterpolate', label: 'minterpolate (FFmpeg hareket telafisi — gerçek ara kare)' },
+                  { value: 'Rife v4.10', label: 'Rife v4.10 (deneysel etiket; fps filtresi uygulanır)' },
+                  { value: 'Rife v4.6', label: 'Rife v4.6 (deneysel etiket; fps filtresi uygulanır)' },
                 ]}
                 size="sm"
               />

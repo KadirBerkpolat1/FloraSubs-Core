@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   Plus,
   Trash2,
@@ -19,7 +19,6 @@ interface FileQueueProps {
   selectedId: string | null;
   onSelect: (item: QueueItem) => void;
   onAddFiles: () => void;
-  onAddFilePaths?: (paths: string[]) => void;
   onRemoveItem: (id: string) => void;
   onClearQueue: () => void;
   onStartItem: (id: string) => void;
@@ -33,7 +32,6 @@ export const FileQueue: React.FC<FileQueueProps> = ({
   selectedId,
   onSelect,
   onAddFiles,
-  onAddFilePaths,
   onRemoveItem,
   onClearQueue,
   onStartItem,
@@ -42,36 +40,11 @@ export const FileQueue: React.FC<FileQueueProps> = ({
   onCancelItem,
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddClick = () => {
     onAddFiles();
   };
 
-  const getFilePath = (file: File): string => {
-    if (file && typeof file === 'object' && 'path' in file) {
-      const p = file.path;
-      if (typeof p === 'string' && p.trim().length > 0) {
-        return p;
-      }
-    }
-    return file.name;
-  };
-
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const paths: string[] = [];
-      for (let i = 0; i < e.target.files.length; i++) {
-        const f = e.target.files[i];
-        const rawPath = getFilePath(f);
-        if (rawPath) paths.push(rawPath);
-      }
-      if (paths.length > 0 && onAddFilePaths) {
-        onAddFilePaths(paths);
-      }
-      e.target.value = '';
-    }
-  };
 
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return '0 B';
@@ -106,14 +79,6 @@ export const FileQueue: React.FC<FileQueueProps> = ({
             </button>
           )}
 
-          <input
-            type="file"
-            ref={fileInputRef}
-            multiple
-            accept=".mkv,.mp4,.ts,.webm,.avi,.mov,.flv,.m4v,.m2ts"
-            className="hidden"
-            onChange={handleFileInputChange}
-          />
 
           <button
             onClick={handleAddClick}
@@ -133,21 +98,10 @@ export const FileQueue: React.FC<FileQueueProps> = ({
         }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={(e) => {
+          // Tauri native drag-drop (tauri://drag-drop in App) delivers real filesystem paths;
+          // HTML5 dataTransfer paths are unavailable in the webview.
           e.preventDefault();
           setIsDragOver(false);
-          if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            const paths: string[] = [];
-            for (let i = 0; i < e.dataTransfer.files.length; i++) {
-              const file = e.dataTransfer.files[i];
-              const p = getFilePath(file);
-              if (p) paths.push(p);
-            }
-            if (paths.length > 0 && onAddFilePaths) {
-              onAddFilePaths(paths);
-              return;
-            }
-          }
-          onAddFiles();
         }}
         className={`flex-1 p-6 overflow-y-auto ${
           isDragOver ? 'bg-blue-500/5 border-2 border-dashed border-blue-500/50 m-2 rounded-2xl' : ''

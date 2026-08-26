@@ -1,9 +1,9 @@
 # FloraSubs Reborn — Project State & Architectural Blueprint
 
-**Son Güncelleme:** 2026-08-25  
+**Son Güncelleme:** 2026-08-26  
 **Mimar:** Jony (Baş Yazılım Mimarı)  
 **Kullanıcı:** Berk  
-**Durum:** v1.0.0 Kararlı Sürüm Yayınlandı (Windows Port, MPV Kaldırma, Çoklu Platform GitHub Release & CI/CD)
+**Durum:** v1.1.0 Tam Doğrulandı (Tüm Pipeline, Font/Upscale/Hardsub/Pause Testleri & Windows Bundler Hazır)
 
 ---
 
@@ -35,6 +35,27 @@ v1.0.0 sürümü ile birlikte:
 ---
 
 ## 3. Doğrulama ve Test Sonuçları
-* **Rust Backend:** 16/16 birim testi eksiksiz geçti (`cargo test` $\rightarrow$ 0 hata) ✅
+* **Rust Backend:** 24/24 birim testi eksiksiz geçti (`cargo test` $\rightarrow$ 0 hata) ✅
 * **Frontend Prodüksiyon Paketi:** `bun run build` $\rightarrow$ 0 Hata (1615 modül) ✅
-* **GitHub Release v1.0.0:** `FloraSubs-v1.0.0-linux-x86_64.tar.gz` ve Windows NSIS `setup.exe` paketi hazırlandı ✅
+* **Windows Paketleyici:** `scripts/bundle-windows.sh` & `scripts/download-ffmpeg.sh` ile statik FFmpeg 7.x + NSIS Setup + Portable paketleme tam hazır ✅
+* **GitHub Release & CI/CD:** [KadirBerkpolat1/FloraSubs-Core](https://github.com/KadirBerkpolat1/FloraSubs-Core) çoklu platform GitHub Actions iş akışı bağlandı ✅
+
+## 4. v1.1 Sertleştirme (2026-08-25)
+* **Güvenlik:** Stream sunucusu UUID token + Host doğrulaması ile korundu; wildcard CORS kaldırıldı. `tauri.conf.json`'da katı CSP etkin, capability yalnız `main` penceresine daraltıldı.
+* **Süreç Yönetimi:** Pencere kapanınca tüm ffmpeg çocukları öldürülüyor (`kill_all_jobs`); iptal edilen işler artık "error" değil "cancelled" olarak raporlanıyor. Batch kodlama sıralı kuyruğa alındı.
+* **Dürüstlük:** ONNX/RIFE sahte katalog girdileri kaldırıldı; encoder listesi donanım desteğine göre devre dışı bırakılıyor. AI backend seçici (çalışmayan) arayüzden çıkarıldı.
+* **CI/CD:** Tek yayıncılı release akışı (softprops), platform-bağımsız ffmpeg indirici.
+* **Doğrulama:** cargo test 17/17 ✅ • bun run build 0 hata ✅
+
+## 5. Code Review & Canlı Düzeltmeler (2026-08-25)
+* **Önizleme CORS Kırığı (KRİTİK, düzeltildi):** `PreviewView.tsx`'teki `crossOrigin="anonymous"` + streamer'ın `Access-Control-Allow-Origin` göndermemesi → WebKit tüm video yüklemelerini reddediyordu. Attribute kaldırıldı; `onError` overlay eklendi (sessiz siyah ekran sona erdi).
+* **Windows Derleme Kırığı (düzeltildi):** `runner.rs` NtSuspend/NtResume için `Win32_System_LibraryLoader` feature'ı gerekiyordu; `Cargo.toml`'a eklendi. Öncesinde Windows hedefi derlenemiyordu.
+* **Harici Altyazı Önizleme (yeni):** Hardsub'lı çıktıda gömülü track olmaması normal; önizleme paneline `.ass/.srt/.vtt` yükleme butonu + hardsub bilgilendirmesi eklendi. `demuxer.rs`'e SRT/WebVTT parser eklendi.
+* **Kritik Düzeltmeler (tamamlandı):** (1) Sahte ONNX katalog girdileri kaldırıldı — builder yalnız GLSL çalıştırabildiğinden katalogda yalnız Anime4K_Upscale_HD kaldı; orphan `.onnx` repo'dan silindi. (2) Linux CI'a `download-ffmpeg.sh` adımı eklendi; tar.gz artık gerçek binary + `bin/` taşıyor; deb `depends: ffmpeg` kaldırıldı (statik bundle). (3) `resolve_unique_output_path` — çakışan çıktıya otomatik `_2/_3` son eki + log bildirimi (sessiz overwrite sona erdi). (4) Tek girişte ses map'i `0:a:N?` opsiyonel yapıldı (sessiz video artık job'u patlatmaz). Doğrulama: cargo test 18/18 ✅ • bun build ✅ • dev app canlı ✅.
+* **Sahte 'İşleniyor' Takılması (düzeltildi):** `start_encode` job'ı `tokio::spawn` ile fırlatılıyor, runner'daki erken hatalar (`?`) event'siz ölüyordu → UI sonsuza dek '%0.0 İşleniyor' gösteriyordu. Runner'a `emit_error` closure eklendi: probe/altyazı çıkarma/ffmpeg yok/args/spawn/pid hataları artık `encode-progress status=error` yayınlıyor.
+* **Model Seçici Senkronu (düzeltildi):** EncodingView'daki hardcoded Adore option'ı ve 2K handler'ı katalog temizliğinden kaçmıştı. Yeni `ModelSettings.target_height` alanı eklendi (2K→1440, 4K→2160); builder hedef yükseklikten `scale=-2:H` üretiyor — 2K seçimi artık gerçek 1440p (önceki iw*2 fallback 1080p kaynağı 2160p yapıyordu). PreviewView rozeti + App/Converter default'ları senkronlandı.
+* **FloraSubs Reborn Tam Hat Doğrulaması (2026-08-26):**
+  1. **Altyazı & Font Koruma:** `demuxer.rs` gömülü `.ass` ve `.ttf/.otf` font eklerini (`-dump_attachment:t ""`) izole çalışma dizinine döker; `builder.rs` `subtitles='...':fontsdir='...'` filtresini Windows ve Unix sürücü/yol kaçışları (`C\\:/...`) ile oluşturur (Arial'a düşme hatası kalıcı olarak giderildi).
+  2. **Yapay Zeka Upscale + Hardsub Sıralaması:** `scale`/`libplacebo` filtresi filtre grafiğinde birinci sıraya, `subtitles` filtresi ikinci sıraya yerleştirilerek ölçekleme sonrası altyazıların kaybolması veya pikselleşmesi engellendi.
+  3. **Windows & Linux Süreç Kontrolü:** `ProcessManager` Unix (`SIGSTOP`/`SIGCONT`) ve Windows (`NtSuspendProcess`/`NtResumeProcess`) API'leri ile aktif kodlama süreçlerini bellek sızıntısı ve CPU tüketimi olmadan duraklatır ve sürdürür.
+  4. **Doğrulama:** 24/24 Cargo testleri başarıyla geçti ✅ • Frontend Vite build 0 hata ✅.

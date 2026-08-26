@@ -29,6 +29,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
+      - name: Download Linux FFmpeg
+        run: bash scripts/download-ffmpeg.sh
       - name: Install frontend dependencies
         run: bun install
 
@@ -40,15 +42,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "FloraSubs Reborn ${{ github.ref_name }}"
-          releaseBody: "Official ${{ github.ref_name }} Multi-Platform Fansub & Encoding Station Release"
-          releaseDraft: false
-          prerelease: false
-          args: --bundles deb,appimage,nsis
+          args: --bundles deb,appimage
 
       - name: Package Linux release
-        if: always()
+        if: success()
         run: |
           cd src-tauri/target/release/bundle
           # Create tar.gz for Linux
@@ -60,7 +57,8 @@ jobs:
           fi
           # Create a combined tarball with binaries
           mkdir -p release-package
-          cp -r ../release/florasubs-core release-package/ 2>/dev/null || true
+          cp ../florasubs-core release-package/
+          cp -r ../../../bin release-package/bin
           tar -czf FloraSubs-Reborn-${{ github.ref_name }}-linux-x86_64.tar.gz -C release-package .
 
       - name: Upload Linux artifacts
@@ -94,6 +92,7 @@ jobs:
 
       - name: Download Windows FFmpeg
         run: |
+          New-Item -ItemType Directory -Force -Path "src-tauri/bin"
           $url = "https://github.com/GyanD/codexffmpeg/releases/download/7.1/ffmpeg-7.1-full_build.zip"
           $zip = "ffmpeg.zip"
           Invoke-WebRequest -Uri $url -OutFile $zip
@@ -110,15 +109,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "FloraSubs Reborn ${{ github.ref_name }}"
-          releaseBody: "Official ${{ github.ref_name }} Multi-Platform Fansub & Encoding Station Release"
-          releaseDraft: false
-          prerelease: false
           args: --bundles nsis
 
       - name: Package Windows release
-        if: always()
+        if: success()
         run: |
           cd src-tauri/target/release/bundle
           if (Test-Path "nsis") {

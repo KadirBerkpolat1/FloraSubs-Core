@@ -81,6 +81,10 @@ export async function cancelEncode(jobId: string): Promise<void> {
   return await invoke<void>('cancel_encode', { jobId });
 }
 
+export async function cancelAllJobs(): Promise<void> {
+  return await invoke<void>('cancel_all_jobs');
+}
+
 export async function hasActiveJobs(): Promise<boolean> {
   return await invoke<boolean>('has_active_jobs');
 }

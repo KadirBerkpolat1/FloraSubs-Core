@@ -9,17 +9,20 @@ pub struct ModelSettings {
     pub frame_gen_enabled: bool,
     pub frame_gen_model: String, // "SVP", "RIFE", "minterpolate"
     pub target_fps: u32,         // 24 - 255 (default 60)
+    #[serde(default)]
+    pub target_height: Option<u32>, // Hedef yükseklik (None = kaynak x2)
 }
 
 impl Default for ModelSettings {
     fn default() -> Self {
         Self {
             upscale_enabled: false,
-            upscale_model: "2x_Adore_renarchi_fp16_DML_onnxslim".to_string(),
+            upscale_model: "Anime4K_Upscale_HD".to_string(),
             backend: "DML".to_string(),
             frame_gen_enabled: false,
             frame_gen_model: "SVP".to_string(),
             target_fps: 60,
+            target_height: None,
         }
     }
 }
@@ -253,14 +256,13 @@ pub fn escape_ffmpeg_filter_path(path: &str) -> String {
 pub fn build_subtitles_filter(sub_path: &str, fonts_dir: Option<&str>) -> String {
     let escaped_sub = escape_ffmpeg_filter_path(sub_path);
     if let Some(f_dir) = fonts_dir {
-        if !f_dir.trim().is_empty() && Path::new(f_dir).exists() {
+        if !f_dir.trim().is_empty() {
             let escaped_fonts = escape_ffmpeg_filter_path(f_dir);
             return format!("subtitles='{}':fontsdir='{}'", escaped_sub, escaped_fonts);
         }
     }
     format!("subtitles='{}'", escaped_sub)
 }
-
 /// Builds the complete FFmpeg argument vector based on the configuration.
 pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String> {
     let mut args: Vec<String> = Vec::new();
@@ -305,12 +307,8 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
         if shader_path.exists() {
             let escaped_shader = escape_ffmpeg_filter_path(&shader_path.to_string_lossy());
             vf_parts.push(format!("libplacebo=custom_shader_path='{}'", escaped_shader));
-        } else if model_id.contains("4K") || model_id.contains("4x") || model_id.contains("2160") {
-            vf_parts.push("scale=3840:2160:flags=lanczos+accurate_rnd".to_string());
-        } else if model_id.contains("2K") || model_id.contains("1440") {
-            vf_parts.push("scale=2560:1440:flags=lanczos+accurate_rnd".to_string());
-        } else if model_id.contains("2x") {
-            vf_parts.push("scale=iw*2:ih*2:flags=lanczos+accurate_rnd".to_string());
+        } else if let Some(h) = config.model_settings.target_height {
+            vf_parts.push(format!("scale=-2:{}:flags=lanczos+accurate_rnd", h));
         } else {
             vf_parts.push("scale=iw*2:ih*2:flags=lanczos".to_string());
         }
@@ -427,7 +425,7 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
         args.push("0:v:0".to_string());
 
         args.push("-map".to_string());
-        args.push(format!("0:a:{}", config.audio_track_index));
+        args.push(format!("0:a:{}?", config.audio_track_index));
     }
 
     // Video Encoder Settings
@@ -650,7 +648,8 @@ mod tests {
         config.input_path = "/media/in.mkv".to_string();
         config.output_path = "/media/out.mp4".to_string();
         config.model_settings.upscale_enabled = true;
-        config.model_settings.upscale_model = "2x_Adore_renarchi_fp16_DML_onnxslim".to_string();
+        config.model_settings.upscale_model = "Anime4K_Upscale_HD".to_string();
+        config.model_settings.target_height = Some(1440);
         config.model_settings.frame_gen_enabled = true;
         config.model_settings.frame_gen_model = "SVP".to_string();
         config.model_settings.target_fps = 60;
@@ -659,7 +658,7 @@ mod tests {
         assert!(args.contains(&"-vf".to_string()));
         let vf_idx = args.iter().position(|r| r == "-vf").unwrap();
         let vf_val = &args[vf_idx + 1];
-        assert!(vf_val.contains("scale=iw*2:ih*2"));
+        assert!(vf_val.contains("scale=-2:1440"));
         assert!(vf_val.contains("fps=fps=60"));
     }
 
@@ -723,5 +722,72 @@ mod tests {
         let vf_idx = args.iter().position(|r| r == "-vf").unwrap();
         let vf_val = &args[vf_idx + 1];
         assert!(vf_val.contains("format=nv12,hwupload"));
+    }
+
+    #[test]
+    fn test_windows_path_escaping_and_fontsdir() {
+        let win_sub = r"C:\Users\Berk\AppData\Local\Temp\florasubs_job_sub.ass";
+        let win_fonts = r"C:\Users\Berk\AppData\Local\Temp\florasubs_job_fonts";
+        let filter = build_subtitles_filter(win_sub, Some(win_fonts));
+        assert_eq!(
+            filter,
+            "subtitles='C\\:/Users/Berk/AppData/Local/Temp/florasubs_job_sub.ass':fontsdir='C\\:/Users/Berk/AppData/Local/Temp/florasubs_job_fonts'"
+        );
+    }
+
+    #[test]
+    fn test_upscale_and_hardsub_pipeline_ordering() {
+        let mut config = EncodeJobConfig::default();
+        config.input_path = "/media/anime_raw.mkv".to_string();
+        config.output_path = "/media/anime_upscaled.mp4".to_string();
+        config.model_settings.upscale_enabled = true;
+        config.model_settings.target_height = Some(1440);
+        config.hardsub_enabled = true;
+        config.resolved_subtitle_path = Some("/tmp/sub.ass".to_string());
+        config.fonts_dir = Some("/tmp/fonts".to_string());
+
+        let args = build_ffmpeg_args(&config).unwrap();
+        let vf_idx = args.iter().position(|r| r == "-vf").expect("Must contain -vf");
+        let vf_str = &args[vf_idx + 1];
+
+        let scale_pos = vf_str.find("scale=-2:1440").expect("Must contain scale");
+        let sub_pos = vf_str.find("subtitles=").expect("Must contain subtitles");
+        assert!(scale_pos < sub_pos, "Scale/Upscale filter must precede subtitle burning");
+        assert!(vf_str.contains("fontsdir='/tmp/fonts'"));
+    }
+
+    #[test]
+    fn test_preset_profiles_flags_spec() {
+        let profiles = get_preset_profiles();
+        let x264_prof = profiles.iter().find(|p| p.id == "anime_web_x264").unwrap();
+        assert_eq!(x264_prof.encoder, "libx264");
+        assert_eq!(x264_prof.crf, 20);
+        assert_eq!(x264_prof.preset, "slow");
+        assert_eq!(x264_prof.pixel_format, "yuv420p");
+        assert!(x264_prof.faststart);
+
+        let av1_prof = profiles.iter().find(|p| p.id == "anime_nextgen_av1").unwrap();
+        assert_eq!(av1_prof.encoder, "libsvtav1");
+        assert_eq!(av1_prof.crf, 24);
+        assert_eq!(av1_prof.preset, "6");
+        assert_eq!(av1_prof.pixel_format, "yuv420p10le");
+        assert!(av1_prof.faststart);
+
+        let nvenc_prof = profiles.iter().find(|p| p.id == "gpu_nvidia_fast").unwrap();
+        assert_eq!(nvenc_prof.encoder, "hevc_nvenc");
+        assert_eq!(nvenc_prof.crf, 22);
+        assert_eq!(nvenc_prof.preset, "p6");
+
+        let amf_prof = profiles.iter().find(|p| p.id == "gpu_amd_fast").unwrap();
+        assert_eq!(amf_prof.encoder, "hevc_amf");
+        assert_eq!(amf_prof.crf, 22);
+        assert_eq!(amf_prof.preset, "quality");
+    }
+
+    #[test]
+    fn test_escape_special_characters() {
+        let complex_path = r"/media/Anime [2026]; Vol, 1's Special/sub:title.ass";
+        let escaped = escape_ffmpeg_filter_path(complex_path);
+        assert_eq!(escaped, r"/media/Anime \[2026\]\; Vol\, 1'\''s Special/sub\:title.ass");
     }
 }

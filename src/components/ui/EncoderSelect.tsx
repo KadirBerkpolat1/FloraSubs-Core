@@ -6,6 +6,7 @@ export interface EncoderOption {
   value: string;
   label: string;
   group: string;
+  disabled?: boolean;
 }
 
 interface EncoderSelectProps {
@@ -47,7 +48,7 @@ export const EncoderSelect: React.FC<EncoderSelectProps> = ({
             {encoders
               .filter((e) => e.group === group)
               .map((e) => (
-                <option key={e.value} value={e.value}>
+                <option key={e.value} value={e.value} disabled={e.disabled}>
                   {e.label}
                 </option>
               ))}

@@ -80,6 +80,85 @@ pub fn parse_ass_content(content: &str) -> Vec<SubtitleDialogue> {
     dialogues.sort_by(|a, b| a.start.partial_cmp(&b.start).unwrap_or(std::cmp::Ordering::Equal));
     dialogues
 }
+/// Parses SRT/WebVTT content into subtitle dialogues.
+pub fn parse_srt_content(content: &str) -> Vec<SubtitleDialogue> {
+    let time_re = regex::Regex::new(
+        r"(\d{1,2}):(\d{2}):(\d{2})[,.](\d{3})\s*-->\s*(\d{1,2}):(\d{2}):(\d{2})[,.](\d{3})",
+    )
+    .expect("srt timecode regex");
+
+    let to_secs = |h: &str, m: &str, s: &str, ms: &str| -> f64 {
+        h.parse::<f64>().unwrap_or(0.0) * 3600.0
+            + m.parse::<f64>().unwrap_or(0.0) * 60.0
+            + s.parse::<f64>().unwrap_or(0.0)
+            + format!("0.{}", ms).parse::<f64>().unwrap_or(0.0)
+    };
+
+    let mut dialogues = Vec::new();
+    let mut start = 0.0f64;
+    let mut end = 0.0f64;
+    let mut buffer: Vec<String> = Vec::new();
+
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if let Some(c) = time_re.captures(trimmed) {
+            if !buffer.is_empty() {
+                let raw_text = buffer.join("\n");
+                let text = clean_ass_text(&raw_text);
+                if !text.is_empty() && end >= start {
+                    dialogues.push(SubtitleDialogue {
+                        start,
+                        end,
+                        text,
+                        raw_text,
+                        style: "Default".to_string(),
+                    });
+                }
+                buffer.clear();
+            }
+            start = to_secs(&c[1], &c[2], &c[3], &c[4]);
+            end = to_secs(&c[5], &c[6], &c[7], &c[8]);
+        } else if trimmed.is_empty() {
+            if !buffer.is_empty() {
+                let raw_text = buffer.join("\n");
+                let text = clean_ass_text(&raw_text);
+                if !text.is_empty() && end >= start {
+                    dialogues.push(SubtitleDialogue {
+                        start,
+                        end,
+                        text,
+                        raw_text,
+                        style: "Default".to_string(),
+                    });
+                }
+                buffer.clear();
+            }
+        } else if buffer.is_empty() && trimmed.chars().all(|ch| ch.is_ascii_digit()) {
+            // SRT sequence index line — skip
+        } else if trimmed == "WEBVTT" || trimmed.starts_with("NOTE") {
+            // WebVTT header / comment — skip
+        } else {
+            buffer.push(trimmed.to_string());
+        }
+    }
+
+    if !buffer.is_empty() {
+        let raw_text = buffer.join("\n");
+        let text = clean_ass_text(&raw_text);
+        if !text.is_empty() && end >= start {
+            dialogues.push(SubtitleDialogue {
+                start,
+                end,
+                text,
+                raw_text,
+                style: "Default".to_string(),
+            });
+        }
+    }
+
+    dialogues.sort_by(|a, b| a.start.partial_cmp(&b.start).unwrap_or(std::cmp::Ordering::Equal));
+    dialogues
+}
 
 /// Extracts a specific subtitle track from an MKV/MP4 file and returns parsed dialogue cues.
 pub fn extract_and_parse_subtitles(
@@ -90,7 +169,13 @@ pub fn extract_and_parse_subtitles(
     if is_external {
         let content = std::fs::read_to_string(input_path)
             .map_err(|e| format!("Altyazı dosyası okunamadı: {}", e))?;
-        return Ok(parse_ass_content(&content));
+        return Ok(if input_path.to_lowercase().ends_with(".ass")
+            || input_path.to_lowercase().ends_with(".ssa")
+        {
+            parse_ass_content(&content)
+        } else {
+            parse_srt_content(&content)
+        });
     }
 
     let temp_sub = std::env::temp_dir().join(format!("florasubs_preview_{}.ass", subtitle_index));

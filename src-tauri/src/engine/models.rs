@@ -61,16 +61,6 @@ pub fn get_ai_models_catalog() -> Vec<AiModelInfo> {
     let mut catalog = vec![
         // Upscale Models
         AiModelInfo {
-            id: "2x_Adore_renarchi_fp16_DML_onnxslim".to_string(),
-            name: "2x Adore Renarchi FP16 (DirectML ONNX)".to_string(),
-            category: "upscale".to_string(),
-            format: "onnx".to_string(),
-            filename: "2x_Adore_renarchi_fp16_DML_onnxslim.onnx".to_string(),
-            download_url: "https://github.com/renarchi/Re-SISR/releases/download/Adore/2x_Adore_renarchi_fp16_DML_onnxslim.onnx".to_string(),
-            size_mb: 2.86,
-            is_downloaded: false,
-        },
-        AiModelInfo {
             id: "Anime4K_Upscale_HD".to_string(),
             name: "Anime4K Upscale HD (Ultra Fast Shader GLSL)".to_string(),
             category: "upscale".to_string(),
@@ -80,38 +70,7 @@ pub fn get_ai_models_catalog() -> Vec<AiModelInfo> {
             size_mb: 0.04,
             is_downloaded: false,
         },
-        AiModelInfo {
-            id: "RealESRGAN_x2plus".to_string(),
-            name: "Real-ESRGAN Anime x2 Plus (ONNX)".to_string(),
-            category: "upscale".to_string(),
-            format: "onnx".to_string(),
-            filename: "RealESRGAN_x2plus.onnx".to_string(),
-            download_url: "https://huggingface.co/Kim2091/2x-AnimeSharpV4/resolve/main/2x-AnimeSharpV4_RCAN_fp16_op17.onnx".to_string(),
-            size_mb: 31.2,
-            is_downloaded: false,
-        },
 
-        // Frame Interpolation Models
-        AiModelInfo {
-            id: "rife_v4.6".to_string(),
-            name: "RIFE v4.6 (Anime Frame Interpolation)".to_string(),
-            category: "frame_gen".to_string(),
-            format: "onnx".to_string(),
-            filename: "rife-v4.6.onnx".to_string(),
-            download_url: "https://huggingface.co/Heliosoph/realesrgan-onnx/resolve/main/realesr-general-x4v3.onnx".to_string(),
-            size_mb: 4.87,
-            is_downloaded: false,
-        },
-        AiModelInfo {
-            id: "rife_v4.10".to_string(),
-            name: "RIFE v4.10 (HD Dynamic Interpolation)".to_string(),
-            category: "frame_gen".to_string(),
-            format: "onnx".to_string(),
-            filename: "rife-v4.10.onnx".to_string(),
-            download_url: "https://github.com/renarchi/Re-SISR/releases/download/Adore/2x_Adore_renarchi_fp32_DML_onnxslim.onnx".to_string(),
-            size_mb: 5.72,
-            is_downloaded: false,
-        },
     ];
 
     for model in &mut catalog {
@@ -356,10 +315,9 @@ mod tests {
     #[test]
     fn test_models_catalog_and_lookup() {
         let catalog = get_ai_models_catalog();
-        assert!(catalog.len() >= 4);
-        assert!(catalog.iter().any(|m| m.id == "2x_Adore_renarchi_fp16_DML_onnxslim"));
+        // İşlevsiz ONNX girdileri kaldırıldı — builder yalnız GLSL shader çalıştırabilir.
+        assert!(!catalog.iter().any(|m| m.format == "onnx"));
         assert!(catalog.iter().any(|m| m.id == "Anime4K_Upscale_HD"));
-        assert!(catalog.iter().any(|m| m.category == "frame_gen"));
 
         // SVP and minterpolate should always report installed (built-in)
         assert!(is_model_installed("SVP"));

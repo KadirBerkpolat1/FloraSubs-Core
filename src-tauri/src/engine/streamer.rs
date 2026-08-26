@@ -11,6 +11,7 @@ use crate::engine::probe::normalize_file_path;
 #[derive(Debug, Clone)]
 pub struct MediaStreamerServer {
     pub port: u16,
+    pub auth_token: String,
 }
 
 impl MediaStreamerServer {
@@ -24,26 +25,32 @@ impl MediaStreamerServer {
             .local_addr()
             .map_err(|e| format!("Soket adresi alınamadı: {}", e))?;
         let port = addr.port();
+        let auth_token = uuid::Uuid::new_v4().to_string();
 
         // Spawn background connection handler loop
+        let server_token = auth_token.clone();
         tokio::spawn(async move {
             loop {
                 if let Ok((stream, client_addr)) = listener.accept().await {
+                    let conn_token = server_token.clone();
                     tokio::spawn(async move {
-                        let _ = handle_client_connection(stream, client_addr).await;
+                        let _ = handle_client_connection(stream, client_addr, conn_token).await;
                     });
                 }
             }
         });
 
-        Ok(Self { port })
+        Ok(Self { port, auth_token })
     }
 
     /// Returns the local HTTP stream URL for a given file path.
     pub fn get_stream_url(&self, file_path: &str) -> String {
         let clean = normalize_file_path(file_path);
         let encoded: String = urlencoding::encode(&clean).into_owned();
-        format!("http://127.0.0.1:{}/stream?path={}", self.port, encoded)
+        format!(
+            "http://127.0.0.1:{}/stream?path={}&token={}",
+            self.port, encoded, self.auth_token
+        )
     }
 
     /// Returns the local WebVTT subtitle stream URL for a given file and track index.
@@ -51,8 +58,8 @@ impl MediaStreamerServer {
         let clean = normalize_file_path(file_path);
         let encoded: String = urlencoding::encode(&clean).into_owned();
         format!(
-            "http://127.0.0.1:{}/subtitle?path={}&track={}",
-            self.port, encoded, track_index
+            "http://127.0.0.1:{}/subtitle?path={}&track={}&token={}",
+            self.port, encoded, track_index, self.auth_token
         )
     }
 }
@@ -60,6 +67,7 @@ impl MediaStreamerServer {
 async fn handle_client_connection(
     mut stream: TcpStream,
     _addr: SocketAddr,
+    auth_token: String,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut buffer = [0u8; 8192];
 
@@ -89,6 +97,27 @@ async fn handle_client_connection(
         let connection_close = request_str
             .lines()
             .any(|l| l.to_lowercase().starts_with("connection:") && l.to_lowercase().contains("close"));
+
+        // --- Security gate: Host validation + session token (anti-CSRF / anti-DNS-rebinding) ---
+        let host_ok = request_str
+            .lines()
+            .find(|l| l.to_lowercase().starts_with("host:"))
+            .map(|l| {
+                let v = l.split(':').nth(1).unwrap_or("").trim();
+                v.starts_with("127.0.0.1") || v.starts_with("localhost")
+            })
+            .unwrap_or(false);
+
+        let supplied_token = path_and_query
+            .split_once('?')
+            .map(|(_, q)| q)
+            .and_then(|q| q.split('&').find_map(|kv| kv.strip_prefix("token=")));
+
+        if !host_ok || supplied_token != Some(auth_token.as_str()) {
+            let resp = "HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+            let _ = stream.write_all(resp.as_bytes()).await;
+            break;
+        }
 
         if path_and_query.starts_with("/subtitle") {
             let _ = serve_webvtt_subtitle(&mut stream, path_and_query).await;
@@ -207,7 +236,6 @@ async fn serve_webvtt_subtitle(
         "HTTP/1.1 200 OK\r\n\
          Content-Type: text/vtt; charset=utf-8\r\n\
          Content-Length: {}\r\n\
-         Access-Control-Allow-Origin: *\r\n\
          Connection: close\r\n\r\n",
         vtt_bytes.len()
     );
@@ -269,7 +297,6 @@ async fn serve_file_with_range(
                     "HTTP/1.1 416 Range Not Satisfiable\r\n\
                      Content-Range: bytes */{}\r\n\
                      Content-Length: 0\r\n\
-                     Access-Control-Allow-Origin: *\r\n\
                      Connection: keep-alive\r\n\r\n",
                     total_size
                 );
@@ -285,7 +312,6 @@ async fn serve_file_with_range(
                  Content-Range: bytes {}-{}/{}\r\n\
                  Content-Length: {}\r\n\
                  Accept-Ranges: bytes\r\n\
-                 Access-Control-Allow-Origin: *\r\n\
                  Connection: keep-alive\r\n\r\n",
                 mime_type, start, end, total_size, content_len
             );
@@ -318,7 +344,6 @@ async fn serve_file_with_range(
          Content-Type: {}\r\n\
          Content-Length: {}\r\n\
          Accept-Ranges: bytes\r\n\
-         Access-Control-Allow-Origin: *\r\n\
          Connection: keep-alive\r\n\r\n",
         mime_type, total_size
     );
@@ -373,7 +398,6 @@ async fn serve_transmuxed_stream(
     let header = "HTTP/1.1 200 OK\r\n\
                   Content-Type: video/mp4\r\n\
                   Accept-Ranges: none\r\n\
-                  Access-Control-Allow-Origin: *\r\n\
                   Connection: close\r\n\r\n";
 
     stream.write_all(header.as_bytes()).await?;
@@ -466,8 +490,8 @@ mod tests {
 
         // 1. Request first range (bytes=0-99)
         let req1 = format!(
-            "GET /stream?path={} HTTP/1.1\r\nHost: 127.0.0.1\r\nRange: bytes=0-99\r\n\r\n",
-            encoded
+            "GET /stream?path={}&token={} HTTP/1.1\r\nHost: 127.0.0.1\r\nRange: bytes=0-99\r\n\r\n",
+            encoded, server.auth_token
         );
         stream.write_all(req1.as_bytes()).await.unwrap();
         let (resp1_headers, resp1_body) = read_full_http_response(&mut stream).await;
@@ -479,8 +503,8 @@ mod tests {
 
         // 2. Request second range on the SAME socket (Keep-Alive) (bytes=500-599)
         let req2 = format!(
-            "GET /stream?path={} HTTP/1.1\r\nHost: 127.0.0.1\r\nRange: bytes=500-599\r\n\r\n",
-            encoded
+            "GET /stream?path={}&token={} HTTP/1.1\r\nHost: 127.0.0.1\r\nRange: bytes=500-599\r\n\r\n",
+            encoded, server.auth_token
         );
         stream.write_all(req2.as_bytes()).await.unwrap();
         let (resp2_headers, resp2_body) = read_full_http_response(&mut stream).await;
@@ -508,8 +532,8 @@ mod tests {
         let mut stream = TcpStream::connect(format!("127.0.0.1:{}", server.port)).await.unwrap();
 
         let req = format!(
-            "GET /stream?path={} HTTP/1.1\r\nHost: 127.0.0.1\r\nRange: bytes=100-299\r\n\r\n",
-            encoded
+            "GET /stream?path={}&token={} HTTP/1.1\r\nHost: 127.0.0.1\r\nRange: bytes=100-299\r\n\r\n",
+            encoded, server.auth_token
         );
         stream.write_all(req.as_bytes()).await.unwrap();
 
@@ -521,5 +545,50 @@ mod tests {
         assert!(header_str.contains("Content-Length: 200"));
 
         let _ = std::fs::remove_file(&mkv_path);
+    }
+
+    #[tokio::test]
+    async fn test_streamer_rejects_missing_token_and_bad_host() {
+        let server = MediaStreamerServer::start().await.unwrap();
+        let temp_dir = tempfile::tempdir().unwrap();
+        let file_path = temp_dir.path().join("auth_probe.mp4");
+        {
+            let mut f = std::fs::File::create(&file_path).unwrap();
+            f.write_all(&vec![0x41u8; 500]).unwrap();
+        }
+        let encoded: String = urlencoding::encode(file_path.to_str().unwrap()).into_owned();
+
+        // 1. Missing token -> 403
+        let mut s1 = TcpStream::connect(format!("127.0.0.1:{}", server.port)).await.unwrap();
+        let req_no_token = format!(
+            "GET /stream?path={} HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n",
+            encoded
+        );
+        s1.write_all(req_no_token.as_bytes()).await.unwrap();
+        let mut buf1 = [0u8; 256];
+        let n1 = s1.read(&mut buf1).await.unwrap();
+        assert!(String::from_utf8_lossy(&buf1[..n1]).contains("403 Forbidden"));
+
+        // 2. Wrong token -> 403
+        let mut s2 = TcpStream::connect(format!("127.0.0.1:{}", server.port)).await.unwrap();
+        let req_bad_token = format!(
+            "GET /stream?path={}&token=wrong-token HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n",
+            encoded
+        );
+        s2.write_all(req_bad_token.as_bytes()).await.unwrap();
+        let mut buf2 = [0u8; 256];
+        let n2 = s2.read(&mut buf2).await.unwrap();
+        assert!(String::from_utf8_lossy(&buf2[..n2]).contains("403 Forbidden"));
+
+        // 3. Valid token but foreign Host header (DNS-rebinding) -> 403
+        let mut s3 = TcpStream::connect(format!("127.0.0.1:{}", server.port)).await.unwrap();
+        let req_bad_host = format!(
+            "GET /stream?path={}&token={} HTTP/1.1\r\nHost: evil.example.com\r\n\r\n",
+            encoded, server.auth_token
+        );
+        s3.write_all(req_bad_host.as_bytes()).await.unwrap();
+        let mut buf3 = [0u8; 256];
+        let n3 = s3.read(&mut buf3).await.unwrap();
+        assert!(String::from_utf8_lossy(&buf3[..n3]).contains("403 Forbidden"));
     }
 }

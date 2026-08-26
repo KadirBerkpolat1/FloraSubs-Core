@@ -98,6 +98,7 @@ export interface ModelSettings {
   frame_gen_enabled: boolean;
   frame_gen_model: string;
   target_fps: number;
+  target_height: number | null;
 }
 
 export interface FilterSettings {

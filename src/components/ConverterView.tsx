@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { RefreshCw, FileVideo, Zap, Folder, CheckCircle2 } from 'lucide-react';
 import { selectMediaFile, selectOutputDirectory, startEncode } from '../services/tauri';
 import { EncodeJobConfig } from '../types';
@@ -9,7 +9,6 @@ export const ConverterView: React.FC = () => {
   const [outputFolder, setOutputFolder] = useState<string | null>(null);
   const [isRemuxing, setIsRemuxing] = useState<boolean>(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSelectSource = async () => {
     const file = await selectMediaFile();
@@ -19,19 +18,6 @@ export const ConverterView: React.FC = () => {
     }
   };
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const f = e.target.files[0];
-      const p = (f && typeof f === 'object' && 'path' in f && typeof f.path === 'string')
-        ? f.path
-        : f.name;
-      if (p) {
-        setSourceFile(p);
-        setSuccessMsg(null);
-      }
-      e.target.value = '';
-    }
-  };
   const handleSelectOutput = async () => {
     const dir = await selectOutputDirectory();
     if (dir) setOutputFolder(dir);
@@ -81,6 +67,7 @@ export const ConverterView: React.FC = () => {
           upscale_enabled: false,
           upscale_model: '',
           backend: 'CPU',
+          target_height: null,
           frame_gen_enabled: false,
           frame_gen_model: '',
           target_fps: 60,
@@ -131,13 +118,6 @@ export const ConverterView: React.FC = () => {
               readOnly
               value={sourceFile || 'Lütfen video dosyası seçin (.mkv, .mp4, .ts, .webm)'}
               className="flex-1 bg-[#1f2433] text-gray-300 text-xs rounded-lg border border-[#2e364a] px-3 py-2 font-mono truncate"
-            />
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept=".mkv,.mp4,.ts,.webm,.avi,.mov,.flv,.m4v,.m2ts"
-              className="hidden"
-              onChange={handleFileInputChange}
             />
             <button
               onClick={handleSelectSource}

@@ -21,6 +21,7 @@ import { EncodeJobConfig, QueueItem, SubtitleDialogue } from '../types';
 import {
   getPreviewSubtitles,
   getVideoStreamUrl,
+  selectSubtitleFile,
 } from '../services/tauri';
 
 interface PreviewViewProps {
@@ -48,6 +49,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
   const [subtitleDialogues, setSubtitleDialogues] = useState<SubtitleDialogue[]>([]);
   const [activeSubTrack, setActiveSubTrack] = useState<string>('0');
   const [currentCueText, setCurrentCueText] = useState<string | null>(null);
+  const [previewExternalSubPath, setPreviewExternalSubPath] = useState<string | null>(null);
   const [loadingSubs, setLoadingSubs] = useState<boolean>(false);
 
   const meta = selectedItem?.metadata;
@@ -92,7 +94,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
     const subIdx = isExternal ? 0 : parseInt(activeSubTrack, 10) || 0;
     const targetFile =
       isExternal && previewSource === 'main'
-        ? config.external_subtitle_path || activeFilePath
+        ? previewExternalSubPath || config.external_subtitle_path || activeFilePath
         : activeFilePath;
 
     getPreviewSubtitles(targetFile, subIdx, isExternal)
@@ -111,8 +113,17 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
     activeFilePath,
     activeSubTrack,
     config.external_subtitle_path,
+    previewExternalSubPath,
     previewSource,
   ]);
+
+  const handleLoadExternalSub = async () => {
+    const subPath = await selectSubtitleFile();
+    if (subPath) {
+      setPreviewExternalSubPath(subPath);
+      setActiveSubTrack('external');
+    }
+  };
   const togglePlay = () => {
     const v = videoRef.current;
     if (!v) return;
@@ -400,7 +411,6 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
               <video
                 ref={videoRef}
                 src={streamUrl || (activeFilePath ? convertFileSrc(activeFilePath) : '')}
-                crossOrigin="anonymous"
                 onPlay={() => setIsPlaying(true)}
                 onPlaying={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
@@ -408,9 +418,20 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
                 onClick={togglePlay}
+                onError={() => {
+                  setIsPlaying(false);
+                  setVideoError('Video yüklenemedi: codec desteklenmiyor veya dosya okunamıyor.');
+                }}
                 className="w-full h-full object-contain cursor-pointer"
               />
 
+              {/* Playback Error Overlay */}
+              {videoError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0c10]/95 z-30 pointer-events-none">
+                  <p className="text-red-400 text-sm font-bold font-mono">{videoError}</p>
+                  <p className="text-gray-500 text-[10px] font-mono mt-1 truncate max-w-[80%]">{activeFilePath}</p>
+                </div>
+              )}
               {/* REAL-TIME SYNCHRONIZED ANIME SUBTITLE OVERLAY (LIKE MPV / LIBASS) */}
               {currentCueText && activeSubTrack !== 'none' && (
                 <div className="absolute bottom-16 inset-x-6 text-center pointer-events-none z-20 flex justify-center">
@@ -440,7 +461,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
                 )}
                 {config.model_settings.upscale_enabled && (
                   <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-mono border border-indigo-500/30 backdrop-blur-sm">
-                    {config.model_settings.upscale_model.includes('4K') ? '4K UHD' : '2K / 2x AI'}
+                    {config.model_settings.target_height === 2160 ? '4K UHD' : config.model_settings.target_height === 1440 ? '2K QHD' : '2x AI'}
                   </span>
                 )}
                 {config.model_settings.frame_gen_enabled && (
@@ -551,8 +572,10 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
                         ) : (
                           <option value="0" className="bg-[#141824] text-white">Gömülü Track #1</option>
                         )}
-                        {config.external_subtitle_path && (
-                          <option value="external" className="bg-[#141824] text-white">Harici (.ass)</option>
+                        {(previewExternalSubPath || config.external_subtitle_path) && (
+                          <option value="external" className="bg-[#141824] text-white">
+                            Harici: {(previewExternalSubPath || config.external_subtitle_path || '').split(/[\\/]/).pop()}
+                          </option>
                         )}
                         <option value="none" className="bg-[#141824] text-white">Kapalı</option>
                       </select>
@@ -643,9 +666,17 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
                   <Eye className="w-4 h-4 text-purple-400" />
                   <span>Gömülü Altyazılar ({meta?.subtitle_streams.length || 0})</span>
                 </h3>
-                <span className="text-[10px] text-purple-400 font-mono">
-                  {subtitleDialogues.length} Diyalog
-                </span>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={handleLoadExternalSub}
+                    className="px-2 py-1 rounded bg-purple-600/20 border border-purple-500/40 text-purple-300 text-[10px] font-mono hover:bg-purple-600/30 transition"
+                  >
+                    .ass/.srt Yükle
+                  </button>
+                  <span className="text-[10px] text-purple-400 font-mono">
+                    {subtitleDialogues.length} Diyalog
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-2 max-h-52 overflow-y-auto">
@@ -676,7 +707,12 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
                     </div>
                   ))
                 ) : (
-                  <p className="text-xs text-gray-500 italic">Gömülü altyazı akışı bulunamadı.</p>
+                  <div className="text-xs text-gray-500 italic space-y-1.5">
+                    <p>Gömülü altyazı akışı bulunamadı.</p>
+                    <p className="text-gray-600 not-italic">
+                      Hardsub'lı çıktıda altyazılar görüntüye işlenmiştir (normal). Kaynak .ass dosyasını yukarıdaki butonla yükleyerek canlı takip edebilirsin.
+                    </p>
+                  </div>
                 )}
               </div>
             </div>

@@ -235,3 +235,8 @@ pub async fn has_active_jobs(
 ) -> Result<bool, String> {
     Ok(state.has_active_jobs().await)
 }
+
+#[tauri::command]
+pub async fn cancel_all_jobs(state: State<'_, Arc<ProcessManager>>) -> Result<(), String> {
+    state.kill_all_jobs().await
+}
