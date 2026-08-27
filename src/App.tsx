@@ -30,6 +30,7 @@ import {
   resumeEncode,
   selectMultipleMediaFiles,
   startEncode,
+  isTauri,
 } from './services/tauri';
 
 export default function App() {
@@ -174,16 +175,23 @@ export default function App() {
     }).then((un) => {
       unlistenLog = un;
     });
-
     // Native Tauri Drag and Drop Event Listener
     let unlistenDragDrop: (() => void) | null = null;
-    listen<{ paths: string[] }>('tauri://drag-drop', async (event) => {
-      if (event.payload && event.payload.paths && event.payload.paths.length > 0) {
-        await handleAddFilePaths(event.payload.paths);
-      }
-    }).then((un) => {
-      unlistenDragDrop = un;
-    });
+    if (isTauri()) {
+      listen<{ paths: string[] }>('tauri://drag-drop', async (event) => {
+        if (event.payload && event.payload.paths && event.payload.paths.length > 0) {
+          await handleAddFilePaths(event.payload.paths);
+        }
+      }).then((un) => {
+        unlistenDragDrop = un;
+      });
+    } else {
+      // In browser preview mode, preload the sample anime files
+      handleAddFilePaths([
+        '/home/sevelebeci/İndirilenler/[Judas] Initial D (Complete Series + Movies) [BD 1080p][HEVC x265 10bit][Dual-Audio][Eng-Subs]/[Judas] 01 - Initial D First Stage/[Judas] Initial D - S01E04.mkv',
+        '/home/sevelebeci/İndirilenler/annen.mp4',
+      ]);
+    }
 
     return () => {
       if (unlistenProgress) unlistenProgress();
@@ -417,6 +425,8 @@ export default function App() {
 
   // Handle window close with confirmation if jobs are running
   useEffect(() => {
+    if (!isTauri()) return;
+
     const handleClose = async (e: { preventDefault(): void }) => {
       e.preventDefault();
       const runningJobs = queue.filter(
@@ -430,7 +440,11 @@ export default function App() {
     };
 
     let unlisten: (() => void) | null = null;
-    getCurrentWindow().onCloseRequested(handleClose).then((fn) => { unlisten = fn; });
+    try {
+      getCurrentWindow().onCloseRequested(handleClose).then((fn) => { unlisten = fn; });
+    } catch {
+      // Browser preview mode
+    }
     return () => {
       if (unlisten) unlisten();
     };

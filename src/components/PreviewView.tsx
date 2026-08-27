@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { convertFileSrc } from '@tauri-apps/api/core';
 import {
   Play,
   Pause,
@@ -19,6 +18,7 @@ import {
 } from 'lucide-react';
 import { EncodeJobConfig, QueueItem, SubtitleDialogue } from '../types';
 import {
+  convertMediaSrc,
   getPreviewSubtitles,
   getVideoStreamUrl,
   selectSubtitleFile,
@@ -76,7 +76,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
         .then((url) => setStreamUrl(url))
         .catch((err) => {
           console.warn('Stream URL hatası:', err);
-          setStreamUrl(convertFileSrc(activeFilePath));
+          setStreamUrl(convertMediaSrc(activeFilePath));
         });
     }
   }, [selectedItem?.id, activeFilePath, previewSource, meta?.duration_secs]);
@@ -410,7 +410,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
               {/* HTML5 Video Surface */}
               <video
                 ref={videoRef}
-                src={streamUrl || (activeFilePath ? convertFileSrc(activeFilePath) : '')}
+                src={streamUrl || (activeFilePath ? convertMediaSrc(activeFilePath) : '')}
                 onPlay={() => setIsPlaying(true)}
                 onPlaying={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
