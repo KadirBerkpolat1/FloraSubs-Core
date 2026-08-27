@@ -75,14 +75,12 @@ v1.0.0 sürümü ile birlikte:
   - Model seçimi ile 2K (1440p) / 4K (2160p) çözünürlük hapları otomatik senkronize edildi.
 * **Doğrulama:** 26/26 Cargo testleri başarıyla geçti ✅ • Frontend Vite build 0 hata ✅ • GitHub Release v1.2.0 yayınlandı ✅.
 
-## 7. v2.0 — Endüstriyel Kurgu Stüdyosu UI & 3-Bölmeli Çalışma İstasyonu (2026-08-27)
-* **Görsel Tema & Palet Refaktörü:**
-  - Jet Black (`#070A0F`) ve Obsidyen (`#0E131F`, `#141B2D`) zemin tonları üzerine Sıcak Kehribar (`#F59E0B`), Elektrik Turuncu (`#FB923C`) ve Stüdyo Camgöbeği (`#06B6D4`) renk sistemi entegre edildi.
-  - Tonal cam katmanları (`backdrop-filter: blur(12px)`), 1px zarif kenarlıklar ve `transition: 150ms` mikro-etkileşim standartları getirildi.
-* **3-Bölmeli Entegre Çalışma İstasyonu (Multi-Pane Studio Layout):**
-  - **Sol Panel (`320px`):** `FileQueue` — Video sürükle-bırak, toplu dosya seçimi, canlı ETA/FPS istatistikleri ve parça yönetim dock'u.
-  - **Merkez Panel (Esnek / Fluid):** `PreviewView` — Canlı HTTP 206 video oynatıcı, mikrosaniye hassasiyetinde ASS/SRT altyazı senkronizasyonu ve klavye HUD kısayol göstergeleri.
-  - **Sağ Panel (`380px`):** `EncodingView` — GPU donanım kodlayıcı seçimi (AMF/NVENC/QSV/CPU), 2K/4K Lanczos ölçekleme hapları, CRF slider ve 1-tıkla kodlama başlatma denetçisi.
-* **Bileşen Kütüphanesi Yenilenmesi:**
-  - `Button`, `Badge`, `ProgressBar`, `ResolutionPills`, `EncoderSelect`, `Card`, `Header`, `Sidebar` bileşenleri yeni renk token'larına ve industrial sınıflara dönüştürüldü.
-* **Doğrulama:** 27/27 Cargo testleri başarıyla geçti ✅ • Frontend Vite build 0 hata (1615 modül 1.54s) ✅.
+## 7. v2.0 — Monochrome Pro Studio UI & 3-Bölmeli Ferah Çalışma İstasyonu (2026-08-27)
+* **Siyah-Beyaz (Monochrome) Minimalist Dönüşüm:**
+  - Dikkat dağıtan sarı/turuncu neon renkler kaldırılarak saf siyah (`#000000`), mat kömür (`#0A0A0A`, `#121212`, `#181818`) ve saf beyaz (`#FFFFFF`) tipografi/vurgu sistemine geçildi.
+  - Sol alttaki gereksiz `TELEMETRY` (GPU, Encoder, FFmpeg) kutusu tamamen temizlendi; sidebar ferahlatıldı (`200px`).
+* **3-Bölmeli Entegre & Ferah Düzen (Multi-Pane Layout):**
+  - **Sol Dock (`280px`):** `FileQueue` — Video sürükle-bırak, kuyruk listesi, beyaz `Dosya Ekle` butonu.
+  - **Merkez Monitör (Esnek / Fluid):** `PreviewView` — Canlı HTTP 206 video monitörü, mikrosaniye ASS/SRT altyazı katmanı, geniş video yüzeyi.
+  - **Sağ Denetçi (`360px`):** `EncodingView` — Sub-tab geçişli (Format & Encoder $\leftrightarrow$ AI & Filtreler) ferah denetçi paneli; metin ve dropdown kırpılmaları tamamen giderildi.
+* **Doğrulama:** 27/27 Cargo testleri başarıyla geçti ✅ • Frontend Vite build 0 hata (1615 modül 1.38s) ✅.

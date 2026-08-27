@@ -57,33 +57,33 @@ export const FileQueue: React.FC<FileQueueProps> = ({
   return (
     <div className="flex-1 bg-surface-container-low flex flex-col h-full overflow-hidden select-none">
       {/* Header */}
-      <div className="h-14 px-6 border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
-        <div className="flex items-center space-x-3">
-          <Film className="w-4 h-4 text-primary" />
-          <h2 className="text-xs font-bold text-on-surface uppercase tracking-wider font-display">
-            MKV / MP4 Dosyaları
+      <div className="h-11 px-4 border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
+        <div className="flex items-center space-x-2">
+          <Film className="w-3.5 h-3.5 text-white" />
+          <h2 className="text-xs font-bold text-white uppercase tracking-wider font-display">
+            Dosya Kuyruğu
           </h2>
-          <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-xs font-mono font-semibold border border-primary/30">
+          <span className="px-1.5 py-0.2 rounded bg-white/10 text-white text-[10px] font-mono font-semibold border border-white/20">
             {queue.length}
           </span>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5">
           {queue.length > 0 && (
             <button
               onClick={onClearQueue}
-              className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface-variant text-xs transition border border-outline-variant"
+              className="flex items-center space-x-1 px-2 py-1 rounded-md bg-surface-container-high hover:bg-surface-bright text-neutral-400 hover:text-white text-xs transition border border-outline-variant"
               title="Kuyruğu Temizle"
             >
-              <Trash2 className="w-3.5 h-3.5 text-danger" />
+              <Trash2 className="w-3 h-3 text-red-400" />
               <span>Temizle</span>
             </button>
           )}
 
           <button
             onClick={handleAddClick}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-surface-container-lowest text-xs font-bold shadow-md shadow-primary/20 transition cursor-pointer"
+            className="flex items-center space-x-1 px-2.5 py-1 rounded-md bg-white hover:bg-neutral-200 text-black text-xs font-bold shadow-sm transition cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             <span>Dosya Ekle</span>
           </button>
         </div>

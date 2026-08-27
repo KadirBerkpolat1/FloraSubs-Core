@@ -521,7 +521,7 @@ export default function App() {
           {activeTab === 'home' && (
             <div className="flex-1 flex h-full overflow-hidden">
               {/* Left Dock: Ingestion Queue */}
-              <div className="w-[320px] flex-shrink-0 h-full border-r border-outline-variant flex flex-col bg-surface-container-low">
+              <div className="w-[280px] flex-shrink-0 h-full border-r border-outline-variant flex flex-col bg-surface-container-low">
                 <FileQueue
                   queue={queue}
                   selectedId={selectedId}
@@ -542,7 +542,7 @@ export default function App() {
               </div>
 
               {/* Right Inspector: Encoding & GPU Studio Controls */}
-              <div className="w-[380px] flex-shrink-0 h-full border-l border-outline-variant bg-surface-container-low overflow-y-auto">
+              <div className="w-[360px] flex-shrink-0 h-full border-l border-outline-variant bg-surface-container-low overflow-y-auto">
                 <EncodingView
                   config={config}
                   setConfig={setConfig}

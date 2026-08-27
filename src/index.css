@@ -17,70 +17,70 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #070a0f;
+  background: #000000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #25314c;
+  background: #262626;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #f59e0b;
+  background: #ffffff;
 }
 
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #25314c #070a0f;
+  scrollbar-color: #262626 #000000;
 }
 
 /* ==========================================================================
-   Glassmorphism & Industrial Panels
+   Glassmorphism & Monochrome Panels
    ========================================================================== */
 .glass-panel {
-  background: rgba(14, 19, 31, 0.85);
+  background: rgba(18, 18, 18, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .glass-panel-elevated {
-  background: rgba(20, 27, 45, 0.9);
+  background: rgba(24, 24, 24, 0.95);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .glass-modal {
-  background: rgba(14, 19, 31, 0.95);
+  background: rgba(14, 14, 14, 0.98);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 /* ==========================================================================
-   Etched Input Style (Industrial Workstation)
+   Etched Input Style (Monochrome Pro)
    ========================================================================== */
 .etched-input {
-  background: #1a233a;
-  border: 1px solid #25314c;
-  color: #f8fafc;
+  background: #141414;
+  border: 1px solid #262626;
+  color: #ffffff;
 }
 
 .etched-input:focus {
-  border-color: #f59e0b;
-  box-shadow: 0 0 0 1px #f59e0b;
+  border-color: #ffffff;
+  box-shadow: 0 0 0 1px #ffffff;
   outline: none;
 }
 
 .etched-input::placeholder {
-  color: #64748b;
+  color: #737373;
 }
 
 /* Disabled state */
 .etched-input:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
@@ -107,40 +107,32 @@
 /* Button base */
 .btn-base {
   @apply inline-flex items-center justify-center font-display font-semibold rounded-lg transition-all duration-150
-         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface
-         disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98];
+         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black
+         disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.98];
 }
 
 .btn-primary {
-  @apply btn-base bg-primary text-surface-container-lowest font-bold hover:bg-primary-container active:bg-amber-700 shadow-md shadow-primary/20;
+  @apply btn-base bg-white text-black font-bold hover:bg-neutral-200 active:bg-neutral-300 shadow-md shadow-white/10;
 }
 
 .btn-secondary {
-  @apply btn-base bg-surface-container-high text-on-surface border border-outline-variant hover:bg-surface-bright hover:border-primary/40;
+  @apply btn-base bg-surface-container text-white border border-outline-variant hover:bg-surface-bright hover:border-white/30;
 }
 
 .btn-ghost {
-  @apply btn-base bg-transparent text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high;
+  @apply btn-base bg-transparent text-on-surface-variant hover:text-white hover:bg-surface-container-high;
 }
 
 .btn-outline {
-  @apply btn-base bg-transparent border border-outline-variant text-on-surface hover:border-primary hover:text-primary;
+  @apply btn-base bg-transparent border border-outline-variant text-white hover:border-white hover:bg-white/5;
 }
 
 .btn-danger {
-  @apply btn-base bg-danger text-white hover:bg-rose-600 active:bg-rose-800 shadow-md shadow-danger/20;
+  @apply btn-base bg-danger text-white hover:bg-red-600 active:bg-red-700 shadow-md shadow-danger/20;
 }
 
 .btn-success {
-  @apply btn-base bg-success text-surface-container-lowest font-bold hover:bg-emerald-600 active:bg-emerald-800 shadow-md shadow-success/20;
-}
-
-.btn-cyan {
-  @apply btn-base bg-secondary text-surface-container-lowest font-bold hover:bg-cyan-dark shadow-md shadow-secondary/20;
-}
-
-.btn-ai {
-  @apply btn-base bg-ai-purple text-white hover:bg-purple-600 active:bg-purple-800 shadow-md shadow-ai-purple/20;
+  @apply btn-base bg-success text-white font-bold hover:bg-emerald-600 active:bg-emerald-700 shadow-md shadow-success/20;
 }
 
 /* Card styles */
@@ -153,57 +145,54 @@
 }
 
 .card-interactive {
-  @apply card-base hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 cursor-pointer;
+  @apply card-base hover:border-white/30 hover:shadow-lg hover:shadow-white/5 transition-all duration-200 cursor-pointer;
 }
 
 /* Badge styles */
 .badge-base {
-  @apply inline-flex items-center font-mono font-semibold text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-full;
+  @apply inline-flex items-center font-mono font-semibold text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-md;
 }
 
-.badge-primary { @apply badge-base bg-primary/15 text-primary border border-primary/30; }
-.badge-success { @apply badge-base bg-emerald-500/15 text-emerald-400 border border-emerald-500/30; }
-.badge-warning { @apply badge-base bg-amber-500/15 text-amber-400 border border-amber-500/30; }
-.badge-error { @apply badge-base bg-danger/15 text-danger border border-danger/30; }
-.badge-processing { @apply badge-base bg-primary/20 text-primary border border-primary/40 animate-pulse; }
-.badge-cyan { @apply badge-base bg-secondary/15 text-secondary border border-secondary/30; }
-.badge-default { @apply badge-base bg-surface-container-highest/50 text-on-surface-variant border border-outline-variant/30; }
+.badge-primary { @apply badge-base bg-white/10 text-white border border-white/20; }
+.badge-success { @apply badge-base bg-emerald-500/10 text-emerald-400 border border-emerald-500/20; }
+.badge-warning { @apply badge-base bg-amber-500/10 text-amber-400 border border-amber-500/20; }
+.badge-error { @apply badge-base bg-danger/10 text-danger border border-danger/20; }
+.badge-processing { @apply badge-base bg-white/20 text-white border border-white/40 animate-pulse; }
+.badge-default { @apply badge-base bg-surface-container-highest text-on-surface-variant border border-outline-variant; }
 
 /* Progress bar */
 .progress-base {
-  @apply w-full rounded-full overflow-hidden bg-surface-container-lowest relative;
+  @apply w-full rounded-full overflow-hidden bg-surface-container-high relative;
 }
 
 .progress-sm { @apply h-1; }
 .progress-md { @apply h-2; }
 .progress-lg { @apply h-2.5; }
 
-.progress-fill-primary { @apply bg-gradient-to-r from-primary to-orange; }
-.progress-fill-cyan { @apply bg-secondary; }
-.progress-fill-ai { @apply bg-ai-purple; }
+.progress-fill-primary { @apply bg-white; }
 .progress-fill-success { @apply bg-success; }
 .progress-fill-warning { @apply bg-warning; }
 .progress-fill-error { @apply bg-danger; }
 
 /* Radio pill cards (for resolution/FPS/Encoder selection) */
 .radio-pill {
-  @apply border border-outline-variant rounded-xl text-left transition-all duration-150
-         hover:bg-surface-container-high hover:border-primary/40 cursor-pointer;
+  @apply border border-outline-variant rounded-lg text-left transition-all duration-150
+         hover:bg-surface-container-high hover:border-white/30 cursor-pointer bg-surface-container/60;
 }
 
 .radio-pill-active {
-  @apply border-primary bg-primary/10 shadow-md shadow-primary/10 text-primary;
+  @apply border-white bg-white/10 shadow-md shadow-white/5 text-white font-semibold;
 }
 
 /* Drop zone */
 .drop-zone {
-  @apply border-2 border-dashed border-outline-variant/50 rounded-xl
-         hover:border-primary hover:bg-primary/5
+  @apply border-2 border-dashed border-outline-variant rounded-xl
+         hover:border-white hover:bg-white/5
          transition-all duration-200 flex flex-col items-center justify-center;
 }
 
 .drop-zone-active {
-  @apply border-primary bg-primary/10;
+  @apply border-white bg-white/10;
 }
 
 /* Bento grid card */
@@ -217,7 +206,7 @@
 
 /* Focus visible utility */
 .focus-ring {
-  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black;
 }
 
 /* Status dots */
@@ -228,8 +217,8 @@
 .status-dot-success { @apply status-dot bg-emerald-400; }
 .status-dot-warning { @apply status-dot bg-amber-400; }
 .status-dot-error { @apply status-dot bg-danger; }
-.status-dot-processing { @apply status-dot bg-primary animate-pulse; }
-.status-dot-info { @apply status-dot bg-primary; }
+.status-dot-processing { @apply status-dot bg-white animate-pulse; }
+.status-dot-info { @apply status-dot bg-white; }
 .terminal-bg {
   background: #020617;
 }
