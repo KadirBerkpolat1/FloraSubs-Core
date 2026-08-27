@@ -28,14 +28,14 @@ export const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
   ) => {
     const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
 
-    const baseStyles = 'w-full rounded-full overflow-hidden bg-[#334155] relative';
+    const baseStyles = 'w-full rounded-full overflow-hidden bg-surface-container-lowest relative border border-outline-variant/20';
 
     const variants = {
-      primary: 'bg-brand',
+      primary: 'bg-gradient-to-r from-primary to-orange',
       success: 'bg-success',
       warning: 'bg-warning',
       error: 'bg-danger',
-      ai: 'bg-ai-purple',
+      ai: 'bg-secondary',
     };
 
     const sizes = {

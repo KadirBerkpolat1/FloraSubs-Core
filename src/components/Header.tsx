@@ -28,13 +28,13 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="h-[48px] bg-surface-dim border-b border-outline-variant px-6 flex items-center justify-between select-none">
+    <header className="h-[48px] bg-surface-container-low border-b border-outline-variant px-6 flex items-center justify-between select-none">
       <div className="flex items-center space-x-3">
-        <span className="text-xs font-semibold text-on-surface tracking-wide uppercase font-display">
+        <span className="text-xs font-bold text-on-surface tracking-wider uppercase font-display">
           Fansub & Anime Encoding Studio
         </span>
         {activeCount > 0 && (
-          <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-primary-container/20 border border-primary/30 text-primary text-xs font-mono-technical">
+          <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-mono-technical animate-pulse">
             <Activity className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
             <span>{activeCount} İşlem Aktif</span>
           </div>
@@ -43,17 +43,17 @@ export const Header: React.FC<HeaderProps> = ({
 
       <div className="flex items-center space-x-3">
         <div className="flex items-center space-x-2 text-xs text-on-surface-variant">
-          <Layers className="w-3.5 h-3.5 text-brand" aria-hidden="true" />
+          <Layers className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
           <span className="font-medium text-on-surface">Ön Ayar:</span>
         </div>
 
         <select
           value={selectedPresetId}
           onChange={handleChange}
-          className="etched-input w-56 h-9 px-4 text-sm font-body"
+          className="etched-input w-56 h-9 px-4 text-sm font-body rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"
         >
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
+            <option key={opt.value} value={opt.value} className="bg-surface-container text-on-surface">
               {opt.label}
             </option>
           ))}
@@ -62,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="h-4 w-px bg-outline-variant" aria-hidden="true" />
 
         <div className="text-xs text-on-surface-variant font-mono-technical">
-          Kuyruk: <span className="text-on-surface font-bold">{totalQueue}</span> dosya
+          Kuyruk: <span className="text-primary font-bold">{totalQueue}</span> dosya
         </div>
       </div>
     </header>

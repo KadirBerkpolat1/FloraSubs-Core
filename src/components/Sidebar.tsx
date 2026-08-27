@@ -37,19 +37,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const recommendedEnc = hardware?.recommended_encoder || 'libx264';
 
   return (
-    <aside className="w-[260px] bg-surface-container border-r border-outline-variant flex flex-col justify-between select-none">
+    <aside className="w-[260px] bg-surface-container-low border-r border-outline-variant flex flex-col justify-between select-none">
       <div>
         {/* Branding Header */}
         <div className="h-[48px] px-4 flex items-center space-x-3 border-b border-outline-variant">
-          <div className="p-2 rounded-xl bg-brand/20 text-brand border border-brand/30">
+          <div className="p-2 rounded-xl bg-primary/15 text-primary border border-primary/30">
             <Film className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-bold text-on-surface truncate uppercase tracking-wide font-display">
+            <h1 className="text-sm font-bold text-on-surface truncate uppercase tracking-wider font-display">
               FloraSubs
             </h1>
-            <p className="text-[10px] text-on-surface-variant truncate">
-              V2.4.0-STABLE
+            <p className="text-[10px] text-primary font-mono-technical font-semibold truncate">
+              v2.0-INDUSTRIAL
             </p>
           </div>
         </div>
@@ -62,11 +62,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => setActiveTab(id)}
               aria-current={activeTab === id ? 'page' : undefined}
               className={`
-                w-full flex items-center gap-3 px-3 py-2.5 rounded-r-none
-                font-body text-body-md transition-all duration-150
+                w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+                font-body text-body-md transition-all duration-150 text-left
                 ${activeTab === id
-                  ? 'bg-surface-variant/40 text-on-surface border-l-3 border-brand'
-                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40'
+                  ? 'bg-surface-container text-primary border-l-4 border-primary font-semibold shadow-inner'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
                 }
               `}
             >
@@ -78,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Hardware / Engine Status Card */}
-      <div className="p-3 border-t border-outline-variant bg-surface-dim/50 space-y-2">
+      <div className="p-3 border-t border-outline-variant bg-surface-container-lowest/60 space-y-2">
         <div className="flex items-center justify-between text-label-caps text-on-surface-variant">
           <span>TELEMETRY</span>
           <Badge variant="success" size="sm" dot>
@@ -86,10 +86,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </Badge>
         </div>
 
-        <Card variant="default" padding="sm" className="space-y-2">
+        <Card variant="default" padding="sm" className="space-y-2 border-outline-variant/30 bg-surface-container/60">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <Cpu className="w-3.5 h-3.5 text-brand" />
+              <Cpu className="w-3.5 h-3.5 text-primary" />
               <span className="text-on-surface-variant">GPU</span>
             </div>
             <span className="font-mono-technical font-bold text-on-surface truncate max-w-[140px]">
@@ -99,7 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <Zap className="w-3.5 h-3.5 text-success" />
+              <Zap className="w-3.5 h-3.5 text-emerald-400" />
               <span className="text-on-surface-variant">Encoder</span>
             </div>
             <span className="font-mono-technical font-bold text-emerald-400">
@@ -109,11 +109,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-ai-purple" />
+              <Sparkles className="w-3.5 h-3.5 text-secondary" />
               <span className="text-on-surface-variant">FFmpeg</span>
             </div>
-            <span className="font-mono-technical font-bold text-brand">
-              n9.0.1
+            <span className="font-mono-technical font-bold text-primary">
+              7.1 Static
             </span>
           </div>
         </Card>

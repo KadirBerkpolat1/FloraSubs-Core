@@ -2,7 +2,7 @@ import React from 'react';
 import { twMerge } from 'tailwind-merge';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'default' | 'primary' | 'success' | 'warning' | 'error' | 'processing';
+  variant?: 'default' | 'primary' | 'success' | 'warning' | 'error' | 'processing' | 'cyan';
   size?: 'sm' | 'md';
   dot?: boolean;
 }
@@ -23,11 +23,12 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
 
     const variants = {
       default: 'bg-surface-container-highest/50 text-on-surface-variant border border-outline-variant/30',
-      primary: 'bg-primary-container/20 text-primary border border-primary/30',
-      success: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
-      warning: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
-      error: 'bg-danger/20 text-danger border border-danger/30',
-      processing: 'bg-ai-purple/20 text-ai-purple border border-ai-purple/30',
+      primary: 'bg-primary/15 text-primary border border-primary/30',
+      success: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+      warning: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+      error: 'bg-danger/15 text-danger border border-danger/30',
+      processing: 'bg-primary/20 text-primary border border-primary/40 animate-pulse',
+      cyan: 'bg-secondary/15 text-secondary border border-secondary/30',
     };
 
     const sizes = {
@@ -50,7 +51,8 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
               variant === 'success' && 'bg-success',
               variant === 'warning' && 'bg-warning',
               variant === 'error' && 'bg-danger',
-              variant === 'processing' && 'bg-ai-purple animate-pulse'
+              variant === 'processing' && 'bg-primary animate-pulse',
+              variant === 'cyan' && 'bg-secondary'
             )}
           />
         )}

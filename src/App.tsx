@@ -454,33 +454,33 @@ export default function App() {
     getCurrentWindow().close();
   };
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-gray-100 font-sans">
+    <div className="flex h-screen w-screen overflow-hidden bg-surface text-on-surface font-body">
       {/* Close Confirmation Modal */}
       {showCloseConfirm && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md"
           onClick={cancelClose}
         >
           <div
-            className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full mx-4 animate-in fade-in-0 zoom-in-95 duration-200"
+            className="bg-surface-container-high border border-outline-variant rounded-2xl p-6 max-w-md w-full mx-4 animate-in fade-in-0 zoom-in-95 duration-150 shadow-2xl shadow-black/80"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-bold text-slate-100 mb-2">
+            <h3 className="text-lg font-bold text-on-surface mb-2 font-display">
               Kodlama İşlemleri Devam Ediyor
             </h3>
-            <p className="text-slate-400 text-sm mb-4">
+            <p className="text-on-surface-variant text-sm mb-4">
               {activeCount} kodlama işlemi aktif. Uygulamayı kapatırsanız işlemler durdurulacak.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={cancelClose}
-                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 font-medium text-sm border border-slate-600 transition"
+                className="px-4 py-2 rounded-lg bg-surface-container hover:bg-surface-bright text-on-surface font-medium text-sm border border-outline-variant transition"
               >
                 İptal
               </button>
               <button
                 onClick={confirmClose}
-                className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-medium text-sm shadow-md shadow-rose-600/30 transition"
+                className="px-4 py-2 rounded-lg bg-danger hover:bg-rose-600 text-white font-bold text-sm shadow-md shadow-danger/30 transition"
               >
                 İşlemleri Durdur ve Kapat
               </button>
@@ -506,27 +506,39 @@ export default function App() {
         <div className="flex-1 flex overflow-hidden">
           {activeTab === 'home' && (
             <div className="flex-1 flex h-full overflow-hidden">
-              <EncodingView
-                config={config}
-                setConfig={setConfig}
-                selectedItem={selectedItem}
-                hardware={hardware}
-                onStartSingle={handleStartSingle}
-                onStartBatch={handleStartBatch}
-                isEncoding={activeCount > 0}
-              />
-              <FileQueue
-                queue={queue}
-                selectedId={selectedId}
-                onSelect={handleSelectItem}
-                onAddFiles={handleAddFiles}
-                onRemoveItem={handleRemoveItem}
-                onClearQueue={handleClearQueue}
-                onStartItem={handleStartItem}
-                onPauseItem={handlePauseItem}
-                onResumeItem={handleResumeItem}
-                onCancelItem={handleCancelItem}
-              />
+              {/* Left Dock: Ingestion Queue */}
+              <div className="w-[320px] flex-shrink-0 h-full border-r border-outline-variant flex flex-col bg-surface-container-low">
+                <FileQueue
+                  queue={queue}
+                  selectedId={selectedId}
+                  onSelect={handleSelectItem}
+                  onAddFiles={handleAddFiles}
+                  onRemoveItem={handleRemoveItem}
+                  onClearQueue={handleClearQueue}
+                  onStartItem={handleStartItem}
+                  onPauseItem={handlePauseItem}
+                  onResumeItem={handleResumeItem}
+                  onCancelItem={handleCancelItem}
+                />
+              </div>
+
+              {/* Center Canvas: Live Video & Subtitle Preview Monitor */}
+              <div className="flex-1 min-w-0 h-full bg-surface-canvas overflow-hidden flex flex-col">
+                <PreviewView selectedItem={selectedItem} config={config} />
+              </div>
+
+              {/* Right Inspector: Encoding & GPU Studio Controls */}
+              <div className="w-[380px] flex-shrink-0 h-full border-l border-outline-variant bg-surface-container-low overflow-y-auto">
+                <EncodingView
+                  config={config}
+                  setConfig={setConfig}
+                  selectedItem={selectedItem}
+                  hardware={hardware}
+                  onStartSingle={handleStartSingle}
+                  onStartBatch={handleStartBatch}
+                  isEncoding={activeCount > 0}
+                />
+              </div>
             </div>
           )}
 

@@ -55,15 +55,15 @@ export const FileQueue: React.FC<FileQueueProps> = ({
   };
 
   return (
-    <div className="flex-1 bg-[#0f1117] flex flex-col h-full overflow-hidden select-none">
+    <div className="flex-1 bg-surface-container-low flex flex-col h-full overflow-hidden select-none">
       {/* Header */}
-      <div className="h-14 px-6 border-b border-[#242938] flex items-center justify-between bg-[#131722]">
+      <div className="h-14 px-6 border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
         <div className="flex items-center space-x-3">
-          <Film className="w-4 h-4 text-blue-400" />
-          <h2 className="text-xs font-bold text-gray-200 uppercase tracking-wide">
+          <Film className="w-4 h-4 text-primary" />
+          <h2 className="text-xs font-bold text-on-surface uppercase tracking-wider font-display">
             MKV / MP4 Dosyaları
           </h2>
-          <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs font-mono font-semibold border border-blue-500/30">
+          <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-xs font-mono font-semibold border border-primary/30">
             {queue.length}
           </span>
         </div>
@@ -71,18 +71,17 @@ export const FileQueue: React.FC<FileQueueProps> = ({
           {queue.length > 0 && (
             <button
               onClick={onClearQueue}
-              className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-[#1f2433] hover:bg-[#2a3145] text-gray-300 text-xs transition border border-[#2e364a]"
+              className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface-variant text-xs transition border border-outline-variant"
               title="Kuyruğu Temizle"
             >
-              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+              <Trash2 className="w-3.5 h-3.5 text-danger" />
               <span>Temizle</span>
             </button>
           )}
 
-
           <button
             onClick={handleAddClick}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/30 transition cursor-pointer"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-surface-container-lowest text-xs font-bold shadow-md shadow-primary/20 transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Dosya Ekle</span>
@@ -103,39 +102,27 @@ export const FileQueue: React.FC<FileQueueProps> = ({
           e.preventDefault();
           setIsDragOver(false);
         }}
-        className={`flex-1 p-6 overflow-y-auto ${
-          isDragOver ? 'bg-blue-500/5 border-2 border-dashed border-blue-500/50 m-2 rounded-2xl' : ''
+        className={`flex-1 p-4 overflow-y-auto ${
+          isDragOver ? 'bg-primary/5 border-2 border-dashed border-primary/50 m-2 rounded-2xl' : ''
         }`}
       >
         {queue.length === 0 ? (
-          // Empty State Dropzone (Screenshot #4 Style)
+          // Empty State Dropzone
           <div
             onClick={handleAddClick}
-            className="h-full border-2 border-dashed border-[#242938] hover:border-blue-500/50 rounded-2xl flex flex-col items-center justify-center space-y-4 p-8 transition-all cursor-pointer group bg-[#131722]/50 hover:bg-[#161c2b]/50"
+            className="h-full border-2 border-dashed border-outline-variant/60 hover:border-primary/50 rounded-2xl flex flex-col items-center justify-center space-y-4 p-8 transition-all cursor-pointer group bg-surface-container/30 hover:bg-surface-container/60"
           >
-            <div className="w-20 h-20 rounded-2xl bg-[#1b2130] group-hover:bg-blue-600/20 group-hover:border-blue-500/40 border border-[#2e364a] flex items-center justify-center text-gray-400 group-hover:text-blue-400 transition transform group-hover:scale-105 shadow-xl">
+            <div className="w-20 h-20 rounded-2xl bg-surface-container-high group-hover:bg-primary/20 group-hover:border-primary/40 border border-outline-variant flex items-center justify-center text-on-surface-variant group-hover:text-primary transition transform group-hover:scale-105 shadow-xl">
               <Plus className="w-10 h-10" />
             </div>
 
             <div className="text-center space-y-1">
-              <h3 className="text-sm font-bold text-gray-200 group-hover:text-white">
+              <h3 className="text-sm font-bold text-on-surface group-hover:text-primary transition">
                 Video Dosyalarını Buraya Sürükleyin
               </h3>
-              <p className="text-xs text-gray-400 max-w-sm">
-                MKV, MP4, TS, WebM veya AVI dosyalarını doğrudan sürükleyip bırakın veya seçmek için tıklayın.
+              <p className="text-xs text-on-surface-variant max-w-[240px]">
+                MKV, MP4, WebM, TS veya AVI dosyalarını toplu içe aktarın.
               </p>
-            </div>
-
-            <div className="flex items-center space-x-2 text-[11px] text-gray-400 font-mono bg-[#1c2232] px-3 py-1 rounded-full border border-[#2a334a]">
-              <span>MKV</span>
-              <span>•</span>
-              <span>MP4</span>
-              <span>•</span>
-              <span>WebM</span>
-              <span>•</span>
-              <span>TS</span>
-              <span>•</span>
-              <span>ASS Altyazı</span>
             </div>
           </div>
         ) : (
@@ -153,24 +140,24 @@ export const FileQueue: React.FC<FileQueueProps> = ({
                 <div
                   key={item.id}
                   onClick={() => onSelect(item)}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                  className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-[#181e2b] border-blue-500/60 shadow-lg shadow-blue-500/10'
-                      : 'bg-[#141824] border-[#22283a] hover:bg-[#191f2e] hover:border-[#2d354d]'
+                      ? 'bg-surface-container border-primary shadow-lg shadow-primary/10'
+                      : 'bg-surface-container-lowest/80 border-outline-variant/40 hover:bg-surface-container hover:border-outline-variant'
                   }`}
                 >
                   <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-3 flex-1 min-w-0 pr-4">
-                      <div className="w-10 h-10 rounded-lg bg-[#1e2538] border border-[#2f3955] flex items-center justify-center text-blue-400 flex-shrink-0">
-                        <FileVideo className="w-5 h-5" />
+                    <div className="flex items-start space-x-3 flex-1 min-w-0 pr-2">
+                      <div className="w-9 h-9 rounded-lg bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary flex-shrink-0">
+                        <FileVideo className="w-4 h-4" />
                       </div>
 
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center space-x-2">
-                          <h4 className="text-xs font-bold text-gray-200 truncate" title={item.fileName}>
+                          <h4 className="text-xs font-bold text-on-surface truncate" title={item.fileName}>
                             {item.fileName}
                           </h4>
-                          <span className="text-[10px] text-gray-400 font-mono">
+                          <span className="text-[10px] text-on-surface-variant font-mono">
                             ({formatBytes(item.fileSize)})
                           </span>
                         </div>
@@ -178,17 +165,17 @@ export const FileQueue: React.FC<FileQueueProps> = ({
                         {/* Metadata Tags */}
                         <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono">
                           {meta?.duration_formatted && (
-                            <span className="px-1.5 py-0.5 rounded bg-[#1f2638] text-gray-300 border border-[#2e374f]">
+                            <span className="px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant border border-outline-variant/50">
                               ⏱ {meta.duration_formatted}
                             </span>
                           )}
                           {meta?.video_stream && (
-                            <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                               {meta.video_stream.width}x{meta.video_stream.height} ({meta.video_stream.fps.toFixed(1)} fps)
                             </span>
                           )}
                           {meta && meta.subtitle_streams.length > 0 && (
-                            <span className="px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                            <span className="px-1.5 py-0.5 rounded bg-secondary/10 text-secondary border border-secondary/20">
                               📝 {meta.subtitle_streams.length} Altyazı
                             </span>
                           )}
@@ -205,8 +192,8 @@ export const FileQueue: React.FC<FileQueueProps> = ({
                     <div className="flex items-center space-x-2 flex-shrink-0">
                       {/* Status Badge */}
                       {isEncoding && (
-                        <span className="px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-400 text-[11px] font-bold border border-blue-500/30 flex items-center space-x-1 animate-pulse">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                        <span className="px-2.5 py-1 rounded-full bg-primary/20 text-primary text-[11px] font-bold border border-primary/30 flex items-center space-x-1 animate-pulse">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                           <span>İşleniyor (%{item.progress.percentage.toFixed(1)})</span>
                         </span>
                       )}
@@ -228,7 +215,7 @@ export const FileQueue: React.FC<FileQueueProps> = ({
                         </span>
                       )}
                       {item.status === 'waiting' && (
-                        <span className="px-2.5 py-1 rounded-full bg-gray-500/20 text-gray-400 text-[11px] font-medium border border-gray-500/30">
+                        <span className="px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant text-[11px] font-medium border border-outline-variant/40">
                           Bekliyor
                         </span>
                       )}
@@ -238,7 +225,7 @@ export const FileQueue: React.FC<FileQueueProps> = ({
                         {item.status === 'waiting' && (
                           <button
                             onClick={() => onStartItem(item.id)}
-                            className="p-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white transition"
+                            className="p-1.5 rounded-lg bg-primary/20 hover:bg-primary text-primary hover:text-surface-container-lowest transition font-bold"
                             title="Kodlamayı Başlat"
                           >
                             <Play className="w-3.5 h-3.5" />
@@ -266,7 +253,7 @@ export const FileQueue: React.FC<FileQueueProps> = ({
                           <>
                             <button
                               onClick={() => onResumeItem(item.id)}
-                              className="p-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white transition"
+                              className="p-1.5 rounded-lg bg-primary/20 hover:bg-primary text-primary hover:text-surface-container-lowest transition"
                               title="Devam Et"
                             >
                               <Play className="w-3.5 h-3.5" />
@@ -283,7 +270,7 @@ export const FileQueue: React.FC<FileQueueProps> = ({
                         {!isEncoding && !isPaused && (
                           <button
                             onClick={() => onRemoveItem(item.id)}
-                            className="p-1.5 rounded-lg bg-[#242b3d] hover:bg-rose-600/30 text-gray-400 hover:text-rose-400 transition"
+                            className="p-1.5 rounded-lg bg-surface-container-high hover:bg-rose-600/30 text-on-surface-variant hover:text-danger transition"
                             title="Kuyruktan Çıkar"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -295,11 +282,11 @@ export const FileQueue: React.FC<FileQueueProps> = ({
 
                   {/* Progress Bar & Live Telemetry when encoding / paused */}
                   {(isEncoding || isPaused) && (
-                    <div className="mt-3 pt-3 border-t border-[#262c3e] space-y-2.5">
+                    <div className="mt-3 pt-3 border-t border-outline-variant/30 space-y-2.5">
                       {/* Bar & Header */}
                       <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="text-blue-400 font-bold flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
+                        <span className="text-primary font-bold flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
                           {isPaused ? 'Duraklatıldı' : 'İşleniyor...'} (%{item.progress.percentage.toFixed(1)})
                         </span>
                         <span className="text-emerald-400 font-bold bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1">
@@ -308,29 +295,29 @@ export const FileQueue: React.FC<FileQueueProps> = ({
                         </span>
                       </div>
 
-                      <div className="w-full h-2 bg-[#1f2638] rounded-full overflow-hidden">
+                      <div className="w-full h-2 bg-surface-container-lowest rounded-full overflow-hidden border border-outline-variant/30">
                         <div
-                          className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500 rounded-full transition-all duration-300 shadow-sm shadow-blue-500/50"
+                          className="h-full bg-gradient-to-r from-primary via-orange to-emerald-400 rounded-full transition-all duration-300 shadow-sm shadow-primary/30"
                           style={{ width: `${item.progress.percentage}%` }}
                         />
                       </div>
 
                       {/* Live Stats Grid */}
-                      <div className="grid grid-cols-4 gap-2 text-[10px] font-mono text-gray-400 bg-[#161c2b] p-2 rounded-lg border border-[#232b40]">
+                      <div className="grid grid-cols-4 gap-2 text-[10px] font-mono text-on-surface-variant bg-surface-container-lowest p-2 rounded-lg border border-outline-variant/40">
                         <div className="flex items-center space-x-1">
-                          <Gauge className="w-3 h-3 text-blue-400" />
-                          <span>FPS: <strong className="text-white">{item.progress.fps.toFixed(1)}</strong></span>
+                          <Gauge className="w-3 h-3 text-primary" />
+                          <span>FPS: <strong className="text-on-surface">{item.progress.fps.toFixed(1)}</strong></span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <Zap className="w-3 h-3 text-amber-400" />
-                          <span>Hız: <strong className="text-white">{item.progress.speed.toFixed(1)}x</strong></span>
+                          <Zap className="w-3 h-3 text-orange" />
+                          <span>Hız: <strong className="text-on-surface">{item.progress.speed.toFixed(1)}x</strong></span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <Clock className="w-3 h-3 text-cyan-400" />
-                          <span>Konum: <strong className="text-white">{item.progress.time_formatted}</strong></span>
+                          <Clock className="w-3 h-3 text-secondary" />
+                          <span>Konum: <strong className="text-on-surface">{item.progress.time_formatted}</strong></span>
                         </div>
                         <div className="flex items-center space-x-1 text-right justify-end">
-                          <span>Kalan: <strong className="text-amber-300">{item.progress.eta_formatted}</strong></span>
+                          <span>Kalan: <strong className="text-primary">{item.progress.eta_formatted}</strong></span>
                         </div>
                       </div>
                     </div>

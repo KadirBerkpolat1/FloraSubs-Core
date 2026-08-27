@@ -25,16 +25,16 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      'inline-flex items-center justify-center font-display font-semibold rounded-lg transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]';
+      'inline-flex items-center justify-center font-display font-semibold rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]';
 
     const variants = {
-      primary: 'bg-brand text-white hover:bg-blue-500 active:bg-blue-700 shadow-md shadow-brand/20',
-      secondary: 'bg-surface-container-high text-on-surface border border-outline-variant hover:bg-surface-bright',
-      ghost: 'bg-transparent text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40',
-      danger: 'bg-danger text-white hover:bg-rose-500 active:bg-rose-700 shadow-md shadow-danger/20',
-      success: 'bg-success text-white hover:bg-emerald-500 active:bg-emerald-700 shadow-md shadow-success/20',
-      outline: 'bg-transparent border border-outline-variant text-on-surface hover:border-brand hover:text-brand',
-      ai: 'bg-ai-purple text-white hover:bg-purple-500 active:bg-purple-700 shadow-md shadow-ai-purple/20',
+      primary: 'bg-primary text-surface-container-lowest font-bold hover:bg-primary-container active:bg-amber-700 shadow-md shadow-primary/20',
+      secondary: 'bg-surface-container-high text-on-surface border border-outline-variant hover:bg-surface-bright hover:border-primary/40',
+      ghost: 'bg-transparent text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high',
+      danger: 'bg-danger text-white hover:bg-rose-600 active:bg-rose-800 shadow-md shadow-danger/20',
+      success: 'bg-success text-surface-container-lowest font-bold hover:bg-emerald-600 active:bg-emerald-800 shadow-md shadow-success/20',
+      outline: 'bg-transparent border border-outline-variant text-on-surface hover:border-primary hover:text-primary',
+      ai: 'bg-secondary text-surface-container-lowest font-bold hover:bg-cyan-dark active:bg-cyan-900 shadow-md shadow-secondary/20',
     };
 
     const sizes = {
