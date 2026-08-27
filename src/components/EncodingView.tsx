@@ -189,6 +189,44 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
     [hardware]
   );
 
+  const presetSelectOptions = useMemo(() => {
+    if (config.encoder.includes('amf')) {
+      return [
+        { value: 'speed', label: 'speed (Önerilen: En Hızlı)' },
+        { value: 'balanced', label: 'balanced (Dengeli)' },
+        { value: 'quality', label: 'quality (Yüksek Kalite)' },
+      ];
+    }
+    if (config.encoder.includes('nvenc')) {
+      return [
+        { value: 'p1', label: 'p1 (En Hızlı)' },
+        { value: 'p2', label: 'p2' },
+        { value: 'p3', label: 'p3' },
+        { value: 'p4', label: 'p4 (Önerilen: p4)' },
+        { value: 'p5', label: 'p5' },
+        { value: 'p6', label: 'p6 (Yüksek Kalite)' },
+        { value: 'p7', label: 'p7 (Ultra Kalite)' },
+      ];
+    }
+    if (config.encoder.includes('svtav1')) {
+      return [
+        { value: '4', label: '4 (Yavaş / Maksimum Sıkıştırma)' },
+        { value: '6', label: '6 (Önerilen Denge)' },
+        { value: '8', label: '8 (Hızlı)' },
+      ];
+    }
+    return [
+      { value: 'ultrafast', label: 'ultrafast' },
+      { value: 'superfast', label: 'superfast' },
+      { value: 'veryfast', label: 'veryfast' },
+      { value: 'faster', label: 'faster' },
+      { value: 'fast', label: 'fast' },
+      { value: 'medium', label: 'medium' },
+      { value: 'slow', label: 'slow (Önerilen: Standart)' },
+      { value: 'slower', label: 'slower' },
+      { value: 'veryslow', label: 'veryslow' },
+    ];
+  }, [config.encoder]);
   const activeUpscaleModel = findModel(config.model_settings.upscale_model);
   const upscaleModeNote = activeUpscaleModel
     ? activeUpscaleModel.format === 'glsl'
@@ -401,44 +439,7 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
               label="Ön Ayarlar"
               value={config.preset}
               onChange={(e) => setConfig((prev) => ({ ...prev, preset: e.target.value }))}
-              options={useMemo(() => {
-                if (config.encoder.includes('amf')) {
-                  return [
-                    { value: 'speed', label: 'speed (Önerilen: En Hızlı)' },
-                    { value: 'balanced', label: 'balanced (Dengeli)' },
-                    { value: 'quality', label: 'quality (Yüksek Kalite)' },
-                  ];
-                }
-                if (config.encoder.includes('nvenc')) {
-                  return [
-                    { value: 'p1', label: 'p1 (En Hızlı)' },
-                    { value: 'p2', label: 'p2' },
-                    { value: 'p3', label: 'p3' },
-                    { value: 'p4', label: 'p4 (Önerilen: p4)' },
-                    { value: 'p5', label: 'p5' },
-                    { value: 'p6', label: 'p6 (Yüksek Kalite)' },
-                    { value: 'p7', label: 'p7 (Ultra Kalite)' },
-                  ];
-                }
-                if (config.encoder.includes('svtav1')) {
-                  return [
-                    { value: '4', label: '4 (Yavaş / Maksimum Sıkıştırma)' },
-                    { value: '6', label: '6 (Önerilen Denge)' },
-                    { value: '8', label: '8 (Hızlı)' },
-                  ];
-                }
-                return [
-                  { value: 'ultrafast', label: 'ultrafast' },
-                  { value: 'superfast', label: 'superfast' },
-                  { value: 'veryfast', label: 'veryfast' },
-                  { value: 'faster', label: 'faster' },
-                  { value: 'fast', label: 'fast' },
-                  { value: 'medium', label: 'medium' },
-                  { value: 'slow', label: 'slow (Önerilen: Standart)' },
-                  { value: 'slower', label: 'slower' },
-                  { value: 'veryslow', label: 'veryslow' },
-                ];
-              }, [config.encoder])}
+              options={presetSelectOptions}
               size="sm"
             />
 
