@@ -84,3 +84,15 @@ v1.0.0 sürümü ile birlikte:
   - **Merkez Monitör (Esnek / Fluid):** `PreviewView` — Canlı HTTP 206 video monitörü, mikrosaniye ASS/SRT altyazı katmanı, geniş video yüzeyi.
   - **Sağ Denetçi (`360px`):** `EncodingView` — Sub-tab geçişli (Format & Encoder $\leftrightarrow$ AI & Filtreler) ferah denetçi paneli; metin ve dropdown kırpılmaları tamamen giderildi.
 * **Doğrulama:** 27/27 Cargo testleri başarıyla geçti ✅ • Frontend Vite build 0 hata (1615 modül 1.38s) ✅.
+
+## 8. Sürükle-Bırak Çiftleme & Önizleme İntro Temizliği (2026-08-27)
+* **Sürükle-Bırak Çift Dosya Ekleme Onarımı:**
+  - Tauri v2'de global `listen('tauri://drag-drop')` hem Window hem Webview olayını yakaladığından dosya bırakıldığında kuyruğa 2 kopya ekleniyordu.
+  - `getCurrentWebviewWindow().onDragDropEvent` ile pencereye özel dinleyiciye geçildi; `type === 'drop'` filtresi uygulandı.
+  - `App.tsx` içerisindeki `handleAddFilePaths` fonksiyonuna gelen yollar ve mevcut kuyruk için çiftleme (deduplication / `Set`) kontrolü eklendi.
+  - React StrictMode çift mount durumunda listener sızıntısını önleyen `isMounted` yaşam döngüsü temizliği entegre edildi.
+* **Önizleme İntro Videosu Bölümü Kaldırıldı:**
+  - `PreviewView.tsx` içerisindeki `previewSource` (Ana Video $\leftrightarrow$ İntro Videosu) durumları ve üst geçiş buton çubuğu tamamen kaldırıldı.
+  - Önizleme monitörü doğrudan kuyruktan seçilen ana videoyu ve altyazılarını oynatacak şekilde yalınlaştırıldı.
+  - Başlangıçta yüklenen sahte örnek dosyalar (`Initial D`, `annen.mp4`) temizlenerek uygulamanın boş kuyrukla başlaması sağlandı.
+* **Doğrulama:** 27/27 Cargo testleri başarıyla geçti ✅ • Frontend Vite build 0 hata (1617 modül 1.30s) ✅.

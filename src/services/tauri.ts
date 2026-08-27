@@ -1,6 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
-import { listen, UnlistenFn } from '@tauri-apps/api/event';
-import {
+import { listen } from '@tauri-apps/api/event';
+import type { UnlistenFn } from '@tauri-apps/api/event';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+import type {
   AiModelInfo,
   EncodeJobConfig,
   EncodeProgress,
@@ -257,21 +259,20 @@ export async function getPreviewSubtitles(
   });
 }
 
-// Native Dialog Wrappers (100% Reliable RFD Native Dialogs)
 export async function selectMediaFile(): Promise<string | null> {
-  if (!isTauri()) return '/home/sevelebeci/İndirilenler/[Judas] Initial D - S01E04.mkv';
+  if (!isTauri()) return null;
   return await invoke<string | null>('open_media_file_native');
 }
 
 export async function selectMultipleMediaFiles(): Promise<string[]> {
-  if (!isTauri()) {
-    return [
-      '/home/sevelebeci/İndirilenler/[Judas] Initial D (Complete Series + Movies) [BD 1080p][HEVC x265 10bit][Dual-Audio][Eng-Subs]/[Judas] 01 - Initial D First Stage/[Judas] Initial D - S01E04.mkv',
-      '/home/sevelebeci/İndirilenler/annen.mp4',
-    ];
-  }
+  if (!isTauri()) return [];
   return await invoke<string[]>('open_media_files_native');
 }
+export async function addMediaFilesDirect(paths: string[]): Promise<void> {
+  if (!isTauri()) return;
+  return await invoke<void>('add_media_files_direct', { paths });
+}
+
 
 export async function selectSubtitleFile(): Promise<string | null> {
   if (!isTauri()) return null;
@@ -313,5 +314,16 @@ export async function onModelDownloadProgress(
   if (!isTauri()) return () => {};
   return await listen<ModelDownloadProgress>('model-download-progress', (event) => {
     callback(event.payload);
+  });
+}
+
+export async function onDragDropFiles(
+  callback: (paths: string[]) => void
+): Promise<UnlistenFn> {
+  if (!isTauri()) return () => {};
+  return await getCurrentWebviewWindow().onDragDropEvent((event) => {
+    if (event.payload.type === 'drop' && event.payload.paths && event.payload.paths.length > 0) {
+      callback(event.payload.paths);
+    }
   });
 }

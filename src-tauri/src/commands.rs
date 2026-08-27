@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 
 use crate::engine::gpu_probe::{detect_hardware, HardwareProfile};
@@ -105,6 +105,21 @@ pub async fn open_media_files_native(app: AppHandle) -> Result<Vec<String>, Stri
     }
     Ok(result)
 }
+#[tauri::command]
+pub fn add_media_files_direct(app: AppHandle, paths: Vec<String>) -> Result<(), String> {
+    #[derive(serde::Serialize, Clone)]
+    struct DragDropPayload {
+        paths: Vec<String>,
+    }
+    let normalized_paths: Vec<String> = paths
+        .into_iter()
+        .map(|p| crate::engine::probe::normalize_file_path(&p))
+        .collect();
+    app.emit("tauri://drag-drop", DragDropPayload { paths: normalized_paths })
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 
 #[tauri::command]
 pub async fn open_subtitle_file_native(app: AppHandle) -> Result<Option<String>, String> {

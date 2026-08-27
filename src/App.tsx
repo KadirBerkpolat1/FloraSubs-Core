@@ -8,7 +8,7 @@ import { PreviewView } from './components/PreviewView';
 import { ConverterView } from './components/ConverterView';
 import { ConsoleView } from './components/ConsoleView';
 import { SettingsView } from './components/SettingsView';
-import {
+import type {
   EncodeJobConfig,
   EncodeProgress,
   HardwareProfile,
@@ -16,7 +16,6 @@ import {
   PresetProfile,
   QueueItem,
 } from './types';
-import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import {
   cancelAllJobs,
@@ -25,6 +24,7 @@ import {
   getPresets,
   onEncodeLog,
   onEncodeProgress,
+  onDragDropFiles,
   pauseEncode,
   probeMedia,
   resumeEncode,
@@ -32,7 +32,6 @@ import {
   startEncode,
   isTauri,
 } from './services/tauri';
-
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('home');
   const [isBatchRunning, setIsBatchRunning] = useState<boolean>(false);
@@ -44,7 +43,10 @@ export default function App() {
   // Queue and Selection
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-
+  const queueRef = useRef<QueueItem[]>(queue);
+  useEffect(() => {
+    queueRef.current = queue;
+  }, [queue]);
   // Global Config Form State
   const [config, setConfig] = useState<EncodeJobConfig>({
     id: `job_${Date.now()}`,
@@ -90,130 +92,40 @@ export default function App() {
     },
     faststart: true,
   });
-  // Batch Serialization
-  const startNextInBatch = (currentQueue: QueueItem[]) => {
-    const nextItem = currentQueue.find((i) => i.status === 'waiting');
-    if (nextItem) {
-      setQueue((prev) =>
-        prev.map((i) => (i.id === nextItem.id ? { ...i, status: 'encoding' } : i))
-      );
-      setCurrentBatchJobId(nextItem.id);
-      startEncode({ ...config, id: nextItem.id, input_path: nextItem.filePath }).catch((err) => {
-        console.error('Batch job start error:', err);
-        setTimeout(() => startNextInBatch(currentQueue), 100);
-      });
-    } else {
-      setIsBatchRunning(false);
-      setCurrentBatchJobId(null);
-    }
-  };
 
-
-  // Logs
-  const [logs, setLogs] = useState<JobLogMessage[]>([]);
-
-  // Window close confirmation state
-  const [showCloseConfirm, setShowCloseConfirm] = useState<boolean>(false);
-
-  // Initialize hardware profile, presets and event listeners
-  useEffect(() => {
-    async function initSystem() {
-      try {
-        const hw = await getHardwareProfile();
-        setHardware(hw);
-
-        if (hw) {
-          setConfig((prev) => ({
-            ...prev,
-            encoder: hw.recommended_encoder || prev.encoder,
-            preset: hw.recommended_encoder?.includes('nvenc') ? 'p4' : 'slow',
-            threads: hw.cpu_threads || prev.threads,
-          }));
-        }
-
-        const pr = await getPresets();
-        setPresets(pr);
-      } catch (err) {
-        console.error('Donanım algılama hatası:', err);
-      }
-    }
-
-    initSystem();
-
-    // Tauri Event Listeners
-    let unlistenProgress: (() => void) | null = null;
-    let unlistenLog: (() => void) | null = null;
-
-    onEncodeProgress((progress: EncodeProgress) => {
-      setQueue((prev) => {
-        const newQueue = prev.map((item) => {
-          if (item.id === progress.job_id) {
-            let status = item.status;
-            if (progress.status === 'completed') status = 'completed';
-            else if (progress.status === 'error') status = 'error';
-            else if (progress.status === 'cancelled') status = 'waiting';
-            else if (progress.status === 'running') status = 'encoding';
-            else if (progress.status === 'paused') status = 'paused';
-
-            return { ...item, status, progress };
-          }
-          return item;
-        });
-
-        if (isBatchRunning && currentBatchJobId === progress.job_id && (progress.status === 'completed' || progress.status === 'error' || progress.status === 'cancelled')) {
-           setTimeout(() => startNextInBatch(newQueue), 100);
-        }
-        
-        return newQueue;
-      });
-    }).then((un) => {
-      unlistenProgress = un;
-    });
-
-    onEncodeLog((log: JobLogMessage) => {
-      setLogs((prev) => [...prev.slice(-999), log]);
-    }).then((un) => {
-      unlistenLog = un;
-    });
-    // Native Tauri Drag and Drop Event Listener
-    let unlistenDragDrop: (() => void) | null = null;
-    if (isTauri()) {
-      listen<{ paths: string[] }>('tauri://drag-drop', async (event) => {
-        if (event.payload && event.payload.paths && event.payload.paths.length > 0) {
-          await handleAddFilePaths(event.payload.paths);
-        }
-      }).then((un) => {
-        unlistenDragDrop = un;
-      });
-    } else {
-      // In browser preview mode, preload the sample anime files
-      handleAddFilePaths([
-        '/home/sevelebeci/İndirilenler/[Judas] Initial D (Complete Series + Movies) [BD 1080p][HEVC x265 10bit][Dual-Audio][Eng-Subs]/[Judas] 01 - Initial D First Stage/[Judas] Initial D - S01E04.mkv',
-        '/home/sevelebeci/İndirilenler/annen.mp4',
-      ]);
-    }
-
-    return () => {
-      if (unlistenProgress) unlistenProgress();
-      if (unlistenLog) unlistenLog();
-      if (unlistenDragDrop) unlistenDragDrop();
-    };
-  }, []);
-
-  // Keep a ref to the latest config for stale-closure-safe listeners (drag-drop)
   const configRef = useRef(config);
   useEffect(() => {
     configRef.current = config;
   }, [config]);
 
+  const handleSelectItem = (item: QueueItem) => {
+    setSelectedId(item.id);
+    setConfig((prev) => ({
+      ...prev,
+      id: item.id,
+      input_path: item.filePath,
+      output_path: item.config.output_path,
+    }));
+  };
 
   const handleAddFilePaths = async (files: string[]) => {
     try {
-      if (files.length === 0) return;
+      if (!files || files.length === 0) return;
+
+      // Clean & deduplicate input paths
+      const uniqueFiles = Array.from(
+        new Set(files.filter((f) => typeof f === 'string' && f.trim().length > 0))
+      );
+      if (uniqueFiles.length === 0) return;
+
+      // Filter out files already in queue
+      const existingPaths = new Set(queueRef.current.map((item) => item.filePath));
+      const freshFiles = uniqueFiles.filter((f) => !existingPaths.has(f));
+      if (freshFiles.length === 0) return;
 
       const newItems: QueueItem[] = [];
 
-      for (const file of files) {
+      for (const file of freshFiles) {
         const fileName = file.split(/[\\/]/).pop() || file;
         const itemId = `job_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
@@ -268,7 +180,14 @@ export default function App() {
         });
       }
 
-      setQueue((prev) => [...prev, ...newItems]);
+      if (newItems.length === 0) return;
+
+      setQueue((prev) => {
+        const prevPaths = new Set(prev.map((i) => i.filePath));
+        const nonDuplicateItems = newItems.filter((i) => !prevPaths.has(i.filePath));
+        return [...prev, ...nonDuplicateItems];
+      });
+
       if (!selectedId && newItems.length > 0) {
         handleSelectItem(newItems[0]);
       }
@@ -277,21 +196,125 @@ export default function App() {
     }
   };
 
-  // Handle file addition via dialog
   const handleAddFiles = async () => {
     const files = await selectMultipleMediaFiles();
     await handleAddFilePaths(files);
   };
 
-  const handleSelectItem = (item: QueueItem) => {
-    setSelectedId(item.id);
-    setConfig((prev) => ({
-      ...prev,
-      id: item.id,
-      input_path: item.filePath,
-      output_path: item.config.output_path,
-    }));
+  // Batch Serialization
+  const startNextInBatch = (currentQueue: QueueItem[]) => {
+    const nextItem = currentQueue.find((i) => i.status === 'waiting');
+    if (nextItem) {
+      setQueue((prev) =>
+        prev.map((i) => (i.id === nextItem.id ? { ...i, status: 'encoding' } : i))
+      );
+      setCurrentBatchJobId(nextItem.id);
+      startEncode({ ...config, id: nextItem.id, input_path: nextItem.filePath }).catch((err) => {
+        console.error('Batch job start error:', err);
+        setTimeout(() => startNextInBatch(currentQueue), 100);
+      });
+    } else {
+      setIsBatchRunning(false);
+      setCurrentBatchJobId(null);
+    }
   };
+
+  // Logs
+  const [logs, setLogs] = useState<JobLogMessage[]>([]);
+
+  // Window close confirmation state
+  const [showCloseConfirm, setShowCloseConfirm] = useState<boolean>(false);
+
+  // Initialize hardware profile, presets and event listeners
+  useEffect(() => {
+    let isMounted = true;
+    let unlistenProgress: (() => void) | null = null;
+    let unlistenLog: (() => void) | null = null;
+    let unlistenDragDrop: (() => void) | null = null;
+
+    async function initSystem() {
+      try {
+        const hw = await getHardwareProfile();
+        if (!isMounted) return;
+        setHardware(hw);
+
+        if (hw) {
+          setConfig((prev) => ({
+            ...prev,
+            encoder: hw.recommended_encoder || prev.encoder,
+            preset: hw.recommended_encoder?.includes('nvenc') ? 'p4' : 'slow',
+            threads: hw.cpu_threads || prev.threads,
+          }));
+        }
+
+        const pr = await getPresets();
+        if (!isMounted) return;
+        setPresets(pr);
+      } catch (err) {
+        console.error('Donanım algılama hatası:', err);
+      }
+    }
+
+    initSystem();
+    const win = window as unknown as { __addFiles?: (files: string[]) => Promise<void> };
+    win.__addFiles = handleAddFilePaths;
+
+    onEncodeProgress((progress: EncodeProgress) => {
+      if (!isMounted) return;
+      setQueue((prev) => {
+        const newQueue = prev.map((item) => {
+          if (item.id === progress.job_id) {
+            let status = item.status;
+            if (progress.status === 'completed') status = 'completed';
+            else if (progress.status === 'error') status = 'error';
+            else if (progress.status === 'cancelled') status = 'waiting';
+            else if (progress.status === 'running') status = 'encoding';
+            else if (progress.status === 'paused') status = 'paused';
+
+            return { ...item, status, progress };
+          }
+          return item;
+        });
+
+        if (isBatchRunning && currentBatchJobId === progress.job_id && (progress.status === 'completed' || progress.status === 'error' || progress.status === 'cancelled')) {
+           setTimeout(() => startNextInBatch(newQueue), 100);
+        }
+        
+        return newQueue;
+      });
+    }).then((un) => {
+      if (!isMounted) un();
+      else unlistenProgress = un;
+    });
+
+    onEncodeLog((log: JobLogMessage) => {
+      if (!isMounted) return;
+      setLogs((prev) => [...prev.slice(-999), log]);
+    }).then((un) => {
+      if (!isMounted) un();
+      else unlistenLog = un;
+    });
+
+    // Native Tauri Drag and Drop Event Listener
+    if (isTauri()) {
+      onDragDropFiles((paths) => {
+        if (!isMounted) return;
+        handleAddFilePaths(paths);
+      }).then((un) => {
+        if (!isMounted) un();
+        else unlistenDragDrop = un;
+      });
+    }
+
+    return () => {
+      isMounted = false;
+      if (unlistenProgress) unlistenProgress();
+      if (unlistenLog) unlistenLog();
+      if (unlistenDragDrop) unlistenDragDrop();
+    };
+  }, []);
+
+
 
   const handleRemoveItem = (id: string) => {
     setQueue((prev) => prev.filter((i) => i.id !== id));

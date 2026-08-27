@@ -42,7 +42,6 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
   const [streamUrl, setStreamUrl] = useState<string>('');
   const [videoError, setVideoError] = useState<string | null>(null);
   const [showControls, setShowControls] = useState<boolean>(true);
-  const [previewSource, setPreviewSource] = useState<'main' | 'intro'>('main');
   const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
 
   // Subtitle synchronization state
@@ -53,13 +52,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
   const [loadingSubs, setLoadingSubs] = useState<boolean>(false);
 
   const meta = selectedItem?.metadata;
-
-  // Derived active file path based on previewSource
-  const activeFilePath =
-    previewSource === 'intro' && config.intro_video_path
-      ? config.intro_video_path
-      : selectedItem?.filePath || '';
-
+  const activeFilePath = selectedItem?.filePath || '';
   // Load video stream URL
   useEffect(() => {
     setIsPlaying(false);
@@ -79,7 +72,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
           setStreamUrl(convertMediaSrc(activeFilePath));
         });
     }
-  }, [selectedItem?.id, activeFilePath, previewSource, meta?.duration_secs]);
+  }, [selectedItem?.id, activeFilePath, meta?.duration_secs]);
 
   // Load subtitle dialogues for the active subtitle track
   useEffect(() => {
@@ -92,11 +85,9 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
     setLoadingSubs(true);
     const isExternal = activeSubTrack === 'external';
     const subIdx = isExternal ? 0 : parseInt(activeSubTrack, 10) || 0;
-    const targetFile =
-      isExternal && previewSource === 'main'
-        ? previewExternalSubPath || config.external_subtitle_path || activeFilePath
-        : activeFilePath;
-
+    const targetFile = isExternal
+      ? previewExternalSubPath || config.external_subtitle_path || activeFilePath
+      : activeFilePath;
     getPreviewSubtitles(targetFile, subIdx, isExternal)
       .then((cues) => {
         setSubtitleDialogues(cues);
@@ -114,7 +105,6 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
     activeSubTrack,
     config.external_subtitle_path,
     previewExternalSubPath,
-    previewSource,
   ]);
 
   const handleLoadExternalSub = async () => {
@@ -327,9 +317,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
         {selectedItem && (
           <div className="flex items-center space-x-3">
             <span className="px-3 py-1.5 rounded-lg bg-[#1a1f2c] border border-[#2d364d] text-xs font-mono text-blue-400 font-bold">
-              {previewSource === 'main'
-                ? selectedItem.fileName
-                : config.intro_video_path?.split(/[/\\]/).pop() || 'İntro Videosu'}
+              {selectedItem.fileName}
             </span>
           </div>
         )}
@@ -347,60 +335,6 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Video Player Surface */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Preview Source Switcher (Full Main Video vs. Intro Video) */}
-            <div className="flex flex-wrap items-center justify-between gap-2 bg-[#141824] p-2 rounded-2xl border border-[#242938]">
-              <div className="flex items-center space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setPreviewSource('main')}
-                  className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
-                    previewSource === 'main'
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                      : 'text-gray-400 hover:text-gray-200 hover:bg-[#1f2433]'
-                  }`}
-                >
-                  <Film className="w-3.5 h-3.5" />
-                  <span>🎬 Ana Video (Tüm Video - Tam Bölüm)</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (config.intro_video_path) {
-                      setPreviewSource('intro');
-                    }
-                  }}
-                  disabled={!config.intro_video_path}
-                  className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
-                    previewSource === 'intro'
-                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-                      : config.intro_video_path
-                      ? 'text-gray-400 hover:text-gray-200 hover:bg-[#1f2433]'
-                      : 'text-gray-600 cursor-not-allowed opacity-40'
-                  }`}
-                  title={
-                    config.intro_video_path
-                      ? `İntro Dosyası: ${config.intro_video_path}`
-                      : 'İntro videosu seçilmedi (Gelişmiş sekmesinden ekleyebilirsiniz)'
-                  }
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>📼 İntro Videosu</span>
-                  {config.intro_enabled && config.intro_video_path && (
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
-                  )}
-                </button>
-              </div>
-
-              <div className="text-[11px] font-mono text-gray-400 px-2 hidden sm:block">
-                {previewSource === 'main' ? (
-                  <span className="text-blue-400 font-semibold">Tüm video oynatılıyor</span>
-                ) : (
-                  <span className="text-purple-400 font-semibold">İntro klibi oynatılıyor</span>
-                )}
-              </div>
-            </div>
-
             <div
               ref={containerRef}
               onMouseEnter={() => setShowControls(true)}

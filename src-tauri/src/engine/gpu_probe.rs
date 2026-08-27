@@ -297,9 +297,7 @@ pub fn detect_hardware() -> HardwareProfile {
     for (id, name, family, hw, desc) in catalog {
         let is_available = if raw_encoders_output.is_empty() {
             hw == "cpu"
-        } else if hw == "amd" && !amf_runtime_present {
-            false
-        } else if hw == "vaapi" && !vaapi_device_present {
+        } else if (hw == "amd" && !amf_runtime_present) || (hw == "vaapi" && !vaapi_device_present) {
             false
         } else {
             raw_encoders_output.contains(id)

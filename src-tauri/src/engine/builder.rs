@@ -641,12 +641,17 @@ mod tests {
 
     #[test]
     fn test_filter_settings_and_subtitles() {
-        let mut config = EncodeJobConfig::default();
-        config.input_path = "/media/in.mkv".to_string();
-        config.output_path = "/media/out.mp4".to_string();
-        config.resolved_subtitle_path = Some("/media/test.ass".to_string());
-        config.filter_settings.line_darkening_enabled = true;
-        config.filter_settings.sharpness_enabled = true;
+        let config = EncodeJobConfig {
+            input_path: "/media/in.mkv".to_string(),
+            output_path: "/media/out.mp4".to_string(),
+            resolved_subtitle_path: Some("/media/test.ass".to_string()),
+            filter_settings: FilterSettings {
+                line_darkening_enabled: true,
+                sharpness_enabled: true,
+                ..Default::default()
+            },
+            ..EncodeJobConfig::default()
+        };
 
         let args = build_ffmpeg_args(&config).unwrap();
         assert!(args.contains(&"-vf".to_string()));
@@ -659,15 +664,20 @@ mod tests {
 
     #[test]
     fn test_model_settings_interpolation_and_upscale() {
-        let mut config = EncodeJobConfig::default();
-        config.input_path = "/media/in.mkv".to_string();
-        config.output_path = "/media/out.mp4".to_string();
-        config.model_settings.upscale_enabled = true;
-        config.model_settings.upscale_model = "Anime4K_Upscale_HD".to_string();
-        config.model_settings.target_height = Some(1440);
-        config.model_settings.frame_gen_enabled = true;
-        config.model_settings.frame_gen_model = "SVP".to_string();
-        config.model_settings.target_fps = 60;
+        let config = EncodeJobConfig {
+            input_path: "/media/in.mkv".to_string(),
+            output_path: "/media/out.mp4".to_string(),
+            model_settings: ModelSettings {
+                upscale_enabled: true,
+                upscale_model: "Anime4K_Upscale_HD".to_string(),
+                target_height: Some(1440),
+                frame_gen_enabled: true,
+                frame_gen_model: "SVP".to_string(),
+                target_fps: 60,
+                ..Default::default()
+            },
+            ..EncodeJobConfig::default()
+        };
 
         let args = build_ffmpeg_args(&config).unwrap();
         assert!(args.contains(&"-vf".to_string()));
@@ -679,12 +689,14 @@ mod tests {
 
     #[test]
     fn test_intro_concatenation_and_faststart() {
-        let mut config = EncodeJobConfig::default();
-        config.input_path = "/media/main.mkv".to_string();
-        config.output_path = "/media/final.mp4".to_string();
-        config.intro_enabled = true;
-        config.intro_video_path = Some("/media/intro.mp4".to_string());
-        config.faststart = true;
+        let config = EncodeJobConfig {
+            input_path: "/media/main.mkv".to_string(),
+            output_path: "/media/final.mp4".to_string(),
+            intro_enabled: true,
+            intro_video_path: Some("/media/intro.mp4".to_string()),
+            faststart: true,
+            ..EncodeJobConfig::default()
+        };
 
         let args = build_ffmpeg_args(&config).unwrap();
         assert!(args.contains(&"-filter_complex".to_string()));
@@ -696,13 +708,15 @@ mod tests {
 
     #[test]
     fn test_hardware_encoders_and_bitrate_mode() {
-        let mut config = EncodeJobConfig::default();
-        config.input_path = "/media/video.mp4".to_string();
-        config.output_path = "/media/encoded.mp4".to_string();
-        config.encoder = "h264_nvenc".to_string();
-        config.use_bitrate = true;
-        config.average_bitrate_kbps = 6000;
-        config.threads = 8;
+        let config = EncodeJobConfig {
+            input_path: "/media/video.mp4".to_string(),
+            output_path: "/media/encoded.mp4".to_string(),
+            encoder: "h264_nvenc".to_string(),
+            use_bitrate: true,
+            average_bitrate_kbps: 6000,
+            threads: 8,
+            ..EncodeJobConfig::default()
+        };
 
         let args = build_ffmpeg_args(&config).unwrap();
         assert!(args.contains(&"-threads".to_string()));
@@ -715,12 +729,14 @@ mod tests {
 
     #[test]
     fn test_vaapi_arguments_and_hwupload() {
-        let mut config = EncodeJobConfig::default();
-        config.input_path = "/media/main.mkv".to_string();
-        config.output_path = "/media/final.mp4".to_string();
-        config.encoder = "hevc_vaapi".to_string();
-        config.preset = "ultrafast".to_string();
-        config.crf = 24;
+        let config = EncodeJobConfig {
+            input_path: "/media/main.mkv".to_string(),
+            output_path: "/media/final.mp4".to_string(),
+            encoder: "hevc_vaapi".to_string(),
+            preset: "ultrafast".to_string(),
+            crf: 24,
+            ..EncodeJobConfig::default()
+        };
 
         let args = build_ffmpeg_args(&config).unwrap();
         assert!(args.contains(&"-vaapi_device".to_string()));
@@ -752,14 +768,19 @@ mod tests {
 
     #[test]
     fn test_upscale_and_hardsub_pipeline_ordering() {
-        let mut config = EncodeJobConfig::default();
-        config.input_path = "/media/anime_raw.mkv".to_string();
-        config.output_path = "/media/anime_upscaled.mp4".to_string();
-        config.model_settings.upscale_enabled = true;
-        config.model_settings.target_height = Some(1440);
-        config.hardsub_enabled = true;
-        config.resolved_subtitle_path = Some("/tmp/sub.ass".to_string());
-        config.fonts_dir = Some("/tmp/fonts".to_string());
+        let config = EncodeJobConfig {
+            input_path: "/media/anime_raw.mkv".to_string(),
+            output_path: "/media/anime_upscaled.mp4".to_string(),
+            model_settings: ModelSettings {
+                upscale_enabled: true,
+                target_height: Some(1440),
+                ..Default::default()
+            },
+            hardsub_enabled: true,
+            resolved_subtitle_path: Some("/tmp/sub.ass".to_string()),
+            fonts_dir: Some("/tmp/fonts".to_string()),
+            ..EncodeJobConfig::default()
+        };
 
         let args = build_ffmpeg_args(&config).unwrap();
         let vf_idx = args.iter().position(|r| r == "-vf").expect("Must contain -vf");
@@ -808,10 +829,12 @@ mod tests {
 
     #[test]
     fn test_threads_clamping_to_16() {
-        let mut config = EncodeJobConfig::default();
-        config.input_path = "/media/in.mkv".to_string();
-        config.output_path = "/media/out.mp4".to_string();
-        config.threads = 32; // Should be clamped to 16
+        let mut config = EncodeJobConfig {
+            input_path: "/media/in.mkv".to_string(),
+            output_path: "/media/out.mp4".to_string(),
+            threads: 32, // Should be clamped to 16
+            ..EncodeJobConfig::default()
+        };
 
         let args = build_ffmpeg_args(&config).unwrap();
         let threads_idx = args.iter().position(|r| r == "-threads").expect("Must contain -threads");
@@ -825,10 +848,15 @@ mod tests {
 
     #[test]
     fn test_upscale_lanczos_accurate_rnd_flags() {
-        let mut config = EncodeJobConfig::default();
-        config.input_path = "/media/in.mkv".to_string();
-        config.output_path = "/media/out.mp4".to_string();
-        config.model_settings.upscale_enabled = true;
+        let mut config = EncodeJobConfig {
+            input_path: "/media/in.mkv".to_string(),
+            output_path: "/media/out.mp4".to_string(),
+            model_settings: ModelSettings {
+                upscale_enabled: true,
+                ..Default::default()
+            },
+            ..EncodeJobConfig::default()
+        };
 
         // 2K (1440p)
         config.model_settings.target_height = Some(1440);
@@ -858,11 +886,13 @@ mod tests {
 
     #[test]
     fn test_encoder_and_filter_thread_controls() {
-        let mut config = EncodeJobConfig::default();
-        config.input_path = "/media/in.mkv".to_string();
-        config.output_path = "/media/out.mp4".to_string();
-        config.encoder = "libx264".to_string();
-        config.threads = 24;
+        let mut config = EncodeJobConfig {
+            input_path: "/media/in.mkv".to_string(),
+            output_path: "/media/out.mp4".to_string(),
+            encoder: "libx264".to_string(),
+            threads: 24,
+            ..EncodeJobConfig::default()
+        };
 
         let args = build_ffmpeg_args(&config).unwrap();
         assert!(args.contains(&"-filter_threads".to_string()));

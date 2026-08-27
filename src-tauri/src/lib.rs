@@ -28,6 +28,7 @@ pub fn run() {
             commands::get_models_list,
             commands::download_model,
             commands::open_media_files_native,
+            commands::add_media_files_direct,
             commands::open_subtitle_file_native,
             commands::open_directory_native,
             commands::save_subtitle_native,
