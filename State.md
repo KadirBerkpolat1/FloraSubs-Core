@@ -96,3 +96,20 @@ v1.0.0 sürümü ile birlikte:
   - Önizleme monitörü doğrudan kuyruktan seçilen ana videoyu ve altyazılarını oynatacak şekilde yalınlaştırıldı.
   - Başlangıçta yüklenen sahte örnek dosyalar (`Initial D`, `annen.mp4`) temizlenerek uygulamanın boş kuyrukla başlaması sağlandı.
 * **Doğrulama:** 27/27 Cargo testleri başarıyla geçti ✅ • Frontend Vite build 0 hata (1617 modül 1.30s) ✅.
+
+## 9. Kodlama Başlatma (Encode) Kök Neden Analizi & Kalıcı Çözüm (2026-08-27)
+* **Kök Neden 1 (Donanım Kodlayıcı Race Condition):**
+  - `App.tsx` başlangıç state'inde `encoder: 'h264_nvenc'` tanımlıydı. Dosyalar kuyruğa eklendiğinde `item.config` bu başlangıç encoder'ını kopyalıyordu.
+  - `initSystem()` donanımı tarayıp `h264_vaapi` / `libx264` önerse dahi, `handleSelectItem` çağrıldığında `config` nesnesi `item.config` içindeki eski `h264_nvenc` veya Linux'ta sürücüsü olmayan `h264_amf` değerini geri yüklüyordu.
+  - Kullanıcı "Kodla" butonuna bastığında FFmpeg `Cannot load libcuda.so.1` veya `DLL libamfrt64.so.1 failed to open` hatasıyla anında patlıyordu.
+* **Kök Neden 2 (Altyazısız Videolarda 0:s:0 Hardsub Çökmesi):**
+  - `runner.rs` içinde `hardsub_enabled: true` iken videoda gömülü altyazı akışı yoksa (`meta.subtitle_streams.is_empty()`), `extract_subtitle_track` yine de `0:s:0` çağırmaya çalışıyor ve FFmpeg akış bulamayıp işi hata ile sonlandırıyordu.
+* **Kök Neden 3 (Altyazı Dönüştürme Format Eksikliği):**
+  - `demuxer.rs` içerisinde altyazı kopyalama (`copy`) başarısız olduğunda retry komutunda `-c:s ass` eksikti.
+* **Uygulanan Kalıcı Çözümler:**
+  - `App.tsx` ve `tauri.ts` başlangıç varsayılanı evrensel `libx264` olarak güncellendi. `initSystem()` tarama sonrası kuyruktaki uyumsuz encoder'a sahip bekleyen işleri otomatik donanım encoder'ına geçirdi.
+  - `handleSelectItem` refaktör edilerek kullanıcının seçtiği aktif encoder/CRF ayarları korunacak şekilde yalnız dosya yolları güncellendi.
+  - `runner.rs` altyazısız videolarda hardsub çıkarmayı zarifçe atlayıp sistemi uyarı loguyla devam ettirecek şekilde güçlendirildi.
+  - `demuxer.rs` retry adımına `-c:s ass` entegre edildi.
+* **Doğrulama:**
+  - 27/27 Cargo testleri başarıyla geçti ✅ • Frontend Vite build 0 hata (1617 modül 1.39s) ✅ • Canlı UI üzerinde Kodla $\rightarrow$ Canlı Telemetry & İlerleme $\rightarrow$ İptal Et döngüsü başarıyla test edildi ✅.

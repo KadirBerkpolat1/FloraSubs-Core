@@ -53,12 +53,12 @@ export default function App() {
     input_path: '',
     output_path: '',
     container: 'mp4',
-    encoder: 'h264_nvenc',
+    encoder: 'libx264',
     threads: 0,
     use_bitrate: false,
     average_bitrate_kbps: 4000,
-    crf: 22,
-    preset: 'p4',
+    crf: 20,
+    preset: 'slow',
     pixel_format: 'yuv420p',
     b_frames: 4,
     custom_video_args: null,
@@ -104,7 +104,7 @@ export default function App() {
       ...prev,
       id: item.id,
       input_path: item.filePath,
-      output_path: item.config.output_path,
+      output_path: item.config.output_path || prev.output_path,
     }));
   };
 
@@ -239,12 +239,35 @@ export default function App() {
         setHardware(hw);
 
         if (hw) {
+          const recommended = hw.recommended_encoder || 'libx264';
+          const recPreset = recommended.includes('nvenc')
+            ? 'p4'
+            : (recommended.includes('amf') ? 'speed' : (recommended.includes('vaapi') ? 'medium' : 'slow'));
           setConfig((prev) => ({
             ...prev,
-            encoder: hw.recommended_encoder || prev.encoder,
-            preset: hw.recommended_encoder?.includes('nvenc') ? 'p4' : 'slow',
+            encoder: recommended,
+            preset: recPreset,
             threads: hw.cpu_threads || prev.threads,
           }));
+
+          setQueue((prevQueue) =>
+            prevQueue.map((item) => {
+              if (
+                item.status === 'waiting' &&
+                !hw.supported_encoders.some((s) => s.id === item.config.encoder && s.is_available)
+              ) {
+                return {
+                  ...item,
+                  config: {
+                    ...item.config,
+                    encoder: recommended,
+                    preset: recPreset,
+                  },
+                };
+              }
+              return item;
+            })
+          );
         }
 
         const pr = await getPresets();

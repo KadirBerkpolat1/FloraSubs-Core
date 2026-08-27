@@ -221,16 +221,16 @@ pub fn extract_subtitle_track<P: AsRef<Path>, O: AsRef<Path>>(
         .map_err(|e| format!("FFmpeg altyazı çıkarma komutu çalıştırılamadı: {}", e))?;
 
     if !output_res.status.success() {
-        // Retry with transcoding if copy fails (e.g. converting mov_text/subrip to ass)
+        // Retry with transcoding to ASS if copy fails (e.g. converting mov_text/subrip to ass)
         let retry_res = Command::new(&ffmpeg_bin)
             .arg("-y")
             .arg("-i")
             .arg(input)
             .args(["-map", &map_arg])
+            .args(["-c:s", "ass"])
             .arg(output)
             .output()
             .map_err(|e| format!("FFmpeg altyazı dönüştürme hatası: {}", e))?;
-
         if !retry_res.status.success() {
             let err = String::from_utf8_lossy(&retry_res.stderr);
             return Err(format!("Altyazı çıkarılamadı: {}", err));

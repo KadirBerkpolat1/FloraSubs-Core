@@ -41,7 +41,7 @@ export async function getHardwareProfile(): Promise<HardwareProfile> {
         { id: 'libx264', name: 'libx264 (H.264 CPU Standart)', family: 'h264', hardware_type: 'cpu', is_available: true, description: 'Software CPU x264' },
         { id: 'libx265', name: 'libx265 (HEVC 10-bit)', family: 'hevc', hardware_type: 'cpu', is_available: true, description: 'Software CPU x265' },
       ],
-      recommended_encoder: 'h264_amf',
+      recommended_encoder: 'libx264',
       ffmpeg_path: '/usr/bin/ffmpeg',
       ffmpeg_version: '7.1-static',
     };

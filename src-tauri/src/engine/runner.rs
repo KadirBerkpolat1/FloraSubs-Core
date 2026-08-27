@@ -360,34 +360,51 @@ pub async fn start_encoding_job(
     if config.hardsub_enabled {
         if config.subtitle_source == "embedded" {
             let sub_idx = config.subtitle_track_index.unwrap_or(0);
-            let temp_sub = std::env::temp_dir().join(format!("florasubs_{}_sub_{}.ass", job_id, sub_idx));
-
-            let _ = app.emit(
-                "encode-log",
-                JobLogMessage {
-                    job_id: job_id.clone(),
-                    line: format!("[FloraSubs] Gömülü altyazı akışı #{} ayrıştırılıyor...", sub_idx),
-                    stream: "system".to_string(),
-                    timestamp: chrono::Local::now().format("%H:%M:%S").to_string(),
-                },
-            );
-
-            extract_subtitle_track(&config.input_path, sub_idx, &temp_sub).inspect_err(|e| emit_error(e))?;
-            config.resolved_subtitle_path = Some(temp_sub.to_string_lossy().to_string());
-
-            // Extract fonts
-            if let Ok(Some(fonts_res)) = prepare_job_fonts_dir(&config.input_path, &job_id) {
+            if meta.subtitle_streams.is_empty() {
                 let _ = app.emit(
                     "encode-log",
                     JobLogMessage {
                         job_id: job_id.clone(),
-                        line: format!("[FloraSubs] {} adet gömülü font başarıyla çıkartıldı.", fonts_res.count),
+                        line: "[FloraSubs] Videoda gömülü altyazı akışı bulunamadı, altyazı gömme atlandı.".to_string(),
                         stream: "system".to_string(),
                         timestamp: chrono::Local::now().format("%H:%M:%S").to_string(),
                     },
                 );
-                config.fonts_dir = Some(fonts_res.temp_dir.clone());
-                temp_fonts_dir = Some(PathBuf::from(fonts_res.temp_dir));
+            } else {
+                let valid_idx = if sub_idx >= meta.subtitle_streams.len() {
+                    0
+                } else {
+                    sub_idx
+                };
+                let temp_sub = std::env::temp_dir().join(format!("florasubs_{}_sub_{}.ass", job_id, valid_idx));
+
+                let _ = app.emit(
+                    "encode-log",
+                    JobLogMessage {
+                        job_id: job_id.clone(),
+                        line: format!("[FloraSubs] Gömülü altyazı akışı #{} ayrıştırılıyor...", valid_idx),
+                        stream: "system".to_string(),
+                        timestamp: chrono::Local::now().format("%H:%M:%S").to_string(),
+                    },
+                );
+
+                extract_subtitle_track(&config.input_path, valid_idx, &temp_sub).inspect_err(|e| emit_error(e))?;
+                config.resolved_subtitle_path = Some(temp_sub.to_string_lossy().to_string());
+
+                // Extract fonts
+                if let Ok(Some(fonts_res)) = prepare_job_fonts_dir(&config.input_path, &job_id) {
+                    let _ = app.emit(
+                        "encode-log",
+                        JobLogMessage {
+                            job_id: job_id.clone(),
+                            line: format!("[FloraSubs] {} adet gömülü font başarıyla çıkartıldı.", fonts_res.count),
+                            stream: "system".to_string(),
+                            timestamp: chrono::Local::now().format("%H:%M:%S").to_string(),
+                        },
+                    );
+                    config.fonts_dir = Some(fonts_res.temp_dir.clone());
+                    temp_fonts_dir = Some(PathBuf::from(fonts_res.temp_dir));
+                }
             }
         } else if config.subtitle_source == "external" {
             config.resolved_subtitle_path = config.external_subtitle_path.clone();
