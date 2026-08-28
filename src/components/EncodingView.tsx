@@ -5,18 +5,23 @@ import {
   Sparkles,
   Play,
   PlayCircle,
-  AlertTriangle,
   Loader2,
   Tv,
+  Download,
+  CheckCircle2,
+  Type,
 } from 'lucide-react';
-import {
+import type {
   AiModelInfo,
   EncodeJobConfig,
   HardwareProfile,
+  ModelDownloadProgress,
   QueueItem,
 } from '../types';
 import {
   getModelsList,
+  downloadModel,
+  onModelDownloadProgress,
   selectOutputDirectory,
 } from '../services/tauri';
 import {
@@ -90,15 +95,99 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
   isEncoding,
 }) => {
   const [availableModels, setAvailableModels] = useState<AiModelInfo[]>([]);
-  const [downloadError] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<{
+    modelId: string;
+    percentage: number;
+    downloadedMb: number;
+    totalMb: number;
+    status: 'downloading' | 'completed' | 'error';
+    error?: string;
+  } | null>(null);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [activeSection, setActiveSection] = useState<'encode' | 'ai'>('encode');
 
   const metadata = selectedItem?.metadata;
 
   useEffect(() => {
-    getModelsList().then(setAvailableModels).catch(console.error);
+    let isMounted = true;
+    let unlisten: (() => void) | null = null;
+
+    getModelsList().then((list) => {
+      if (isMounted) setAvailableModels(list);
+    }).catch(console.error);
+
+    onModelDownloadProgress((prog: ModelDownloadProgress) => {
+      if (!isMounted) return;
+      if (prog.status === 'downloading') {
+        setIsDownloading(true);
+        setDownloadProgress({
+          modelId: prog.model_id,
+          percentage: prog.percentage,
+          downloadedMb: prog.downloaded_bytes / (1024 * 1024),
+          totalMb: prog.total_bytes / (1024 * 1024),
+          status: 'downloading',
+        });
+      } else if (prog.status === 'completed') {
+        setIsDownloading(false);
+        setDownloadProgress({
+          modelId: prog.model_id,
+          percentage: 100,
+          downloadedMb: prog.total_bytes / (1024 * 1024),
+          totalMb: prog.total_bytes / (1024 * 1024),
+          status: 'completed',
+        });
+        getModelsList().then((list) => {
+          if (isMounted) setAvailableModels(list);
+        }).catch(console.error);
+      } else if (prog.status === 'error') {
+        setIsDownloading(false);
+        setDownloadProgress({
+          modelId: prog.model_id,
+          percentage: 0,
+          downloadedMb: 0,
+          totalMb: 0,
+          status: 'error',
+          error: prog.error || 'İndirme hatası oluştu',
+        });
+      }
+    }).then((un) => {
+      if (!isMounted) un();
+      else unlisten = un;
+    });
+
+    return () => {
+      isMounted = false;
+      if (unlisten) unlisten();
+    };
   }, []);
 
+  const handleDownloadModel = async (modelId: string) => {
+    try {
+      setIsDownloading(true);
+      setDownloadProgress({
+        modelId,
+        percentage: 0,
+        downloadedMb: 0,
+        totalMb: 0,
+        status: 'downloading',
+      });
+      await downloadModel(modelId);
+      const list = await getModelsList();
+      setAvailableModels(list);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setDownloadProgress({
+        modelId,
+        percentage: 0,
+        downloadedMb: 0,
+        totalMb: 0,
+        status: 'error',
+        error: msg,
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   const handleBrowseOutputFolder = async () => {
     const dir = await selectOutputDirectory();
     if (dir) {
@@ -538,6 +627,46 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
               </Button>
             </div>
           </Card>
+
+          {/* Custom Fonts Directory Card */}
+          <Card variant="default" padding="md" className="space-y-3 bg-surface-container border border-outline-variant/60">
+            <div className="flex items-center justify-between pb-2.5 border-b border-outline-variant/40">
+              <h2 className="text-xs font-bold text-white tracking-wider uppercase flex items-center space-x-2 font-display">
+                <Type className="w-3.5 h-3.5 text-white" />
+                <span>Özel Font Klasörü (fontsdir)</span>
+              </h2>
+              {config.fonts_dir && (
+                <button
+                  type="button"
+                  onClick={() => setConfig((prev) => ({ ...prev, fonts_dir: null }))}
+                  className="text-[10px] text-danger hover:underline cursor-pointer"
+                >
+                  Temizle
+                </button>
+              )}
+            </div>
+            <div className="flex space-x-1.5">
+              <Input
+                value={config.fonts_dir || 'Otomatik (Gömülü veya fonts/)'}
+                readOnly
+                size="sm"
+                variant="mono"
+                className="flex-1"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={async () => {
+                  const dir = await selectOutputDirectory();
+                  if (dir) setConfig((prev) => ({ ...prev, fonts_dir: dir }));
+                }}
+                leftIcon={<Folder className="w-4 h-4" />}
+                aria-label="Font Klasörü Seç"
+              >
+                Seç
+              </Button>
+            </div>
+          </Card>
         </div>
       )}
 
@@ -572,12 +701,6 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
               </div>
             </div>
 
-            {downloadError && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center space-x-2 text-xs text-red-400">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                <span>{downloadError}</span>
-              </div>
-            )}
 
             {/* Resolution Pills */}
             <ResolutionPills
@@ -602,6 +725,53 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
               size="sm"
             />
 
+            {/* Model Download & Status Card */}
+            {activeUpscaleModel && !activeUpscaleModel.is_downloaded && activeUpscaleModel.format !== 'glsl' && (
+              <div className="p-3 rounded-xl bg-surface-container-high border border-outline-variant space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs">
+                    <span className="font-bold text-white block">{activeUpscaleModel.name}</span>
+                    <span className="text-[10px] text-neutral-400">
+                      Boyut: {activeUpscaleModel.size_mb.toFixed(1)} MB (Henüz indirilmedi)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isDownloading}
+                    onClick={() => handleDownloadModel(activeUpscaleModel.id)}
+                    className="px-3 py-1.5 rounded-lg bg-white hover:bg-neutral-200 text-black font-bold text-xs shadow-sm transition disabled:opacity-50 flex items-center space-x-1.5 cursor-pointer"
+                  >
+                    {isDownloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                    <span>{isDownloading ? 'İndiriliyor...' : 'Modeli İndir'}</span>
+                  </button>
+                </div>
+
+                {downloadProgress && downloadProgress.modelId === activeUpscaleModel.id && (
+                  <div className="space-y-1.5 pt-1 border-t border-outline-variant/30">
+                    <div className="flex justify-between text-[10px] font-mono text-neutral-300">
+                      <span>İlerleme: %{downloadProgress.percentage.toFixed(1)}</span>
+                      <span>{downloadProgress.downloadedMb.toFixed(1)} MB / {downloadProgress.totalMb.toFixed(1)} MB</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-surface-container-lowest rounded-full overflow-hidden border border-outline-variant/30">
+                      <div
+                        className="h-full bg-white transition-all duration-200"
+                        style={{ width: `${downloadProgress.percentage}%` }}
+                      />
+                    </div>
+                    {downloadProgress.status === 'error' && (
+                      <p className="text-[10px] text-danger font-bold">{downloadProgress.error}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeUpscaleModel && (activeUpscaleModel.is_downloaded || activeUpscaleModel.format === 'glsl') && (
+              <div className="flex items-center space-x-2 text-xs font-mono text-white bg-white/5 border border-white/20 px-3 py-2 rounded-lg">
+                <CheckCircle2 className="w-3.5 h-3.5 text-white flex-shrink-0" />
+                <span>Model hazır {activeUpscaleModel.format === 'glsl' ? '(Dahili GLSL Shader)' : '(Yerel ONNX İndirildi)'}</span>
+              </div>
+            )}
             {/* Upscale Note */}
             {config.model_settings.upscale_enabled && (
               <p className="text-[11px] text-neutral-400 font-mono bg-surface-container-highest/60 border border-outline-variant/40 rounded-lg px-3 py-2">

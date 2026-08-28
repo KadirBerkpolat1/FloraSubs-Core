@@ -19,9 +19,22 @@ export const isTauri = (): boolean => {
   return '__TAURI_INTERNALS__' in window || '__TAURI__' in window;
 };
 
+export function normalizeClientPath(path: string): string {
+  let clean = path.trim();
+  if (clean.startsWith('file://')) {
+    clean = clean.replace(/^file:\/\//, '');
+    try {
+      clean = decodeURIComponent(clean);
+    } catch {
+      // fallback
+    }
+  }
+  return clean;
+}
+
 export function convertMediaSrc(filePath: string): string {
   if (!isTauri()) return filePath;
-  return filePath;
+  return normalizeClientPath(filePath);
 }
 export async function getHardwareProfile(): Promise<HardwareProfile> {
   if (!isTauri()) {
@@ -50,6 +63,7 @@ export async function getHardwareProfile(): Promise<HardwareProfile> {
 }
 
 export async function probeMedia(filePath: string): Promise<MediaMetadata> {
+  const cleanPath = normalizeClientPath(filePath);
   if (!isTauri()) {
     return {
       file_path: filePath,
@@ -78,7 +92,7 @@ export async function probeMedia(filePath: string): Promise<MediaMetadata> {
       font_count: 14,
     };
   }
-  return await invoke<MediaMetadata>('probe_media', { filePath });
+  return await invoke<MediaMetadata>('probe_media', { filePath: cleanPath, file_path: cleanPath });
 }
 
 export async function extractSubtitle(
@@ -89,8 +103,11 @@ export async function extractSubtitle(
   if (!isTauri()) return outputPath;
   return await invoke<string>('extract_subtitle', {
     inputPath,
+    input_path: inputPath,
     subtitleIndex,
+    subtitle_index: subtitleIndex,
     outputPath,
+    output_path: outputPath,
   });
 }
 
@@ -188,7 +205,6 @@ export async function downloadModel(modelId: string): Promise<string> {
   if (!isTauri()) return 'Model downloaded';
   return await invoke<string>('download_model', { modelId });
 }
-
 export async function startEncode(config: EncodeJobConfig): Promise<void> {
   if (!isTauri()) {
     console.log('[Browser Mock] startEncode', config);
@@ -199,17 +215,17 @@ export async function startEncode(config: EncodeJobConfig): Promise<void> {
 
 export async function pauseEncode(jobId: string): Promise<void> {
   if (!isTauri()) return;
-  return await invoke<void>('pause_encode', { jobId });
+  return await invoke<void>('pause_encode', { jobId, job_id: jobId });
 }
 
 export async function resumeEncode(jobId: string): Promise<void> {
   if (!isTauri()) return;
-  return await invoke<void>('resume_encode', { jobId });
+  return await invoke<void>('resume_encode', { jobId, job_id: jobId });
 }
 
 export async function cancelEncode(jobId: string): Promise<void> {
   if (!isTauri()) return;
-  return await invoke<void>('cancel_encode', { jobId });
+  return await invoke<void>('cancel_encode', { jobId, job_id: jobId });
 }
 
 export async function cancelAllJobs(): Promise<void> {
@@ -227,12 +243,14 @@ export async function openInSystemPlayer(filePath: string): Promise<void> {
     console.log('[Browser Mock] openInSystemPlayer', filePath);
     return;
   }
-  return await invoke<void>('open_in_system_player', { filePath });
+  const clean = normalizeClientPath(filePath);
+  return await invoke<void>('open_in_system_player', { filePath: clean, file_path: clean });
 }
 
 export async function getVideoStreamUrl(filePath: string): Promise<string> {
-  if (!isTauri()) return '';
-  return await invoke<string>('get_video_stream_url', { filePath });
+  if (!isTauri()) return filePath;
+  const clean = normalizeClientPath(filePath);
+  return await invoke<string>('get_video_stream_url', { filePath: clean, file_path: clean });
 }
 
 export async function getSubtitleStreamUrl(
@@ -240,9 +258,12 @@ export async function getSubtitleStreamUrl(
   subtitleIndex: number
 ): Promise<string> {
   if (!isTauri()) return '';
+  const clean = normalizeClientPath(filePath);
   return await invoke<string>('get_subtitle_stream_url', {
-    filePath,
+    filePath: clean,
+    file_path: clean,
     subtitleIndex,
+    subtitle_index: subtitleIndex,
   });
 }
 
@@ -252,31 +273,37 @@ export async function getPreviewSubtitles(
   isExternal: boolean
 ): Promise<SubtitleDialogue[]> {
   if (!isTauri()) return [];
+  const clean = normalizeClientPath(filePath);
   return await invoke<SubtitleDialogue[]>('get_preview_subtitles', {
-    filePath,
+    filePath: clean,
+    file_path: clean,
     subtitleIndex,
+    subtitle_index: subtitleIndex,
     isExternal,
+    is_external: isExternal,
   });
 }
-
 export async function selectMediaFile(): Promise<string | null> {
   if (!isTauri()) return null;
-  return await invoke<string | null>('open_media_file_native');
+  const file = await invoke<string | null>('open_media_file_native');
+  return file ? normalizeClientPath(file) : null;
 }
 
 export async function selectMultipleMediaFiles(): Promise<string[]> {
   if (!isTauri()) return [];
-  return await invoke<string[]>('open_media_files_native');
+  const list = await invoke<string[]>('open_media_files_native');
+  return (list || []).map(normalizeClientPath);
 }
+
 export async function addMediaFilesDirect(paths: string[]): Promise<void> {
   if (!isTauri()) return;
   return await invoke<void>('add_media_files_direct', { paths });
 }
 
-
 export async function selectSubtitleFile(): Promise<string | null> {
   if (!isTauri()) return null;
-  return await invoke<string | null>('open_subtitle_file_native');
+  const file = await invoke<string | null>('open_subtitle_file_native');
+  return file ? normalizeClientPath(file) : null;
 }
 
 export async function selectOutputDirectory(): Promise<string | null> {
@@ -323,7 +350,8 @@ export async function onDragDropFiles(
   if (!isTauri()) return () => {};
   return await getCurrentWebviewWindow().onDragDropEvent((event) => {
     if (event.payload.type === 'drop' && event.payload.paths && event.payload.paths.length > 0) {
-      callback(event.payload.paths);
+      const cleanPaths = event.payload.paths.map(normalizeClientPath);
+      callback(cleanPaths);
     }
   });
 }

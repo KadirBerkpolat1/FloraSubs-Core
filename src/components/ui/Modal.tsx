@@ -96,17 +96,17 @@ export const Modal: React.FC<ModalProps> = ({
         ref={modalRef}
         tabIndex={-1}
         className={twMerge(
-          'w-full bg-slate-900 border border-slate-700 rounded-2xl shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200',
+          'w-full bg-surface-container-high border border-outline-variant rounded-2xl shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200',
           sizes[size]
         )}
       >
         {(title || showCloseButton) && (
-          <div className="flex items-start justify-between p-5 border-b border-slate-700">
+          <div className="flex items-start justify-between p-5 border-b border-outline-variant">
             <div>
               {title && (
                 <h2
                   id="modal-title"
-                  className="text-base font-semibold text-slate-100"
+                  className="text-base font-semibold text-white"
                 >
                   {title}
                 </h2>
@@ -114,7 +114,7 @@ export const Modal: React.FC<ModalProps> = ({
               {description && (
                 <p
                   id="modal-description"
-                  className="mt-1 text-sm text-slate-400"
+                  className="mt-1 text-sm text-neutral-400"
                 >
                   {description}
                 </p>
@@ -123,7 +123,7 @@ export const Modal: React.FC<ModalProps> = ({
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-surface-container transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white"
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />

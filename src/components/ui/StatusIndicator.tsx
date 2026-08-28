@@ -21,12 +21,12 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
   const baseStyles = 'inline-flex items-center gap-1.5 font-mono';
 
   const statusConfig = {
-    idle: { color: 'text-slate-500', icon: Circle, dotColor: 'bg-slate-500' },
-    loading: { color: 'text-blue-400', icon: Loader2, dotColor: 'bg-blue-400 animate-pulse' },
-    success: { color: 'text-emerald-400', icon: CheckCircle2, dotColor: 'bg-emerald-400' },
-    error: { color: 'text-rose-400', icon: AlertCircle, dotColor: 'bg-rose-400' },
-    warning: { color: 'text-amber-400', icon: AlertCircle, dotColor: 'bg-amber-400 animate-pulse' },
-    processing: { color: 'text-purple-400', icon: Loader2, dotColor: 'bg-purple-400 animate-spin' },
+    idle: { color: 'text-neutral-500', icon: Circle, dotColor: 'bg-neutral-500' },
+    loading: { color: 'text-white', icon: Loader2, dotColor: 'bg-white animate-pulse' },
+    success: { color: 'text-white font-bold', icon: CheckCircle2, dotColor: 'bg-white' },
+    error: { color: 'text-danger font-bold', icon: AlertCircle, dotColor: 'bg-danger' },
+    warning: { color: 'text-neutral-300 font-bold', icon: AlertCircle, dotColor: 'bg-neutral-300 animate-pulse' },
+    processing: { color: 'text-white font-bold', icon: Loader2, dotColor: 'bg-white animate-spin' },
   };
 
   const sizes = {

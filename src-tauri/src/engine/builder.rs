@@ -258,10 +258,10 @@ pub fn build_subtitles_filter(sub_path: &str, fonts_dir: Option<&str>) -> String
     if let Some(f_dir) = fonts_dir {
         if !f_dir.trim().is_empty() {
             let escaped_fonts = escape_ffmpeg_filter_path(f_dir);
-            return format!("subtitles='{}':fontsdir='{}'", escaped_sub, escaped_fonts);
+            return format!("subtitles='{}':fontsdir='{}':alpha=1", escaped_sub, escaped_fonts);
         }
     }
-    format!("subtitles='{}'", escaped_sub)
+    format!("subtitles='{}':alpha=1", escaped_sub)
 }
 /// Builds the complete FFmpeg argument vector based on the configuration.
 pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String> {
@@ -314,6 +314,8 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
         } else {
             vf_parts.push("scale=iw*2:ih*2:flags=lanczos+accurate_rnd".to_string());
         }
+        // Force 1:1 square pixel aspect ratio to prevent distorted subtitles & stretched playback
+        vf_parts.push("setsar=1".to_string());
     }
 
     // 2. Frame Interpolation / FPS Generation (Supports up to 255 FPS)
@@ -762,7 +764,7 @@ mod tests {
         let filter = build_subtitles_filter(win_sub, Some(win_fonts));
         assert_eq!(
             filter,
-            "subtitles='C\\:/Users/Berk/AppData/Local/Temp/florasubs_job_sub.ass':fontsdir='C\\:/Users/Berk/AppData/Local/Temp/florasubs_job_fonts'"
+            "subtitles='C\\:/Users/Berk/AppData/Local/Temp/florasubs_job_sub.ass':fontsdir='C\\:/Users/Berk/AppData/Local/Temp/florasubs_job_fonts':alpha=1"
         );
     }
 

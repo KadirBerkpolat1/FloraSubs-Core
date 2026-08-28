@@ -146,135 +146,121 @@ export const FileQueue: React.FC<FileQueueProps> = ({
                       : 'bg-surface-container-lowest/80 border-outline-variant/40 hover:bg-surface-container hover:border-outline-variant'
                   }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-3 flex-1 min-w-0 pr-2">
-                      <div className="w-9 h-9 rounded-lg bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary flex-shrink-0">
-                        <FileVideo className="w-4 h-4" />
-                      </div>
-
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <h4 className="text-xs font-bold text-on-surface truncate" title={item.fileName}>
-                            {item.fileName}
-                          </h4>
-                          <span className="text-[10px] text-on-surface-variant font-mono">
-                            ({formatBytes(item.fileSize)})
-                          </span>
-                        </div>
-
-                        {/* Metadata Tags */}
-                        <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono">
-                          {meta?.duration_formatted && (
-                            <span className="px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant border border-outline-variant/50">
-                              ⏱ {meta.duration_formatted}
-                            </span>
-                          )}
-                          {meta?.video_stream && (
-                            <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                              {meta.video_stream.width}x{meta.video_stream.height} ({meta.video_stream.fps.toFixed(1)} fps)
-                            </span>
-                          )}
-                          {meta && meta.subtitle_streams.length > 0 && (
-                            <span className="px-1.5 py-0.5 rounded bg-secondary/10 text-secondary border border-secondary/20">
-                              📝 {meta.subtitle_streams.length} Altyazı
-                            </span>
-                          )}
-                          {meta && meta.font_count > 0 && (
-                            <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                              🔤 {meta.font_count} Font
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-8 h-8 rounded-lg bg-surface-container-high border border-outline-variant flex items-center justify-center text-white flex-shrink-0 mt-0.5">
+                      <FileVideo className="w-4 h-4" />
                     </div>
 
-                    {/* Status Badge & Actions */}
-                    <div className="flex items-center space-x-2 flex-shrink-0">
-                      {/* Status Badge */}
-                      {isEncoding && (
-                        <span className="px-2.5 py-1 rounded-full bg-primary/20 text-primary text-[11px] font-bold border border-primary/30 flex items-center space-x-1 animate-pulse">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                          <span>İşleniyor (%{item.progress.percentage.toFixed(1)})</span>
-                        </span>
-                      )}
-                      {isPaused && (
-                        <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-[11px] font-bold border border-amber-500/30">
-                          Duraklatıldı
-                        </span>
-                      )}
-                      {isCompleted && (
-                        <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold border border-emerald-500/30 flex items-center space-x-1">
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>Tamamlandı ({item.progress.elapsed_formatted || item.progress.time_formatted})</span>
-                        </span>
-                      )}
-                      {isError && (
-                        <span className="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-400 text-[11px] font-bold border border-rose-500/30 flex items-center space-x-1">
-                          <AlertCircle className="w-3 h-3" />
-                          <span>Hata</span>
-                        </span>
-                      )}
-                      {item.status === 'waiting' && (
-                        <span className="px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant text-[11px] font-medium border border-outline-variant/40">
-                          Bekliyor
-                        </span>
-                      )}
+                    <div className="flex-1 min-w-0">
+                      {/* Title & Top Action Row */}
+                      <div className="flex items-start justify-between gap-1.5">
+                        <h4 className="text-xs font-bold text-white break-words line-clamp-2 leading-tight" title={item.fileName}>
+                          {item.fileName}
+                        </h4>
 
-                      {/* Card Action Buttons */}
-                      <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
-                        {item.status === 'waiting' && (
-                          <button
-                            onClick={() => onStartItem(item.id)}
-                            className="p-1.5 rounded-lg bg-primary/20 hover:bg-primary text-primary hover:text-surface-container-lowest transition font-bold"
-                            title="Kodlamayı Başlat"
-                          >
-                            <Play className="w-3.5 h-3.5" />
-                          </button>
+                        {/* Card Action Buttons */}
+                        <div className="flex items-center space-x-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                          {item.status === 'waiting' && (
+                            <button
+                              onClick={() => onStartItem(item.id)}
+                              className="p-1 rounded bg-white/10 hover:bg-white text-white hover:text-black transition"
+                              title="Kodlamayı Başlat"
+                            >
+                              <Play className="w-3 h-3 fill-current" />
+                            </button>
+                          )}
+                          {isEncoding && (
+                            <>
+                              <button
+                                onClick={() => onPauseItem(item.id)}
+                                className="p-1 rounded bg-surface-container-high hover:bg-neutral-700 text-neutral-300 transition"
+                                title="Duraklat"
+                              >
+                                <Pause className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => onCancelItem(item.id)}
+                                className="p-1 rounded bg-danger/20 hover:bg-danger text-danger hover:text-white transition"
+                                title="İptal Et"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </>
+                          )}
+                          {isPaused && (
+                            <>
+                              <button
+                                onClick={() => onResumeItem(item.id)}
+                                className="p-1 rounded bg-white/20 hover:bg-white text-white hover:text-black transition"
+                                title="Devam Et"
+                              >
+                                <Play className="w-3 h-3 fill-current" />
+                              </button>
+                              <button
+                                onClick={() => onCancelItem(item.id)}
+                                className="p-1 rounded bg-danger/20 hover:bg-danger text-danger hover:text-white transition"
+                                title="İptal Et"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </>
+                          )}
+                          {!isEncoding && !isPaused && (
+                            <button
+                              onClick={() => onRemoveItem(item.id)}
+                              className="p-1 rounded hover:bg-danger/20 text-neutral-400 hover:text-danger transition"
+                              title="Kuyruktan Çıkar"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* File Size & Duration Specs */}
+                      <div className="flex items-center space-x-2 text-[10px] text-neutral-400 font-mono mt-1">
+                        <span>{formatBytes(item.fileSize)}</span>
+                        {meta?.duration_formatted && (
+                          <span>• ⏱ {meta.duration_formatted}</span>
                         )}
-                        {isEncoding && (
-                          <>
-                            <button
-                              onClick={() => onPauseItem(item.id)}
-                              className="p-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-white transition"
-                              title="Duraklat"
-                            >
-                              <Pause className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => onCancelItem(item.id)}
-                              className="p-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white transition"
-                              title="İptal Et"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </>
+                        {meta?.video_stream && (
+                          <span>• {meta.video_stream.width}x{meta.video_stream.height}</span>
+                        )}
+                      </div>
+
+                      {/* Metadata & Status Badges */}
+                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono mt-1.5">
+                        {meta && meta.subtitle_streams && meta.subtitle_streams.length > 0 && (
+                          <span className="px-1.5 py-0.5 rounded bg-white/10 text-white border border-white/20">
+                            📝 {meta.subtitle_streams.length} Altyazı
+                          </span>
+                        )}
+                        {meta && meta.font_count > 0 && (
+                          <span className="px-1.5 py-0.5 rounded bg-white/10 text-white border border-white/20">
+                            🔤 {meta.font_count} Font
+                          </span>
+                        )}
+                        {isCompleted && (
+                          <span className="px-1.5 py-0.5 rounded bg-white/10 text-white border border-white/30 font-bold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>Tamamlandı</span>
+                          </span>
+                        )}
+                        {isError && (
+                          <span className="px-1.5 py-0.5 rounded bg-danger/20 text-danger border border-danger/30 font-bold flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            <span>Hata</span>
+                          </span>
                         )}
                         {isPaused && (
-                          <>
-                            <button
-                              onClick={() => onResumeItem(item.id)}
-                              className="p-1.5 rounded-lg bg-primary/20 hover:bg-primary text-primary hover:text-surface-container-lowest transition"
-                              title="Devam Et"
-                            >
-                              <Play className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => onCancelItem(item.id)}
-                              className="p-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white transition"
-                              title="İptal Et"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </>
+                          <span className="px-1.5 py-0.5 rounded bg-white/10 text-neutral-300 border border-white/20">
+                            Duraklatıldı
+                          </span>
                         )}
-                        {!isEncoding && !isPaused && (
-                          <button
-                            onClick={() => onRemoveItem(item.id)}
-                            className="p-1.5 rounded-lg bg-surface-container-high hover:bg-rose-600/30 text-on-surface-variant hover:text-danger transition"
-                            title="Kuyruktan Çıkar"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                        {isEncoding && (
+                          <span className="px-1.5 py-0.5 rounded bg-white/20 text-white border border-white/40 animate-pulse font-bold">
+                            İşleniyor (%{item.progress.percentage.toFixed(1)})
+                          </span>
                         )}
                       </div>
                     </div>
@@ -285,19 +271,19 @@ export const FileQueue: React.FC<FileQueueProps> = ({
                     <div className="mt-3 pt-3 border-t border-outline-variant/30 space-y-2.5">
                       {/* Bar & Header */}
                       <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="text-primary font-bold flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
+                        <span className="text-white font-bold flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-white animate-ping" />
                           {isPaused ? 'Duraklatıldı' : 'İşleniyor...'} (%{item.progress.percentage.toFixed(1)})
                         </span>
-                        <span className="text-emerald-400 font-bold bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-emerald-400" />
+                        <span className="text-white font-bold bg-white/10 border border-white/20 px-2 py-0.5 rounded flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-white" />
                           <span>Geçen Süre: {item.progress.elapsed_formatted || '00:00:00'}</span>
                         </span>
                       </div>
 
                       <div className="w-full h-2 bg-surface-container-lowest rounded-full overflow-hidden border border-outline-variant/30">
                         <div
-                          className="h-full bg-gradient-to-r from-primary via-orange to-emerald-400 rounded-full transition-all duration-300 shadow-sm shadow-primary/30"
+                          className="h-full bg-white rounded-full transition-all duration-300 shadow-sm shadow-white/30"
                           style={{ width: `${item.progress.percentage}%` }}
                         />
                       </div>
@@ -305,19 +291,19 @@ export const FileQueue: React.FC<FileQueueProps> = ({
                       {/* Live Stats Grid */}
                       <div className="grid grid-cols-4 gap-2 text-[10px] font-mono text-on-surface-variant bg-surface-container-lowest p-2 rounded-lg border border-outline-variant/40">
                         <div className="flex items-center space-x-1">
-                          <Gauge className="w-3 h-3 text-primary" />
+                          <Gauge className="w-3 h-3 text-white" />
                           <span>FPS: <strong className="text-on-surface">{item.progress.fps.toFixed(1)}</strong></span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <Zap className="w-3 h-3 text-orange" />
+                          <Zap className="w-3 h-3 text-white" />
                           <span>Hız: <strong className="text-on-surface">{item.progress.speed.toFixed(1)}x</strong></span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <Clock className="w-3 h-3 text-secondary" />
+                          <Clock className="w-3 h-3 text-white" />
                           <span>Konum: <strong className="text-on-surface">{item.progress.time_formatted}</strong></span>
                         </div>
                         <div className="flex items-center space-x-1 text-right justify-end">
-                          <span>Kalan: <strong className="text-primary">{item.progress.eta_formatted}</strong></span>
+                          <span>Kalan: <strong className="text-white">{item.progress.eta_formatted}</strong></span>
                         </div>
                       </div>
                     </div>
@@ -325,13 +311,13 @@ export const FileQueue: React.FC<FileQueueProps> = ({
 
                   {/* Completed Duration Summary */}
                   {isCompleted && (
-                    <div className="mt-3 pt-2.5 border-t border-emerald-500/20 flex items-center justify-between text-[11px] font-mono bg-emerald-950/20 px-3 py-2 rounded-lg text-emerald-400 border border-emerald-500/30">
+                    <div className="mt-3 pt-2.5 border-t border-white/20 flex items-center justify-between text-[11px] font-mono bg-white/5 px-3 py-2 rounded-lg text-white border border-white/20">
                       <span className="flex items-center space-x-1.5 font-bold">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-white flex-shrink-0" />
                         <span>Kodlama & Upscale Tamamlandı!</span>
                       </span>
-                      <span className="flex items-center space-x-1.5 bg-emerald-900/40 px-2 py-0.5 rounded border border-emerald-500/20">
-                        <Clock className="w-3.5 h-3.5 text-emerald-300" />
+                      <span className="flex items-center space-x-1.5 bg-white/10 px-2 py-0.5 rounded border border-white/20">
+                        <Clock className="w-3.5 h-3.5 text-neutral-300" />
                         <span>Toplam Süre: <strong className="text-white font-bold">{item.progress.elapsed_formatted || item.progress.time_formatted}</strong></span>
                       </span>
                     </div>

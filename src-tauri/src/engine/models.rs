@@ -186,7 +186,7 @@ pub fn get_ai_models_catalog() -> Vec<AiModelInfo> {
         },
         AiModelInfo {
             id: "2x_LD-Anime-Compact".to_string(),
-            name: "LD-Anime Compact (2x - Çizgi Karartma & 2x Ölçekleme)".to_string(),
+            name: "LD-Anime Compact (2x - Çizgi Karartma ve 2x Ölçekleme)".to_string(),
             category: "upscale".to_string(),
             format: "onnx".to_string(),
             filename: "2x_LD-Anime-Compact.onnx".to_string(),

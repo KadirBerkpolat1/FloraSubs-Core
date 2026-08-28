@@ -7,8 +7,10 @@ import {
   FileVideo,
   Eye,
   Type,
+  Folder,
+  X,
 } from 'lucide-react';
-import { EncodeJobConfig, QueueItem } from '../types';
+import type { EncodeJobConfig, QueueItem } from '../types';
 import {
   extractAllSubs,
   extractFonts,
@@ -124,27 +126,46 @@ export const SubtitleView: React.FC<SubtitleViewProps> = ({
     }
   };
 
+  const handleBrowseFontsDir = async () => {
+    const dir = await selectOutputDirectory();
+    if (dir) {
+      setConfig((prev) => ({
+        ...prev,
+        fonts_dir: dir,
+      }));
+      setStatusMsg({ type: 'success', text: `Özel font klasörü bağlandı: ${dir}` });
+    }
+  };
+
+  const handleClearFontsDir = () => {
+    setConfig((prev) => ({
+      ...prev,
+      fonts_dir: null,
+    }));
+    setStatusMsg({ type: 'success', text: 'Özel font klasörü temizlendi.' });
+  };
+
   return (
-    <div className="flex-1 bg-slate-950 flex flex-col h-full overflow-y-auto select-none p-6 space-y-6">
+    <div className="flex-1 bg-surface-container-lowest flex flex-col h-full overflow-y-auto select-none p-6 space-y-6">
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-slate-700/50">
+      <div className="flex items-center justify-between pb-4 border-b border-outline-variant">
         <div className="flex items-center space-x-3">
-          <div className="p-2 rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30">
+          <div className="p-2 rounded-xl bg-white/10 text-white border border-white/20">
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-slate-100 uppercase tracking-wide">
+            <h1 className="text-sm font-bold text-white uppercase tracking-wide">
               Gelişmiş Altyazı & Font İstasyonu
             </h1>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-neutral-400">
               Gömülü ASS/SSA altyazıları ve TTF/OTF fontları tek tıkla çıkartın, harici altyazıları bağlayın.
             </p>
           </div>
         </div>
 
         {selectedItem && (
-          <div className="flex items-center space-x-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/50 text-xs font-mono text-blue-400">
-            <FileVideo className="w-3.5 h-3.5" />
+          <div className="flex items-center space-x-2 bg-surface-container px-3 py-1.5 rounded-lg border border-outline-variant text-xs font-mono text-white">
+            <FileVideo className="w-3.5 h-3.5 text-white" />
             <span className="font-bold truncate max-w-xs">{selectedItem.fileName}</span>
           </div>
         )}
@@ -159,9 +180,9 @@ export const SubtitleView: React.FC<SubtitleViewProps> = ({
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* LEFT: SUBTITLE EXTRACTOR & TRACK PICKER */}
-          <Card variant="default" padding="lg" className="space-y-5">
-            <h2 className="text-xs font-bold text-slate-200 tracking-wide uppercase flex items-center space-x-2 pb-3 border-b border-slate-700/50">
-              <Eye className="w-4 h-4 text-purple-400" />
+          <Card variant="default" padding="lg" className="space-y-5 bg-surface-container border border-outline-variant">
+            <h2 className="text-xs font-bold text-white tracking-wide uppercase flex items-center space-x-2 pb-3 border-b border-outline-variant">
+              <Eye className="w-4 h-4 text-white" />
               <span>Gömülü Altyazı Akışları ({meta?.subtitle_streams.length || 0})</span>
             </h2>
 
@@ -174,15 +195,15 @@ export const SubtitleView: React.FC<SubtitleViewProps> = ({
                       onClick={() => setSelectedSubIndex(sub.subtitle_index)}
                       className={`p-3 rounded-xl border transition cursor-pointer flex items-center justify-between ${
                         selectedSubIndex === sub.subtitle_index
-                          ? 'bg-purple-600/20 border-purple-500/60 text-white shadow-md'
-                          : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-700/50 hover:border-slate-600/50 text-slate-300'
+                          ? 'bg-white/10 border-white text-white shadow-md shadow-white/10'
+                          : 'bg-surface-container-high border-outline-variant hover:border-white/40 text-neutral-300'
                       }`}
                     >
                       <div className="space-y-0.5">
-                        <span className="text-xs font-bold block">
+                        <span className="text-xs font-bold block text-white">
                           #{sub.subtitle_index + 1}: {sub.title || 'Başlıksız Altyazı'}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-mono block">
+                        <span className="text-[10px] text-neutral-400 font-mono block">
                           Dil: {sub.language.toUpperCase()} • Format: {sub.codec.toUpperCase()}
                         </span>
                       </div>
@@ -198,7 +219,7 @@ export const SubtitleView: React.FC<SubtitleViewProps> = ({
                           name="subTrack"
                           checked={selectedSubIndex === sub.subtitle_index}
                           onChange={() => setSelectedSubIndex(sub.subtitle_index)}
-                          className="text-purple-600 focus:ring-0"
+                          className="text-white focus:ring-0 accent-white"
                         />
                       </div>
                     </div>
@@ -223,7 +244,7 @@ export const SubtitleView: React.FC<SubtitleViewProps> = ({
                     size="md"
                     onClick={handleExtractAll}
                     disabled={isExtracting}
-                    leftIcon={<FolderDown className="w-4 h-4 text-purple-400" />}
+                    leftIcon={<FolderDown className="w-4 h-4 text-white" />}
                     className="flex-1"
                   >
                     Tümünü Klasöre Çıkar
@@ -235,8 +256,8 @@ export const SubtitleView: React.FC<SubtitleViewProps> = ({
             )}
 
             {/* External Subtitle Binder */}
-            <div className="pt-3 border-t border-slate-700/50 space-y-2">
-              <span className="text-xs font-bold text-slate-300 block">Harici Altyazı Dosyası (.ass / .srt)</span>
+            <div className="pt-3 border-t border-outline-variant space-y-2">
+              <span className="text-xs font-bold text-white block">Harici Altyazı Dosyası (.ass / .srt)</span>
               <div className="flex space-x-2">
                 <Input
                   value={config.external_subtitle_path || 'Harici altyazı seçilmedi...'}
@@ -249,7 +270,7 @@ export const SubtitleView: React.FC<SubtitleViewProps> = ({
                   variant="secondary"
                   size="sm"
                   onClick={handleBrowseExternalSub}
-                  leftIcon={<FileText className="w-3.5 h-3.5 text-purple-400" />}
+                  leftIcon={<FileText className="w-3.5 h-3.5 text-white" />}
                 >
                   Seç
                 </Button>
@@ -258,16 +279,16 @@ export const SubtitleView: React.FC<SubtitleViewProps> = ({
           </Card>
 
           {/* RIGHT: EMBEDDED FONT ATTACHMENTS INSPECTOR */}
-          <Card variant="default" padding="lg" className="space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-700/50">
-              <h2 className="text-xs font-bold text-slate-200 tracking-wide uppercase flex items-center space-x-2">
-                <Sparkles className="w-4 h-4 text-emerald-400" />
+          <Card variant="default" padding="lg" className="space-y-4 bg-surface-container border border-outline-variant">
+            <div className="flex items-center justify-between pb-3 border-b border-outline-variant">
+              <h2 className="text-xs font-bold text-white tracking-wide uppercase flex items-center space-x-2">
+                <Sparkles className="w-4 h-4 text-white" />
                 <span>Gömülü Font Ekleri ({meta?.font_count || 0})</span>
               </h2>
 
               {meta && meta.font_count > 0 && (
                 <Button
-                  variant="success"
+                  variant="primary"
                   size="sm"
                   onClick={handleExtractFonts}
                   disabled={isExtracting}
@@ -285,28 +306,64 @@ export const SubtitleView: React.FC<SubtitleViewProps> = ({
                   .map((att, idx) => (
                     <div
                       key={idx}
-                      className="p-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-between text-xs font-mono"
+                      className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant flex items-center justify-between text-xs font-mono"
                     >
                       <div className="flex items-center space-x-2">
-                        <Type className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                        <span className="text-slate-100 truncate text-[11px]">{att.filename || 'font.ttf'}</span>
+                        <Type className="w-3.5 h-3.5 text-white flex-shrink-0" />
+                        <span className="text-neutral-200 truncate text-[11px]">{att.filename || 'font.ttf'}</span>
                       </div>
-                      <span className="text-[10px] text-slate-400 px-1.5 py-0.5 rounded bg-slate-900/50">
+                      <span className="text-[10px] text-neutral-400 px-1.5 py-0.5 rounded bg-surface-container-lowest">
                         {att.mime_type || 'application/x-truetype-font'}
                       </span>
                     </div>
                   ))
               ) : (
-                <p className="text-xs text-slate-500 italic">MKV konteynerinde gömülü font ekleri bulunamadı.</p>
+                <p className="text-xs text-neutral-500 italic">MKV konteynerinde gömülü font ekleri bulunamadı.</p>
               )}
+            </div>
+
+            {/* External Custom Fonts Directory Binder */}
+            <div className="pt-3 border-t border-outline-variant space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white block">Özel Font Klasörü (fontsdir)</span>
+                {config.fonts_dir && (
+                  <button
+                    onClick={handleClearFontsDir}
+                    className="text-[10px] text-danger hover:underline flex items-center space-x-1"
+                  >
+                    <X className="w-3 h-3" />
+                    <span>Kaldır</span>
+                  </button>
+                )}
+              </div>
+              <div className="flex space-x-2">
+                <Input
+                  value={config.fonts_dir || 'Harici font klasörü seçilmedi (varsayılan)...'}
+                  readOnly
+                  size="sm"
+                  variant="mono"
+                  className="flex-1"
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleBrowseFontsDir}
+                  leftIcon={<Folder className="w-3.5 h-3.5 text-white" />}
+                >
+                  Klasör Seç
+                </Button>
+              </div>
+              <p className="text-[10px] text-neutral-400">
+                ASS altyazılarında kullanılan özel .ttf/.otf fontların bulunduğu klasörü seçin.
+              </p>
             </div>
 
             {statusMsg && (
               <div
                 className={`p-3 rounded-xl flex items-center space-x-2 text-xs font-medium ${
                   statusMsg.type === 'success'
-                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
-                    : 'bg-rose-500/10 border border-rose-500/30 text-rose-400'
+                    ? 'bg-white/10 border border-white/20 text-white'
+                    : 'bg-danger/10 border border-danger/30 text-danger'
                 }`}
               >
                 <StatusIndicator status={statusMsg.type === 'success' ? 'success' : 'error'} size="sm" />

@@ -22,6 +22,7 @@ import {
   cancelEncode,
   getHardwareProfile,
   getPresets,
+  normalizeClientPath,
   onEncodeLog,
   onEncodeProgress,
   onDragDropFiles,
@@ -32,6 +33,7 @@ import {
   startEncode,
   isTauri,
 } from './services/tauri';
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('home');
   const [isBatchRunning, setIsBatchRunning] = useState<boolean>(false);
@@ -112,9 +114,13 @@ export default function App() {
     try {
       if (!files || files.length === 0) return;
 
-      // Clean & deduplicate input paths
+      // Clean & normalize paths with full UTF-8 percent-decoding
       const uniqueFiles = Array.from(
-        new Set(files.filter((f) => typeof f === 'string' && f.trim().length > 0))
+        new Set(
+          files
+            .map(normalizeClientPath)
+            .filter((f) => typeof f === 'string' && f.trim().length > 0)
+        )
       );
       if (uniqueFiles.length === 0) return;
 
@@ -143,7 +149,6 @@ export default function App() {
           : file.substring(0, file.lastIndexOf(/[\\/]/.exec(file)?.[0] || '/'));
         const sep = savedOutput ? '/' : (parentDir.includes('\\') ? '\\' : '/');
         const defaultOut = `${parentDir}${sep}${baseStem}_FloraSubs.${configRef.current.container}`;
-
         const itemConfig: EncodeJobConfig = {
           ...configRef.current,
           id: itemId,
@@ -201,15 +206,36 @@ export default function App() {
     await handleAddFilePaths(files);
   };
 
+  const resolveItemOutput = (item: QueueItem, globalConfig: EncodeJobConfig): string => {
+    if (selectedId === item.id && globalConfig.output_path && globalConfig.output_path.trim().length > 0) {
+      return globalConfig.output_path;
+    }
+    if (item.config.output_path && item.config.output_path.trim().length > 0) {
+      return item.config.output_path;
+    }
+    const fileName = item.fileName;
+    const baseStem = fileName.replace(/\.[^/.]+$/, '');
+    const parentDir = item.filePath.substring(0, item.filePath.lastIndexOf(/[\\/]/.exec(item.filePath)?.[0] || '/'));
+    const sep = parentDir.includes('\\') ? '\\' : '/';
+    return `${parentDir}${sep}${baseStem}_FloraSubs.${globalConfig.container || 'mp4'}`;
+  };
+
   // Batch Serialization
   const startNextInBatch = (currentQueue: QueueItem[]) => {
     const nextItem = currentQueue.find((i) => i.status === 'waiting');
     if (nextItem) {
+      const targetOut = resolveItemOutput(nextItem, config);
+      const jobConfig: EncodeJobConfig = {
+        ...config,
+        id: nextItem.id,
+        input_path: nextItem.filePath,
+        output_path: targetOut,
+      };
       setQueue((prev) =>
-        prev.map((i) => (i.id === nextItem.id ? { ...i, status: 'encoding' } : i))
+        prev.map((i) => (i.id === nextItem.id ? { ...i, status: 'encoding', config: jobConfig } : i))
       );
       setCurrentBatchJobId(nextItem.id);
-      startEncode({ ...config, id: nextItem.id, input_path: nextItem.filePath }).catch((err) => {
+      startEncode(jobConfig).catch((err) => {
         console.error('Batch job start error:', err);
         setTimeout(() => startNextInBatch(currentQueue), 100);
       });
@@ -362,10 +388,12 @@ export default function App() {
     const currentItem = queue.find((i) => i.id === selectedId);
     if (!currentItem) return;
 
+    const targetOut = resolveItemOutput(currentItem, config);
     const jobConfig: EncodeJobConfig = {
       ...config,
       id: currentItem.id,
       input_path: currentItem.filePath,
+      output_path: targetOut,
     };
 
     setQueue((prev) =>
@@ -399,10 +427,12 @@ export default function App() {
     const item = queue.find((i) => i.id === id);
     if (!item) return;
 
+    const targetOut = resolveItemOutput(item, config);
     const jobConfig: EncodeJobConfig = {
       ...config,
       id: item.id,
       input_path: item.filePath,
+      output_path: targetOut,
     };
 
     setQueue((prev) =>
@@ -567,7 +597,7 @@ export default function App() {
           {activeTab === 'home' && (
             <div className="flex-1 flex h-full overflow-hidden">
               {/* Left Dock: Ingestion Queue */}
-              <div className="w-[280px] flex-shrink-0 h-full border-r border-outline-variant flex flex-col bg-surface-container-low">
+              <div className="w-[320px] xl:w-[350px] flex-shrink-0 h-full border-r border-outline-variant flex flex-col bg-surface-container-low">
                 <FileQueue
                   queue={queue}
                   selectedId={selectedId}
@@ -609,11 +639,6 @@ export default function App() {
               setConfig={setConfig}
             />
           )}
-
-          {activeTab === 'preview' && (
-            <PreviewView selectedItem={selectedItem} config={config} />
-          )}
-
           {activeTab === 'converter' && <ConverterView />}
 
           {activeTab === 'console' && (

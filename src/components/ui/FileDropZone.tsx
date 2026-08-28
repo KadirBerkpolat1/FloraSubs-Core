@@ -103,8 +103,8 @@ export const FileDropZone: React.FC<FileDropZoneProps> = ({
         'relative rounded-2xl border-2 border-dashed transition-all duration-200',
         'flex flex-col items-center justify-center p-8 space-y-3',
         isDragOver
-          ? 'border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/10'
-          : 'border-slate-700/50 hover:border-blue-500/50 hover:bg-slate-800/30',
+          ? 'border-white bg-white/10 shadow-lg shadow-white/10'
+          : 'border-outline-variant/60 hover:border-white/40 hover:bg-white/5',
         disabled && 'opacity-50 cursor-not-allowed',
         className
       )}
@@ -133,8 +133,8 @@ export const FileDropZone: React.FC<FileDropZoneProps> = ({
           className={twMerge(
             'w-14 h-14 rounded-xl flex items-center justify-center',
             isDragOver
-              ? 'bg-blue-500/20 text-blue-400'
-              : 'bg-slate-800/50 text-slate-400'
+              ? 'bg-white/20 text-white'
+              : 'bg-surface-container-high text-neutral-400'
           )}
         >
           {isDragOver ? (
@@ -144,12 +144,12 @@ export const FileDropZone: React.FC<FileDropZoneProps> = ({
           )}
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-semibold text-slate-100">{label}</p>
-          <p className="text-xs text-slate-500">{description}</p>
+          <p className="text-sm font-semibold text-white">{label}</p>
+          <p className="text-xs text-neutral-400">{description}</p>
         </div>
         {children}
       </div>
-      <div className="absolute top-3 right-3 p-1.5 rounded-lg bg-slate-800/50 text-slate-400">
+      <div className="absolute top-3 right-3 p-1.5 rounded-lg bg-surface-container-high text-neutral-400">
         <Plus className="w-4 h-4" />
       </div>
     </div>

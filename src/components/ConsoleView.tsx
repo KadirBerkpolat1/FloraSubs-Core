@@ -34,15 +34,15 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({ logs, onClearLogs }) =
   };
 
   return (
-    <div className="flex-1 bg-[#0d1117] flex flex-col h-full overflow-hidden select-none">
+    <div className="flex-1 bg-surface-container-lowest flex flex-col h-full overflow-hidden select-none">
       {/* Console Top Toolbar */}
-      <div className="h-14 px-6 border-b border-[#242938] bg-[#161b22] flex items-center justify-between">
+      <div className="h-14 px-6 border-b border-outline-variant bg-surface-container flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <Terminal className="w-4 h-4 text-emerald-400" />
-          <h2 className="text-xs font-bold text-gray-200 uppercase tracking-wide">
+          <Terminal className="w-4 h-4 text-white" />
+          <h2 className="text-xs font-bold text-white uppercase tracking-wide">
             FFmpeg Canlı Terminal Konsolu
           </h2>
-          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-mono font-semibold border border-emerald-500/30">
+          <span className="px-2 py-0.5 rounded-full bg-white/10 text-white text-xs font-mono font-semibold border border-white/20">
             {logs.length} Satır
           </span>
         </div>
@@ -56,7 +56,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({ logs, onClearLogs }) =
               placeholder="Loglarda ara..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-[#0f1117] text-gray-300 text-xs pl-8 pr-3 py-1.5 rounded-lg border border-[#2e364a] focus:outline-none focus:border-blue-500 font-mono w-44"
+              className="bg-surface-container-lowest text-white text-xs pl-8 pr-3 py-1.5 rounded-lg border border-outline-variant focus:outline-none focus:border-white font-mono w-44"
             />
           </div>
 
@@ -64,7 +64,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({ logs, onClearLogs }) =
           <select
             value={filterStream}
             onChange={(e) => setFilterStream(e.target.value as 'all' | 'system' | 'stderr' | 'stdout')}
-            className="bg-[#0f1117] text-gray-300 text-xs px-3 py-1.5 rounded-lg border border-[#2e364a] focus:outline-none focus:border-blue-500 font-mono"
+            className="bg-surface-container-lowest text-white text-xs px-3 py-1.5 rounded-lg border border-outline-variant focus:outline-none focus:border-white font-mono"
           >
             <option value="all">Tüm Akışlar</option>
             <option value="system">Sistem ([FloraSubs])</option>
@@ -77,8 +77,8 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({ logs, onClearLogs }) =
             onClick={() => setAutoScroll(!autoScroll)}
             className={`p-1.5 rounded-lg border text-xs transition flex items-center space-x-1 ${
               autoScroll
-                ? 'bg-blue-600/20 border-blue-500/40 text-blue-400'
-                : 'bg-[#1f2433] border-[#2e364a] text-gray-400'
+                ? 'bg-white text-black border-white'
+                : 'bg-surface-container-high border-outline-variant text-neutral-400'
             }`}
             title="Otomatik Kaydırma"
           >
@@ -88,16 +88,16 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({ logs, onClearLogs }) =
           {/* Copy Button */}
           <button
             onClick={handleCopyLogs}
-            className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-[#1f2433] hover:bg-[#2a3145] text-gray-300 text-xs font-medium border border-[#2e364a] transition"
+            className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-neutral-700 text-neutral-200 text-xs font-medium border border-outline-variant transition"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-gray-400" />}
+            {copied ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5 text-neutral-400" />}
             <span>{copied ? 'Kopyalandı' : 'Kopyala'}</span>
           </button>
 
           {/* Clear Button */}
           <button
             onClick={onClearLogs}
-            className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-[#1f2433] hover:bg-rose-900/30 text-rose-400 text-xs font-medium border border-[#2e364a] transition"
+            className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-danger/20 text-danger text-xs font-medium border border-outline-variant transition"
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>Temizle</span>
@@ -108,11 +108,11 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({ logs, onClearLogs }) =
       {/* Terminal Viewport */}
       <div
         ref={logContainerRef}
-        className="flex-1 p-4 font-mono text-xs overflow-y-auto bg-[#0a0c10] select-text space-y-1"
+        className="flex-1 p-4 font-mono text-xs overflow-y-auto bg-surface-container-lowest select-text space-y-1"
       >
         {filteredLogs.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-2 select-none">
-            <Terminal className="w-8 h-8 opacity-40" />
+          <div className="h-full flex flex-col items-center justify-center text-neutral-500 space-y-2 select-none">
+            <Terminal className="w-8 h-8 opacity-40 text-white" />
             <p>Konsol çıktısı bekleniyor. Kodlama başladığında loglar burada canlı akacaktır.</p>
           </div>
         ) : (
@@ -121,20 +121,20 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({ logs, onClearLogs }) =
             const isError = log.line.toLowerCase().includes('error') || log.line.toLowerCase().includes('fatal');
             const isWarning = log.line.toLowerCase().includes('warning');
 
-            let textColor = 'text-gray-300';
-            if (isSystem) textColor = 'text-blue-400 font-bold';
-            else if (isError) textColor = 'text-rose-400 font-semibold';
-            else if (isWarning) textColor = 'text-amber-400';
+            let textColor = 'text-neutral-300';
+            if (isSystem) textColor = 'text-white font-bold';
+            else if (isError) textColor = 'text-danger font-semibold';
+            else if (isWarning) textColor = 'text-neutral-200';
 
             return (
-              <div key={idx} className="flex items-start space-x-3 leading-relaxed hover:bg-[#121620] px-2 py-0.5 rounded">
-                <span className="text-gray-600 flex-shrink-0 text-[11px] select-none">{log.timestamp}</span>
+              <div key={idx} className="flex items-start space-x-3 leading-relaxed hover:bg-white/5 px-2 py-0.5 rounded">
+                <span className="text-neutral-500 flex-shrink-0 text-[11px] select-none">{log.timestamp}</span>
                 <span className={`flex-shrink-0 text-[10px] px-1 rounded uppercase select-none ${
                   isSystem
-                    ? 'bg-blue-500/20 text-blue-300'
+                    ? 'bg-white/15 text-white border border-white/20'
                     : log.stream === 'stderr'
-                    ? 'bg-purple-500/20 text-purple-300'
-                    : 'bg-gray-700/50 text-gray-400'
+                    ? 'bg-surface-container-high text-neutral-300 border border-outline-variant'
+                    : 'bg-surface-container-highest text-neutral-400 border border-outline-variant'
                 }`}>
                   {log.stream}
                 </span>

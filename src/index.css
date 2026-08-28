@@ -214,18 +214,18 @@
   @apply w-1.5 h-1.5 rounded-full flex-shrink-0;
 }
 
-.status-dot-success { @apply status-dot bg-emerald-400; }
-.status-dot-warning { @apply status-dot bg-amber-400; }
+.status-dot-success { @apply status-dot bg-white; }
+.status-dot-warning { @apply status-dot bg-neutral-300; }
 .status-dot-error { @apply status-dot bg-danger; }
 .status-dot-processing { @apply status-dot bg-white animate-pulse; }
 .status-dot-info { @apply status-dot bg-white; }
 .terminal-bg {
-  background: #020617;
+  background: #000000;
 }
 
 .terminal-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #2d3449 transparent;
+  scrollbar-color: #262626 transparent;
 }
 
 .terminal-scroll::-webkit-scrollbar {
@@ -234,10 +234,10 @@
 }
 
 .terminal-scroll::-webkit-scrollbar-thumb {
-  background: #2d3449;
+  background: #262626;
   border-radius: 3px;
 }
 
 .terminal-scroll::-webkit-scrollbar-thumb:hover {
-  background: #424754;
+  background: #404040;
 }

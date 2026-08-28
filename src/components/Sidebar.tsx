@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Film,
   FileText,
-  PlaySquare,
   RefreshCw,
   Terminal,
   Settings,
@@ -18,7 +17,6 @@ interface SidebarProps {
 const navItems = [
   { id: 'home', label: 'Ana Sayfa', icon: Film },
   { id: 'subtitle', label: 'Altyazı', icon: FileText },
-  { id: 'preview', label: 'Önizleme', icon: PlaySquare },
   { id: 'converter', label: 'Dönüştürücü', icon: RefreshCw },
   { id: 'console', label: 'Konsol', icon: Terminal },
   { id: 'settings', label: 'Ayarlar', icon: Settings },

@@ -91,14 +91,10 @@ pub fn normalize_file_path(raw: &str) -> String {
         if clean.starts_with('/') && clean.len() > 2 && clean.chars().nth(2) == Some(':') {
             clean = clean.trim_start_matches('/').to_string();
         }
+        if let Ok(decoded) = urlencoding::decode(&clean) {
+            clean = decoded.into_owned();
+        }
     }
-    // Replace common URL encoded characters if present
-    clean = clean
-        .replace("%20", " ")
-        .replace("%5B", "[")
-        .replace("%5D", "]")
-        .replace("%28", "(")
-        .replace("%29", ")");
     clean
 }
 
@@ -384,5 +380,12 @@ mod tests {
         assert_eq!(meta.attachments.len(), 1);
         assert_eq!(meta.font_count, 1);
         assert_eq!(meta.attachments[0].filename, "TrebuchetMS_Bold.ttf");
+    }
+
+    #[test]
+    fn test_normalize_file_path_percent_decoding() {
+        let raw = "file:///home/sevelebeci/%C4%B0ndirilenler/%5BJudas%5D%20Initial%20D.mkv";
+        let norm = normalize_file_path(raw);
+        assert_eq!(norm, "/home/sevelebeci/İndirilenler/[Judas] Initial D.mkv");
     }
 }

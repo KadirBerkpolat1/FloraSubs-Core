@@ -221,7 +221,7 @@ pub fn extract_subtitle_track<P: AsRef<Path>, O: AsRef<Path>>(
         .map_err(|e| format!("FFmpeg altyazı çıkarma komutu çalıştırılamadı: {}", e))?;
 
     if !output_res.status.success() {
-        // Retry with transcoding to ASS if copy fails (e.g. converting mov_text/subrip to ass)
+        // Retry with transcoding to ASS if copy fails (e.g. converting mov_text/subrip/vtt to ass)
         let retry_res = Command::new(&ffmpeg_bin)
             .arg("-y")
             .arg("-i")
@@ -231,9 +231,22 @@ pub fn extract_subtitle_track<P: AsRef<Path>, O: AsRef<Path>>(
             .arg(output)
             .output()
             .map_err(|e| format!("FFmpeg altyazı dönüştürme hatası: {}", e))?;
+
         if !retry_res.status.success() {
-            let err = String::from_utf8_lossy(&retry_res.stderr);
-            return Err(format!("Altyazı çıkarılamadı: {}", err));
+            // 3. Fallback: let FFmpeg auto-determine subtitle encoder based on file extension
+            let auto_res = Command::new(&ffmpeg_bin)
+                .arg("-y")
+                .arg("-i")
+                .arg(input)
+                .args(["-map", &map_arg])
+                .arg(output)
+                .output()
+                .map_err(|e| format!("FFmpeg altyazı dönüştürme hatası: {}", e))?;
+
+            if !auto_res.status.success() {
+                let err = String::from_utf8_lossy(&auto_res.stderr);
+                return Err(format!("Altyazı çıkarılamadı: {}", err));
+            }
         }
     }
 
@@ -314,17 +327,23 @@ pub fn extract_embedded_fonts<P: AsRef<Path>, O: AsRef<Path>>(
     let ffmpeg_bin = resolve_ffmpeg_path()
         .ok_or_else(|| "ffmpeg ikili dosyası bulunamadı.".to_string())?;
 
-    let output_res = Command::new(&ffmpeg_bin)
+    // Try dumping type "t" (standard font attachments)
+    let _ = Command::new(&ffmpeg_bin)
         .current_dir(target)
         .arg("-y")
         .args(["-dump_attachment:t", ""])
         .arg("-i")
         .arg(input)
-        .output()
-        .map_err(|e| format!("Font çıkarma komutu çalıştırılamadı: {}", e))?;
+        .output();
 
-    let _ = output_res;
-
+    // Also try dumping type "a" (generic attachments: OTF/TTF/TTC tagged as application/octet-stream or none)
+    let _ = Command::new(&ffmpeg_bin)
+        .current_dir(target)
+        .arg("-y")
+        .args(["-dump_attachment:a", ""])
+        .arg("-i")
+        .arg(input)
+        .output();
     let mut font_files = Vec::new();
     if let Ok(entries) = std::fs::read_dir(target) {
         for entry in entries.flatten() {

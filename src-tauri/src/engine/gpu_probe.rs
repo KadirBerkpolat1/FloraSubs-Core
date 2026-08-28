@@ -39,30 +39,39 @@ pub fn resolve_ffmpeg_path() -> Option<PathBuf> {
         }
     }
 
-    // Check executable sibling directory
-    if let Ok(current_exe) = std::env::current_exe() {
-        if let Some(exe_dir) = current_exe.parent() {
-            let win_bin = exe_dir.join("bin").join("ffmpeg.exe");
-            if win_bin.exists() {
-                return Some(win_bin);
-            }
-            let win_root = exe_dir.join("ffmpeg.exe");
-            if win_root.exists() {
-                return Some(win_root);
-            }
-            let unix_bin = exe_dir.join("bin").join("ffmpeg");
-            if unix_bin.exists() {
-                return Some(unix_bin);
-            }
-            let unix_root = exe_dir.join("ffmpeg");
-            if unix_root.exists() {
-                return Some(unix_root);
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(current_exe) = std::env::current_exe() {
+            if let Some(exe_dir) = current_exe.parent() {
+                let win_bin = exe_dir.join("bin").join("ffmpeg.exe");
+                if win_bin.exists() {
+                    return Some(win_bin);
+                }
+                let win_root = exe_dir.join("ffmpeg.exe");
+                if win_root.exists() {
+                    return Some(win_root);
+                }
             }
         }
+        which::which("ffmpeg.exe").or_else(|_| which::which("ffmpeg")).ok()
     }
 
-    // Fallback to system PATH
-    which::which("ffmpeg").ok()
+    #[cfg(not(target_os = "windows"))]
+    {
+        if let Ok(current_exe) = std::env::current_exe() {
+            if let Some(exe_dir) = current_exe.parent() {
+                let unix_bin = exe_dir.join("bin").join("ffmpeg");
+                if unix_bin.exists() {
+                    return Some(unix_bin);
+                }
+                let unix_root = exe_dir.join("ffmpeg");
+                if unix_root.exists() {
+                    return Some(unix_root);
+                }
+            }
+        }
+        which::which("ffmpeg").ok()
+    }
 }
 
 /// Resolves the FFprobe binary path prioritizing bundled resource, env var, or system PATH.
@@ -74,32 +83,40 @@ pub fn resolve_ffprobe_path() -> Option<PathBuf> {
         }
     }
 
-    // Check executable sibling directory
-    if let Ok(current_exe) = std::env::current_exe() {
-        if let Some(exe_dir) = current_exe.parent() {
-            let win_bin = exe_dir.join("bin").join("ffprobe.exe");
-            if win_bin.exists() {
-                return Some(win_bin);
-            }
-            let win_root = exe_dir.join("ffprobe.exe");
-            if win_root.exists() {
-                return Some(win_root);
-            }
-            let unix_bin = exe_dir.join("bin").join("ffprobe");
-            if unix_bin.exists() {
-                return Some(unix_bin);
-            }
-            let unix_root = exe_dir.join("ffprobe");
-            if unix_root.exists() {
-                return Some(unix_root);
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(current_exe) = std::env::current_exe() {
+            if let Some(exe_dir) = current_exe.parent() {
+                let win_bin = exe_dir.join("bin").join("ffprobe.exe");
+                if win_bin.exists() {
+                    return Some(win_bin);
+                }
+                let win_root = exe_dir.join("ffprobe.exe");
+                if win_root.exists() {
+                    return Some(win_root);
+                }
             }
         }
+        which::which("ffprobe.exe").or_else(|_| which::which("ffprobe")).ok()
     }
 
-    // Fallback to system PATH
-    which::which("ffprobe").ok()
+    #[cfg(not(target_os = "windows"))]
+    {
+        if let Ok(current_exe) = std::env::current_exe() {
+            if let Some(exe_dir) = current_exe.parent() {
+                let unix_bin = exe_dir.join("bin").join("ffprobe");
+                if unix_bin.exists() {
+                    return Some(unix_bin);
+                }
+                let unix_root = exe_dir.join("ffprobe");
+                if unix_root.exists() {
+                    return Some(unix_root);
+                }
+            }
+        }
+        which::which("ffprobe").ok()
+    }
 }
-
 /// Cleans a raw lspci or wmic GPU string into a clean user-friendly name (e.g. "AMD Radeon RX 7600").
 /// Cleans a noisy CPU brand string (e.g. "12th Gen Intel(R) Core(TM) i5-12400F" -> "Intel Core i5-12400F").
 pub fn clean_cpu_name(raw: &str) -> String {

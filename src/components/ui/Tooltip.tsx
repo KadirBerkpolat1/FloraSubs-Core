@@ -17,10 +17,10 @@ const positions = {
 };
 
 const arrows = {
-  top: 'top-full left-1/2 -translate-x-1/2 border-t-blue-500',
-  bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-blue-500',
-  left: 'left-full top-1/2 -translate-y-1/2 border-l-blue-500',
-  right: 'right-full top-1/2 -translate-y-1/2 border-r-blue-500',
+  top: 'top-full left-1/2 -translate-x-1/2 border-t-white',
+  bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-white',
+  left: 'left-full top-1/2 -translate-y-1/2 border-l-white',
+  right: 'right-full top-1/2 -translate-y-1/2 border-r-white',
 };
 
 export const Tooltip: React.FC<TooltipProps> = ({
@@ -66,7 +66,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const tooltip = (
     <div
       className={twMerge(
-        'fixed z-50 px-2.5 py-1.5 text-[11px] font-mono text-slate-100 bg-slate-900 border border-slate-600 rounded-lg shadow-lg animate-in fade-in-0 zoom-in-95 duration-150',
+        'fixed z-50 px-2.5 py-1.5 text-[11px] font-mono text-white bg-surface-container-highest border border-outline-variant rounded-lg shadow-lg animate-in fade-in-0 zoom-in-95 duration-150',
         positions[position]
       )}
       style={{ transformOrigin: position === 'left' ? 'right' : position === 'right' ? 'left' : 'center' }}

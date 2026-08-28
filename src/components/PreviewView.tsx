@@ -9,9 +9,7 @@ import {
   RotateCw,
   Layers,
   Eye,
-  CheckCircle2,
   Film,
-  Sparkles,
   ChevronLeft,
   ChevronRight,
   FileText,
@@ -32,7 +30,7 @@ interface PreviewViewProps {
 export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
+  const progressBarRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
@@ -43,7 +41,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
   const [videoError, setVideoError] = useState<string | null>(null);
   const [showControls, setShowControls] = useState<boolean>(true);
   const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
-
+  const [hoverPosition, setHoverPosition] = useState<{ percent: number; time: number; x: number } | null>(null);
   // Subtitle synchronization state
   const [subtitleDialogues, setSubtitleDialogues] = useState<SubtitleDialogue[]>([]);
   const [activeSubTrack, setActiveSubTrack] = useState<string>('0');
@@ -218,6 +216,19 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
     setIsScrubbing(false);
   };
 
+
+  const handleProgressBarMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressBarRef.current || duration <= 0) return;
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const offsetX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const percent = (offsetX / rect.width) * 100;
+    const time = (offsetX / rect.width) * duration;
+    setHoverPosition({ percent, time, x: offsetX });
+  };
+
+  const handleProgressBarMouseLeave = () => {
+    setHoverPosition(null);
+  };
   // Safety listener for mouse up outside the scrubber
   useEffect(() => {
     const handleGlobalMouseUp = () => {
@@ -297,26 +308,26 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
 
 
   return (
-    <div className="flex-1 bg-[#0f1117] flex flex-col h-full overflow-y-auto select-none p-6 space-y-6">
+    <div className="flex-1 bg-surface-container-lowest flex flex-col h-full overflow-y-auto select-none p-6 space-y-6">
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-[#242938]">
+      <div className="flex items-center justify-between pb-4 border-b border-outline-variant">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30">
+            <span className="p-1.5 rounded-lg bg-white/10 text-white border border-white/20">
               <Film className="w-4 h-4" />
             </span>
-            <h1 className="text-sm font-bold text-gray-100 uppercase tracking-wide">
+            <h1 className="text-sm font-bold text-white uppercase tracking-wide">
               İnteraktif Medya & Canlı Altyazı Önizleme
             </h1>
           </div>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-neutral-400 mt-1">
             Seçili videoyu altyazılarıyla birlikte doğrudan oynatın ve zamanlamayı inceleyin.
           </p>
         </div>
 
         {selectedItem && (
           <div className="flex items-center space-x-3">
-            <span className="px-3 py-1.5 rounded-lg bg-[#1a1f2c] border border-[#2d364d] text-xs font-mono text-blue-400 font-bold">
+            <span className="px-3 py-1.5 rounded-lg bg-surface-container border border-outline-variant text-xs font-mono text-white font-bold">
               {selectedItem.fileName}
             </span>
           </div>
@@ -324,23 +335,22 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
       </div>
 
       {!selectedItem ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-12 border-2 border-dashed border-[#242938] rounded-2xl text-center space-y-3 bg-[#131722]/40">
-          <Film className="w-12 h-12 text-gray-500 opacity-60" />
-          <h3 className="text-sm font-bold text-gray-300">Önizlenecek Dosya Seçilmedi</h3>
-          <p className="text-xs text-gray-500 max-w-sm">
+        <div className="flex-1 flex flex-col items-center justify-center p-12 border-2 border-dashed border-outline-variant rounded-2xl text-center space-y-3 bg-surface-container/20">
+          <Film className="w-12 h-12 text-neutral-500 opacity-60" />
+          <h3 className="text-sm font-bold text-white">Önizlenecek Dosya Seçilmedi</h3>
+          <p className="text-xs text-neutral-400 max-w-sm">
             Lütfen sol menüden Ana Sayfa veya Altyazı sekmesine dönüp bir video dosyası seçin.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Video Player Surface */}
-          <div className="lg:col-span-2 space-y-4">
-            <div
-              ref={containerRef}
-              onMouseEnter={() => setShowControls(true)}
-              onMouseLeave={() => isPlaying && setShowControls(false)}
-              className="aspect-video bg-[#0a0c10] rounded-2xl border border-[#242938] flex flex-col items-center justify-center relative overflow-hidden shadow-2xl group"
-            >
+        <div className="flex-1 flex flex-col space-y-4">
+          {/* Full-Width Cinema Video Player Surface */}
+          <div
+            ref={containerRef}
+            onMouseEnter={() => setShowControls(true)}
+            onMouseLeave={() => isPlaying && setShowControls(false)}
+            className="w-full aspect-video max-h-[540px] bg-black rounded-2xl border border-outline-variant flex flex-col items-center justify-center relative overflow-hidden shadow-2xl group mx-auto"
+          >
               {/* HTML5 Video Surface */}
               <video
                 ref={videoRef}
@@ -385,21 +395,21 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
               {/* Active Filter Badges */}
               <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 pointer-events-none z-10">
                 {activeSubTrack !== 'none' ? (
-                  <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[10px] font-mono border border-purple-500/30 backdrop-blur-sm">
+                  <span className="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-mono border border-white/20 backdrop-blur-sm">
                     📝 Altyazı Aktif {loadingSubs ? '(Yükleniyor...)' : `(${subtitleDialogues.length} Satır)`}
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded bg-gray-700/40 text-gray-400 text-[10px] font-mono border border-gray-600/30 backdrop-blur-sm">
+                  <span className="px-2 py-0.5 rounded bg-surface-container-high text-neutral-400 text-[10px] font-mono border border-outline-variant backdrop-blur-sm">
                     Altyazı: Kapalı
                   </span>
                 )}
                 {config.model_settings.upscale_enabled && (
-                  <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-mono border border-indigo-500/30 backdrop-blur-sm">
+                  <span className="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-mono border border-white/20 backdrop-blur-sm">
                     {config.model_settings.target_height === 2160 ? '4K UHD' : config.model_settings.target_height === 1440 ? '2K QHD' : '2x AI'}
                   </span>
                 )}
                 {config.model_settings.frame_gen_enabled && (
-                  <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-mono border border-blue-500/30 backdrop-blur-sm">
+                  <span className="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-mono border border-white/20 backdrop-blur-sm">
                     ⚡ {config.model_settings.target_fps} FPS
                   </span>
                 )}
@@ -409,9 +419,9 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
               {!isPlaying && !videoError && (
                 <button
                   onClick={togglePlay}
-                  className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-blue-600/80 hover:bg-blue-600 text-white flex items-center justify-center shadow-xl shadow-blue-600/40 transition transform active:scale-95 z-10"
+                  className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-white hover:bg-neutral-200 text-black flex items-center justify-center shadow-xl shadow-white/10 transition transform active:scale-95 z-10"
                 >
-                  <Play className="w-6 h-6 fill-white ml-0.5" />
+                  <Play className="w-6 h-6 fill-black ml-0.5" />
                 </button>
               )}
 
@@ -421,13 +431,52 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
                   showControls || !isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 }`}
               >
-                {/* Timeline Scrubber */}
-                <div className="flex items-center space-x-2">
+                {/* YouTube Style Interactive Timeline Scrubber */}
+                <div
+                  ref={progressBarRef}
+                  onMouseMove={handleProgressBarMouseMove}
+                  onMouseLeave={handleProgressBarMouseLeave}
+                  className="group/scrubber relative py-2 -my-2 flex items-center cursor-pointer select-none"
+                >
+                  {/* Hover Time Tooltip */}
+                  {hoverPosition && (
+                    <div
+                      className="absolute -top-7 -translate-x-1/2 bg-black/90 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-white/20 pointer-events-none z-20 shadow-lg backdrop-blur-sm transition-opacity"
+                      style={{ left: `${hoverPosition.percent}%` }}
+                    >
+                      {formatTime(hoverPosition.time)}
+                    </div>
+                  )}
+
+                  {/* Background Track */}
+                  <div className="relative w-full h-1 group-hover/scrubber:h-2 bg-white/20 rounded-full transition-all overflow-hidden">
+                    {/* Hover Preview Bar */}
+                    {hoverPosition && (
+                      <div
+                        className="absolute left-0 top-0 bottom-0 bg-white/30 rounded-full pointer-events-none"
+                        style={{ width: `${hoverPosition.percent}%` }}
+                      />
+                    )}
+
+                    {/* Active Played Progress Fill Line */}
+                    <div
+                      className="absolute left-0 top-0 bottom-0 bg-white rounded-full transition-none shadow-sm shadow-white/30"
+                      style={{ width: `${duration > 0 ? Math.min(100, Math.max(0, (currentTime / duration) * 100)) : 0}%` }}
+                    />
+                  </div>
+
+                  {/* Playhead Scrubber Knob / Dot */}
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md shadow-black/80 scale-0 group-hover/scrubber:scale-100 transition-transform pointer-events-none z-10"
+                    style={{ left: `${duration > 0 ? Math.min(100, Math.max(0, (currentTime / duration) * 100)) : 0}%` }}
+                  />
+
+                  {/* Underlying Range Input for smooth dragging and accessibility */}
                   <input
                     type="range"
                     min="0"
                     max={duration || 100}
-                    step="0.1"
+                    step="0.05"
                     value={currentTime}
                     onMouseDown={handleSeekStart}
                     onTouchStart={handleSeekStart}
@@ -435,7 +484,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
                     onMouseUp={handleSeekCommit}
                     onTouchEnd={handleSeekCommit}
                     onKeyUp={handleSeekCommit}
-                    className="w-full h-1 bg-gray-700/80 rounded-lg appearance-none cursor-pointer accent-blue-500 hover:h-1.5 transition-all"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
                 </div>
 
@@ -490,8 +539,8 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
 
                   <div className="flex items-center space-x-2.5">
                     {/* Subtitle Track Selector in Player Bar */}
-                    <div className="flex items-center space-x-1 bg-black/50 px-2 py-0.5 rounded border border-white/15">
-                      <FileText className="w-3 h-3 text-purple-400" />
+                    <div className="flex items-center space-x-1 bg-black/70 px-2 py-0.5 rounded border border-white/20">
+                      <FileText className="w-3 h-3 text-white" />
                       <select
                         value={activeSubTrack}
                         onChange={(e) => setActiveSubTrack(e.target.value)}
@@ -499,19 +548,19 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
                       >
                         {meta && meta.subtitle_streams.length > 0 ? (
                           meta.subtitle_streams.map((sub) => (
-                            <option key={sub.index} value={sub.subtitle_index} className="bg-[#141824] text-white">
+                            <option key={sub.index} value={sub.subtitle_index} className="bg-surface-container-high text-white">
                               {sub.title || `Altyazı #${sub.subtitle_index + 1}`} [{sub.language.toUpperCase()}]
                             </option>
                           ))
                         ) : (
-                          <option value="0" className="bg-[#141824] text-white">Gömülü Track #1</option>
+                          <option value="0" className="bg-surface-container-high text-white">Gömülü Track #1</option>
                         )}
                         {(previewExternalSubPath || config.external_subtitle_path) && (
-                          <option value="external" className="bg-[#141824] text-white">
+                          <option value="external" className="bg-surface-container-high text-white">
                             Harici: {(previewExternalSubPath || config.external_subtitle_path || '').split(/[\\/]/).pop()}
                           </option>
                         )}
-                        <option value="none" className="bg-[#141824] text-white">Kapalı</option>
+                        <option value="none" className="bg-surface-container-high text-white">Kapalı</option>
                       </select>
                     </div>
 
@@ -519,7 +568,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
                     <div className="flex items-center space-x-1.5">
                       <button onClick={toggleMute} className="text-gray-300 hover:text-white">
                         {isMuted || volume === 0 ? (
-                          <VolumeX className="w-4 h-4 text-rose-400" />
+                          <VolumeX className="w-4 h-4 text-white" />
                         ) : (
                           <Volume2 className="w-4 h-4" />
                         )}
@@ -531,7 +580,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
                         step="0.05"
                         value={isMuted ? 0 : volume}
                         onChange={handleVolumeChange}
-                        className="w-12 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        className="w-12 h-1 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-white"
                       />
                     </div>
 
@@ -539,13 +588,13 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
                     <select
                       value={playbackRate}
                       onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
-                      className="bg-black/50 text-gray-200 text-[10px] font-mono px-1.5 py-0.5 rounded border border-white/20 focus:outline-none"
+                      className="bg-black/50 text-neutral-200 text-[10px] font-mono px-1.5 py-0.5 rounded border border-white/20 focus:outline-none"
                     >
-                      <option value={0.5} className="bg-[#141824]">0.5x</option>
-                      <option value={1.0} className="bg-[#141824]">1.0x</option>
-                      <option value={1.25} className="bg-[#141824]">1.25x</option>
-                      <option value={1.5} className="bg-[#141824]">1.5x</option>
-                      <option value={2.0} className="bg-[#141824]">2.0x</option>
+                      <option value={0.5} className="bg-surface-container-high">0.5x</option>
+                      <option value={1.0} className="bg-surface-container-high">1.0x</option>
+                      <option value={1.25} className="bg-surface-container-high">1.25x</option>
+                      <option value={1.5} className="bg-surface-container-high">1.5x</option>
+                      <option value={2.0} className="bg-surface-container-high">2.0x</option>
                     </select>
 
                     {/* Fullscreen */}
@@ -559,121 +608,63 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
                   </div>
                 </div>
               </div>
-            </div>
+          </div>
 
+          {/* Bottom Diagnostics & Subtitle Controls Dashboard */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Technical Stream Details */}
-            <div className="p-4 rounded-2xl bg-[#161922] border border-[#242938] space-y-2">
-              <h3 className="text-xs font-bold text-gray-200 uppercase tracking-wide flex items-center space-x-2">
-                <Layers className="w-4 h-4 text-blue-400" />
+            <div className="p-4 rounded-2xl bg-surface-container border border-outline-variant space-y-2.5">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wide flex items-center space-x-2">
+                <Layers className="w-4 h-4 text-white" />
                 <span>Teknik Video & Akış Bilgileri</span>
               </h3>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
-                <div className="p-2.5 rounded-xl bg-[#1f2433] border border-[#2e364a]">
-                  <span className="text-gray-400 block text-[10px]">Çözünürlük:</span>
+                <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant">
+                  <span className="text-neutral-400 block text-[10px]">Çözünürlük:</span>
                   <span className="text-white font-bold">
                     {meta?.video_stream?.width || 1920}x{meta?.video_stream?.height || 1080}
                   </span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[#1f2433] border border-[#2e364a]">
-                  <span className="text-gray-400 block text-[10px]">Kare Hızı:</span>
-                  <span className="text-blue-400 font-bold">{meta?.video_stream?.fps.toFixed(2) || '24.00'} FPS</span>
+                <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant">
+                  <span className="text-neutral-400 block text-[10px]">Kare Hızı:</span>
+                  <span className="text-white font-bold">{meta?.video_stream?.fps.toFixed(2) || '24.00'} FPS</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[#1f2433] border border-[#2e364a]">
-                  <span className="text-gray-400 block text-[10px]">Video Codec:</span>
+                <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant">
+                  <span className="text-neutral-400 block text-[10px]">Video Codec:</span>
                   <span className="text-white font-bold">{meta?.video_stream?.codec.toUpperCase() || 'H264'}</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[#1f2433] border border-[#2e364a]">
-                  <span className="text-gray-400 block text-[10px]">Piksel Formatı:</span>
-                  <span className="text-emerald-400 font-bold">{meta?.video_stream?.pix_fmt || 'yuv420p'}</span>
+                <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant">
+                  <span className="text-neutral-400 block text-[10px]">Piksel Formatı:</span>
+                  <span className="text-white font-bold">{meta?.video_stream?.pix_fmt || 'yuv420p'}</span>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Subtitles & Embedded Font Attachments Card */}
-          <div className="space-y-4">
-            {/* Subtitle Tracks */}
-            <div className="p-4 rounded-2xl bg-[#161922] border border-[#242938] space-y-3">
+            {/* Subtitle Tracks & Font Attachments Summary */}
+            <div className="p-4 rounded-2xl bg-surface-container border border-outline-variant space-y-2.5">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-gray-200 uppercase tracking-wide flex items-center space-x-2">
-                  <Eye className="w-4 h-4 text-purple-400" />
-                  <span>Gömülü Altyazılar ({meta?.subtitle_streams.length || 0})</span>
+                <h3 className="text-xs font-bold text-white uppercase tracking-wide flex items-center space-x-2">
+                  <Eye className="w-4 h-4 text-white" />
+                  <span>Altyazı & Font Durumu</span>
                 </h3>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={handleLoadExternalSub}
-                    className="px-2 py-1 rounded bg-purple-600/20 border border-purple-500/40 text-purple-300 text-[10px] font-mono hover:bg-purple-600/30 transition"
-                  >
-                    .ass/.srt Yükle
-                  </button>
-                  <span className="text-[10px] text-purple-400 font-mono">
-                    {subtitleDialogues.length} Diyalog
-                  </span>
+                <button
+                  onClick={handleLoadExternalSub}
+                  className="px-2 py-1 rounded bg-white/10 border border-white/20 text-white text-[10px] font-mono hover:bg-white/20 transition cursor-pointer"
+                >
+                  .ass/.srt Yükle
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant">
+                  <span className="text-neutral-400 block text-[10px]">Gömülü Altyazı:</span>
+                  <span className="text-white font-bold">{meta?.subtitle_streams?.length || 0} Akış</span>
                 </div>
-              </div>
-
-              <div className="space-y-2 max-h-52 overflow-y-auto">
-                {meta && meta.subtitle_streams.length > 0 ? (
-                  meta.subtitle_streams.map((sub) => (
-                    <div
-                      key={sub.index}
-                      onClick={() => setActiveSubTrack(sub.subtitle_index.toString())}
-                      className={`p-2.5 rounded-xl border flex items-center justify-between text-xs font-mono cursor-pointer transition ${
-                        activeSubTrack === sub.subtitle_index.toString()
-                          ? 'bg-purple-600/20 border-purple-500/60 text-white'
-                          : 'bg-[#1f2433] border-[#2e364a] hover:bg-[#283044] text-gray-300'
-                      }`}
-                    >
-                      <div>
-                        <span className="font-bold text-white block truncate">
-                          #{sub.subtitle_index + 1}: {sub.title || 'Başlıksız Altyazı'}
-                        </span>
-                        <span className="text-[10px] text-gray-400">
-                          Dil: {sub.language.toUpperCase()} • Format: {sub.codec.toUpperCase()}
-                        </span>
-                      </div>
-                      {activeSubTrack === sub.subtitle_index.toString() && (
-                        <span className="px-1.5 py-0.5 rounded bg-purple-500/30 text-purple-300 text-[10px] font-bold">
-                          Aktif
-                        </span>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-xs text-gray-500 italic space-y-1.5">
-                    <p>Gömülü altyazı akışı bulunamadı.</p>
-                    <p className="text-gray-600 not-italic">
-                      Hardsub'lı çıktıda altyazılar görüntüye işlenmiştir (normal). Kaynak .ass dosyasını yukarıdaki butonla yükleyerek canlı takip edebilirsin.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Embedded Font Attachments */}
-            <div className="p-4 rounded-2xl bg-[#161922] border border-[#242938] space-y-3">
-              <h3 className="text-xs font-bold text-gray-200 uppercase tracking-wide flex items-center space-x-2">
-                <Sparkles className="w-4 h-4 text-emerald-400" />
-                <span>Gömülü Font Ekleri ({meta?.font_count || 0})</span>
-              </h3>
-
-              <div className="space-y-1.5 max-h-52 overflow-y-auto">
-                {meta && meta.attachments.length > 0 ? (
-                  meta.attachments
-                    .filter((a) => a.is_font)
-                    .map((att, idx) => (
-                      <div
-                        key={idx}
-                        className="p-2 rounded-lg bg-[#1f2433] border border-[#2e364a] flex items-center space-x-2 text-xs font-mono"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                        <span className="text-gray-200 truncate text-[11px]">{att.filename || 'font.ttf'}</span>
-                      </div>
-                    ))
-                ) : (
-                  <p className="text-xs text-gray-500 italic">MKV içinde gömülü font bulunamadı.</p>
-                )}
+                <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant">
+                  <span className="text-neutral-400 block text-[10px]">Gömülü Fontlar:</span>
+                  <span className="text-white font-bold">{meta?.font_count || 0} Font Eki</span>
+                </div>
               </div>
             </div>
           </div>

@@ -42,24 +42,24 @@ export const QueueItem: React.FC<QueueItemProps> = ({
       className={twMerge(
         'group flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 cursor-pointer',
         isSelected
-          ? 'bg-blue-500/10 border-blue-500/60 shadow-md shadow-blue-500/10'
-          : 'bg-slate-900/50 border-slate-700/50 hover:bg-slate-800/50 hover:border-slate-600/50'
+          ? 'bg-surface-container border-white shadow-md shadow-white/10'
+          : 'bg-surface-container-high border-outline-variant hover:border-white/40'
       )}
     >
-      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center">
-        <FileVideo className="w-5 h-5 text-slate-400" />
+      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-surface-container-highest border border-outline-variant flex items-center justify-center">
+        <FileVideo className="w-5 h-5 text-white" />
       </div>
 
       <div className="flex-1 min-w-0 space-y-1.5">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-medium text-slate-100 truncate flex-1">{item.fileName}</p>
+          <p className="text-sm font-medium text-white truncate flex-1">{item.fileName}</p>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <Badge variant={config.variant} size="sm" dot>
               {config.label}
             </Badge>
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(); }}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-danger hover:bg-danger/10 transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
               aria-label="Kuyruktan kaldır"
             >
               <Trash2 className="w-4 h-4" />
@@ -67,7 +67,7 @@ export const QueueItem: React.FC<QueueItemProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-[11px] font-mono text-slate-500">
+        <div className="flex items-center gap-2 text-[11px] font-mono text-neutral-400">
           <span>{(item.fileSize / 1024 / 1024).toFixed(1)} MB</span>
           {item.metadata?.video_stream && (
             <>

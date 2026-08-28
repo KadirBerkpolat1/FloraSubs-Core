@@ -94,22 +94,22 @@ export const ConverterView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 bg-[#0f1117] flex flex-col h-full overflow-y-auto select-none p-8 space-y-6">
+    <div className="flex-1 bg-surface-container-lowest flex flex-col h-full overflow-y-auto select-none p-8 space-y-6">
       {/* Header */}
-      <div className="pb-4 border-b border-[#242938]">
-        <h1 className="text-base font-bold text-gray-100 flex items-center space-x-2">
-          <RefreshCw className="w-5 h-5 text-blue-400" />
+      <div className="pb-4 border-b border-outline-variant">
+        <h1 className="text-base font-bold text-white flex items-center space-x-2">
+          <RefreshCw className="w-5 h-5 text-white" />
           <span>Hızlı Video & Konteyner Dönüştürücü (Remux)</span>
         </h1>
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs text-neutral-400 mt-1">
           Yeniden kodlama (re-encode) yapmadan, kalite kaybı olmadan saniyeler içinde format değiştirin.
         </p>
       </div>
 
-      <div className="max-w-2xl bg-[#161922] rounded-2xl border border-[#242938] p-6 space-y-6">
+      <div className="max-w-2xl bg-surface-container rounded-2xl border border-outline-variant p-6 space-y-6">
         {/* Source File Picker */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-gray-300 uppercase tracking-wide">
+          <label className="text-xs font-bold text-white uppercase tracking-wide">
             Kaynak Video Dosyası
           </label>
           <div className="flex space-x-2">
@@ -117,20 +117,20 @@ export const ConverterView: React.FC = () => {
               type="text"
               readOnly
               value={sourceFile || 'Lütfen video dosyası seçin (.mkv, .mp4, .ts, .webm)'}
-              className="flex-1 bg-[#1f2433] text-gray-300 text-xs rounded-lg border border-[#2e364a] px-3 py-2 font-mono truncate"
+              className="flex-1 bg-surface-container-high text-neutral-200 text-xs rounded-lg border border-outline-variant px-3 py-2 font-mono truncate"
             />
             <button
               onClick={handleSelectSource}
-              className="flex items-center space-x-1.5 px-4 py-2 rounded-lg bg-[#262c3e] hover:bg-[#323a50] text-gray-200 text-xs font-semibold border border-[#37405a] transition cursor-pointer"
+              className="flex items-center space-x-1.5 px-4 py-2 rounded-lg bg-surface-container-highest hover:bg-neutral-700 text-white text-xs font-semibold border border-outline-variant transition cursor-pointer"
             >
-              <FileVideo className="w-4 h-4 text-blue-400" />
+              <FileVideo className="w-4 h-4 text-white" />
               <span>Gözat</span>
             </button>
           </div>
         </div>
         {/* Target Format Selector */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-gray-300 uppercase tracking-wide">
+          <label className="text-xs font-bold text-white uppercase tracking-wide">
             Hedef Konteyner Formatı
           </label>
           <div className="grid grid-cols-3 gap-3">
@@ -144,12 +144,12 @@ export const ConverterView: React.FC = () => {
                 onClick={() => setTargetContainer(fmt.id)}
                 className={`p-3 rounded-xl border text-left transition ${
                   targetContainer === fmt.id
-                    ? 'bg-blue-600/20 border-blue-500/60 shadow-lg shadow-blue-500/10'
-                    : 'bg-[#1f2433] border-[#2e364a] hover:bg-[#283044]'
+                    ? 'bg-white/10 border-white text-white shadow-lg shadow-white/10'
+                    : 'bg-surface-container-high border-outline-variant hover:border-white/40'
                 }`}
               >
                 <span className="text-xs font-bold text-white block">{fmt.label}</span>
-                <span className="text-[10px] text-gray-400 block mt-1">{fmt.desc}</span>
+                <span className="text-[10px] text-neutral-400 block mt-1">{fmt.desc}</span>
               </button>
             ))}
           </div>
@@ -157,7 +157,7 @@ export const ConverterView: React.FC = () => {
 
         {/* Output Directory */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-gray-300 uppercase tracking-wide">
+          <label className="text-xs font-bold text-white uppercase tracking-wide">
             Çıktı Klasörü
           </label>
           <div className="flex space-x-2">
@@ -165,14 +165,14 @@ export const ConverterView: React.FC = () => {
               type="text"
               readOnly
               value={outputFolder || 'Kaynak dosya ile aynı klasör'}
-              className="flex-1 bg-[#1f2433] text-gray-300 text-xs rounded-lg border border-[#2e364a] px-3 py-2 font-mono truncate"
+              className="flex-1 bg-surface-container-high text-neutral-200 text-xs rounded-lg border border-outline-variant px-3 py-2 font-mono truncate"
             />
             <button
               onClick={handleSelectOutput}
-              className="p-2 bg-[#262c3e] hover:bg-[#323a50] text-gray-200 rounded-lg border border-[#37405a] transition"
+              className="p-2 bg-surface-container-highest hover:bg-neutral-700 text-white rounded-lg border border-outline-variant transition"
               title="Klasör Seç"
             >
-              <Folder className="w-4 h-4 text-blue-400" />
+              <Folder className="w-4 h-4 text-white" />
             </button>
           </div>
         </div>
@@ -182,16 +182,16 @@ export const ConverterView: React.FC = () => {
           <button
             onClick={handleStartRemux}
             disabled={!sourceFile || isRemuxing}
-            className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 text-white py-3 rounded-xl font-bold text-xs shadow-lg shadow-blue-600/30 transition cursor-pointer"
+            className="w-full flex items-center justify-center space-x-2 bg-white hover:bg-neutral-200 disabled:opacity-50 text-black py-3 rounded-xl font-bold text-xs shadow-lg shadow-white/10 transition cursor-pointer"
           >
-            <Zap className="w-4 h-4" />
+            <Zap className="w-4 h-4 fill-black" />
             <span>{isRemuxing ? 'Dönüştürülüyor...' : 'Anında Dönüştür (Stream Copy)'}</span>
           </button>
         </div>
 
         {successMsg && (
-          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center space-x-2 text-xs text-emerald-400">
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+          <div className="p-3 rounded-xl bg-white/10 border border-white/20 flex items-center space-x-2 text-xs text-white">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-white" />
             <span>{successMsg}</span>
           </div>
         )}

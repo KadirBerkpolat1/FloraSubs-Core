@@ -112,4 +112,49 @@ v1.0.0 sürümü ile birlikte:
   - `runner.rs` altyazısız videolarda hardsub çıkarmayı zarifçe atlayıp sistemi uyarı loguyla devam ettirecek şekilde güçlendirildi.
   - `demuxer.rs` retry adımına `-c:s ass` entegre edildi.
 * **Doğrulama:**
+
+## 10. URL Yolu Percent-Decoding, Dosya Adı Düzeni & Model İndirme Entegrasyonu (2026-08-28)
+* **URL Percent-Decoding ve Türkçe Karakter / Boşluk Onarımı:**
+  - Sürükle-bırak yoluyla eklenen dosyalarda `file:///home/sevelebeci/%C4%B0ndirilenler/...` gibi URL percent-encoding'li yollar geliyordu.
+  - `normalize_file_path` (`probe.rs`) yalnızca `%20` gibi sınırlı karakterleri temizlediğinden `İndirilenler` (`%C4%B0ndirilenler`) dizininde `Path::exists()` `false` dönüyor; medya analizi (`probeMedia`) `0 B` ve `null` metadata ile düşüyordu. Bu durum altyazıların ve fontların `(0)` görünmesine ve kodlamanın `Girdi dosyası bulunamadı` hatasıyla anında çökmesine yol açıyordu.
+  - `urlencoding::decode` ile hem Rust (`probe.rs`) hem de frontend (`tauri.ts`) katmanlarında tam percent-decoding uygulandı. Artık Türkçe karakterler, köşeli parantezler ve boşluklar dosya sistemiyle %100 uyumlu.
+* **Kuyruk Kartı & Dosya Adı Sığma Düzeni:**
+  - `FileQueue.tsx` kart düzeni refaktör edildi: Dosya adı tek satırda kırpılmak yerine `line-clamp-2` ile 2 satıra kadar tam gösterilecek şekilde ayrıldı.
+  - Boyut, süre ve çözünürlük bilgileri ikinci satıra, altyazı ve font etiketleri (`📝 1 Altyazı`, `🔤 7 Font`) üçüncü satıra taşındı.
+  - Sol kuyruk dock genişliği `w-[280px]` $\rightarrow$ `w-[320px] xl:w-[350px]` seviyesine genişletilerek uzun anime başlıkları için ferah alan sağlandı.
+* **Yapay Zeka Model İndirme & Canlı İlerleme UI Entegrasyonu:**
+  - `EncodingView.tsx` içerisine yerel diskte bulunmayan modeller için **`📥 Modeli İndir`** butonu ve canlı yüzde/megabayt ilerleme çubuğu eklendi.
+  - İndirme tamamlandığında model listesi otomatik güncellenerek `✓ Model hazır (Yerel ONNX İndirildi)` rozetine geçer.
+* **Doğrulama:** 28/28 Cargo testleri başarıyla geçti ✅ • Frontend Vite build 0 hata (1617 modül 1.40s) ✅.
+
+## 11. YouTube Stili İnteraktif Zaman Çubuğu (Scrubber) (2026-08-28)
+* **YouTube Tarzı Canlı İlerleme Çizgisi (`PreviewView.tsx`):**
+  - Düz HTML5 range slider yerine modern katmanlı etkileşimli çubuk tasarlandı.
+  - **Aktif İlerleme Çizgisi:** Saf beyaz (`bg-white`), video ilerledikçe akıcı dolan ve anlık konumu gösteren oynatma hattı.
+  - **Hover Genişleme & Önizleme:** Çubuğun üzerine gelindiğinde `h-1` $\rightarrow$ `h-2` dinamik kalınlaşma ve imleç konumuna kadar yarı saydam hover önizleme çizgisi.
+  - **Yüzen Zaman İpucu (Hover Tooltip):** İmlecin durduğu noktanın tam mikrosaniye/saniye zaman damgasını (`00:08:24`) çubuğun üzerinde canlı gösteren tooltip kutusu.
+  - **Oynatma Kafası (Scrubber Dot):** Yalnızca hover/drag durumunda büyüyen (`scale-0` $\rightarrow$ `scale-100`) beyaz scrubber noktası.
+* **Doğrulama:** `cargo test` 28/28 test geçti ✅ • `bun run build` 0 hata ✅ • Canlı oynatıcıda Initial D ve Annen.mp4 üzerinde test edildi ✅.
+
+## 12. DESIGN.md Tam Uyumlu Saf Monochrome Dönüşüm & Retro Anime Güvenlik Mimarisi (2026-08-28)
+* **Eski / Retro Anime (4:3 SD / DVD Remux / Interlace) Güvenlik Garantisi:**
+  - **1:1 En-Boy Oranı Sabitleme (`setsar=1`):** Eski animelerdeki SAR/DAR uyumsuzluklarında altyazıların yana yayılması veya basık kalması engellendi.
+  - **Upscale + Hardsub Sıralama Garantisi:** Yapay zeka ve Lanczos ölçekleme filtreleri (`scale=-2:1440` / `2160`) filtre zincirinde 1. sıraya, `subtitles` filtresi en son sıraya yerleştirildi. Böylece altyazılar hedef çözünürlükte mikrosaniye hassasiyetinde ve keskin olarak çizilir; fontların ölçeklemede bozulması/kaybolması engellendi.
+  - **Özel Font Klasörü Bağlama (fontsdir):** Hem `SubtitleView` hem de `EncodingView` panellerine harici font klasörü bağlama seçicisi eklendi; videoda font olmasa dahi `.ass` typesetting fontları doğrudan bağlanır.
+* **DESIGN.md %100 Saf Monochrome Temizlik:**
+  - `PreviewView`, `EmptyState`, `FileDropZone`, `Modal`, `Tabs`, `Tooltip`, `Divider`, `QueueItem`, `StatusIndicator` ve `index.css` dosyalarındaki tüm mavi, arduvaz (`slate-*`) ve açık renk artıklar saf siyah (`#000000`), koyu antrasit (`border-outline-variant`) ve beyaz vurgulara geçirildi.
+* **Doğrulama:** `cargo test` 28/28 test geçti ✅ • `bun run build` 0 hata (1617 modül 1.32s) ✅ • Canlı sistem devrede ✅.
+
+## 13. Çift Önizleme Temizliği & Yalın Sidebar Navigasyonu (2026-08-28)
+* **Yinelenen 'Önizleme' Sekmesi Kaldırıldı:**
+  - `Ana Sayfa` zaten merkez monitöründe tam donanımlı canlı `PreviewView` bileşenini barındırdığı için sol menüdeki (`Sidebar.tsx`) bağımsız `Önizleme` sekmesi ve `App.tsx` içerisindeki yinelenen rota tamamen temizlendi.
+  - Sidebar navigasyonu 5 ana temiz sekmeye sadeleştirildi: `Ana Sayfa`, `Altyazı`, `Dönüştürücü`, `Konsol`, `Ayarlar`.
+* **Doğrulama:** `cargo test` 28/28 test geçti ✅ • `bun run build` 0 hata (1617 modül 1.33s) ✅ • Canlı sistem devrede ✅.
+
+## 14. Genişletilmiş Sinema Önizleme Monitörü (Cinema Monitor Layout) (2026-08-28)
+* **Tam Genişlikte Sinema Video Yüzeyi (`PreviewView.tsx`):**
+  - Video oynatıcısını 2/3 sütuna sıkıştıran ve boyutu küçülten yan panel ızgarası kaldırıldı.
+  - Video oynatıcı merkez panelin **%100 tam genişliğine (`aspect-video w-full max-h-[540px]`)** yayılarak yüzey alanı **~%70 oranında büyütüldü**. Altyazı dizgileri, zamanlama ve animasyonlar çok daha net ve ferah hale getirildi.
+  - Teknik video bilgileri (Çözünürlük, FPS, Codec, PixFmt) ve Altyazı/Font durumu video monitörünün altına 2 sütunlu şık bir dashboard olarak yerleştirildi.
+* **Doğrulama:** `cargo test` 28/28 test geçti ✅ • `bun run build` 0 hata (1617 modül 1.37s) ✅ • Canlı sistem devrede ✅.
   - 27/27 Cargo testleri başarıyla geçti ✅ • Frontend Vite build 0 hata (1617 modül 1.39s) ✅ • Canlı UI üzerinde Kodla $\rightarrow$ Canlı Telemetry & İlerleme $\rightarrow$ İptal Et döngüsü başarıyla test edildi ✅.

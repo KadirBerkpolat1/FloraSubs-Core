@@ -18,7 +18,7 @@ export const Tabs: React.FC<TabsProps> = ({
   ...props
 }) => {
   const variants = {
-    default: 'border-b border-slate-700',
+    default: 'border-b border-outline-variant',
     ghost: 'bg-transparent',
   };
 
@@ -38,12 +38,12 @@ export const Tabs: React.FC<TabsProps> = ({
             id={`tab-${tab.id}`}
             onClick={() => onChange(tab.id)}
             className={twMerge(
-              'flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all duration-150 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950',
+              'flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all duration-150 whitespace-nowrap focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white',
               activeTab === tab.id
                 ? variant === 'default'
-                  ? 'text-blue-400 bg-slate-800/50 border-b-2 border-blue-500 -mb-px'
-                  : 'text-blue-400 bg-blue-500/10'
-                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
+                  ? 'text-white bg-surface-container border-b-2 border-white -mb-px font-bold'
+                  : 'text-white bg-white/10 font-bold'
+                : 'text-neutral-400 hover:text-white hover:bg-surface-container/50'
             )}
           >
             {tab.icon && <span className="flex-shrink-0">{tab.icon}</span>}

@@ -1,3 +1,4 @@
+#![allow(non_snake_case)]
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
@@ -21,20 +22,36 @@ pub fn get_hardware_profile() -> Result<HardwareProfile, String> {
 }
 
 #[tauri::command]
-pub async fn probe_media(file_path: String) -> Result<MediaMetadata, String> {
-    tokio::task::spawn_blocking(move || probe_media_file(&file_path))
+pub async fn probe_media(
+    file_path: Option<String>,
+    filePath: Option<String>,
+) -> Result<MediaMetadata, String> {
+    let p = file_path.or(filePath).ok_or_else(|| "Dosya yolu belirtilmedi".to_string())?;
+    eprintln!("[FloraSubs-PROBE-DEBUG] probe_media invoked with: '{}'", p);
+    let res = tokio::task::spawn_blocking(move || probe_media_file(&p))
         .await
-        .map_err(|e| e.to_string())?
+        .map_err(|e| e.to_string())?;
+    match &res {
+        Ok(m) => eprintln!("[FloraSubs-PROBE-DEBUG] probe_media SUCCESS: duration={}, size={}, subs={}, fonts={}", m.duration_formatted, m.file_size, m.subtitle_streams.len(), m.font_count),
+        Err(e) => eprintln!("[FloraSubs-PROBE-DEBUG] probe_media FAILED: {}", e),
+    }
+    res
 }
 
 #[tauri::command]
 pub async fn extract_subtitle(
-    input_path: String,
-    subtitle_index: usize,
-    output_path: String,
+    input_path: Option<String>,
+    inputPath: Option<String>,
+    subtitle_index: Option<usize>,
+    subtitleIndex: Option<usize>,
+    output_path: Option<String>,
+    outputPath: Option<String>,
 ) -> Result<String, String> {
+    let inp = input_path.or(inputPath).ok_or_else(|| "Girdi yolu eksik".to_string())?;
+    let sub_idx = subtitle_index.or(subtitleIndex).unwrap_or(0);
+    let out = output_path.or(outputPath).ok_or_else(|| "Çıktı yolu eksik".to_string())?;
     tokio::task::spawn_blocking(move || {
-        extract_subtitle_track(&input_path, subtitle_index, &output_path)
+        extract_subtitle_track(&inp, sub_idx, &out)
     })
     .await
     .map_err(|e| e.to_string())?
@@ -42,11 +59,15 @@ pub async fn extract_subtitle(
 
 #[tauri::command]
 pub async fn extract_all_subs(
-    input_path: String,
-    output_dir: String,
+    input_path: Option<String>,
+    inputPath: Option<String>,
+    output_dir: Option<String>,
+    outputDir: Option<String>,
 ) -> Result<Vec<ExtractedTrackResult>, String> {
+    let inp = input_path.or(inputPath).ok_or_else(|| "Girdi yolu eksik".to_string())?;
+    let out = output_dir.or(outputDir).ok_or_else(|| "Çıktı dizini eksik".to_string())?;
     tokio::task::spawn_blocking(move || {
-        extract_all_subtitles(&input_path, &output_dir)
+        extract_all_subtitles(&inp, &out)
     })
     .await
     .map_err(|e| e.to_string())?
@@ -54,11 +75,15 @@ pub async fn extract_all_subs(
 
 #[tauri::command]
 pub async fn extract_fonts(
-    input_path: String,
-    target_dir: String,
+    input_path: Option<String>,
+    inputPath: Option<String>,
+    target_dir: Option<String>,
+    targetDir: Option<String>,
 ) -> Result<ExtractedFontsResult, String> {
+    let inp = input_path.or(inputPath).ok_or_else(|| "Girdi yolu eksik".to_string())?;
+    let target = target_dir.or(targetDir).ok_or_else(|| "Hedef dizin eksik".to_string())?;
     tokio::task::spawn_blocking(move || {
-        extract_embedded_fonts(&input_path, &target_dir)
+        extract_embedded_fonts(&inp, &target)
     })
     .await
     .map_err(|e| e.to_string())?
@@ -173,28 +198,40 @@ pub fn open_in_system_player(file_path: String) -> Result<(), String> {
 #[tauri::command]
 pub fn get_video_stream_url(
     state: State<'_, Arc<MediaStreamerServer>>,
-    file_path: String,
+    file_path: Option<String>,
+    filePath: Option<String>,
 ) -> Result<String, String> {
-    Ok(state.get_stream_url(&file_path))
+    let p = file_path.or(filePath).ok_or_else(|| "Dosya yolu eksik".to_string())?;
+    Ok(state.get_stream_url(&p))
 }
 
 #[tauri::command]
 pub fn get_subtitle_stream_url(
     state: State<'_, Arc<MediaStreamerServer>>,
-    file_path: String,
-    subtitle_index: usize,
+    file_path: Option<String>,
+    filePath: Option<String>,
+    subtitle_index: Option<usize>,
+    subtitleIndex: Option<usize>,
 ) -> Result<String, String> {
-    Ok(state.get_subtitle_url(&file_path, subtitle_index))
+    let p = file_path.or(filePath).ok_or_else(|| "Dosya yolu eksik".to_string())?;
+    let sub_idx = subtitle_index.or(subtitleIndex).unwrap_or(0);
+    Ok(state.get_subtitle_url(&p, sub_idx))
 }
 
 #[tauri::command]
 pub async fn get_preview_subtitles(
-    file_path: String,
-    subtitle_index: usize,
-    is_external: bool,
+    file_path: Option<String>,
+    filePath: Option<String>,
+    subtitle_index: Option<usize>,
+    subtitleIndex: Option<usize>,
+    is_external: Option<bool>,
+    isExternal: Option<bool>,
 ) -> Result<Vec<SubtitleDialogue>, String> {
+    let p = file_path.or(filePath).ok_or_else(|| "Dosya yolu eksik".to_string())?;
+    let sub_idx = subtitle_index.or(subtitleIndex).unwrap_or(0);
+    let is_ext = is_external.or(isExternal).unwrap_or(false);
     tokio::task::spawn_blocking(move || {
-        extract_and_parse_subtitles(&file_path, subtitle_index, is_external)
+        extract_and_parse_subtitles(&p, sub_idx, is_ext)
     })
     .await
     .map_err(|e| e.to_string())?

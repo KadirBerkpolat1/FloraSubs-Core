@@ -319,6 +319,17 @@ pub async fn start_encoding_job(
         );
     };
 
+    // Validate output path: if empty, auto-generate default output path from input path
+    if config.output_path.trim().is_empty() {
+        let in_p = Path::new(&config.input_path);
+        let stem = in_p.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
+        let parent = in_p.parent().unwrap_or_else(|| Path::new("."));
+        let ext = if config.container.trim().is_empty() { "mp4" } else { &config.container };
+        config.output_path = parent.join(format!("{}_FloraSubs.{}", stem, ext)).to_string_lossy().to_string();
+    }
+
+    println!("[FloraSubs-DEBUG] Başlatılıyor: Job={}, Input={}, Output={}, Encoder={}", job_id, config.input_path, config.output_path, config.encoder);
+
     // 1. Probe input video to get total duration
     let meta = probe_media_file(&config.input_path)
         .map_err(|e| format!("Girdi dosyası doğrulanamadı: {}", e))
@@ -348,7 +359,7 @@ pub async fn start_encoding_job(
         "encode-log",
         JobLogMessage {
             job_id: job_id.clone(),
-            line: format!("[FloraSubs] Medya analizi tamamlandı. Süre: {} ({} saniye)", meta.duration_formatted, total_duration_secs),
+            line: format!("[FloraSubs] Medya analizi tamamlandı. Süre: {} ({} saniye), Çözünürlük: {}x{}, FPS: {:.2}", meta.duration_formatted, total_duration_secs, meta.video_stream.as_ref().map(|v| v.width).unwrap_or(0), meta.video_stream.as_ref().map(|v| v.height).unwrap_or(0), meta.video_stream.as_ref().map(|v| v.fps).unwrap_or(0.0)),
             stream: "system".to_string(),
             timestamp: now_str.clone(),
         },
@@ -408,6 +419,50 @@ pub async fn start_encoding_job(
             }
         } else if config.subtitle_source == "external" {
             config.resolved_subtitle_path = config.external_subtitle_path.clone();
+
+            // Discover fonts near external subtitle or in input video attachments
+            if config.fonts_dir.is_none() {
+                if let Some(ext_path) = &config.external_subtitle_path {
+                    if let Some(parent) = Path::new(ext_path).parent() {
+                        let fonts_sub = parent.join("fonts");
+                        let fonts_cap = parent.join("Fonts");
+                        if fonts_sub.is_dir() {
+                            config.fonts_dir = Some(fonts_sub.to_string_lossy().to_string());
+                        } else if fonts_cap.is_dir() {
+                            config.fonts_dir = Some(fonts_cap.to_string_lossy().to_string());
+                        } else if parent.is_dir() {
+                            if let Ok(entries) = std::fs::read_dir(parent) {
+                                let has_fonts = entries.flatten().any(|e| {
+                                    e.path().extension().and_then(|x| x.to_str()).map(|x| {
+                                        let l = x.to_lowercase();
+                                        l == "ttf" || l == "otf" || l == "ttc" || l == "woff"
+                                    }).unwrap_or(false)
+                                });
+                                if has_fonts {
+                                    config.fonts_dir = Some(parent.to_string_lossy().to_string());
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // If still not found, check if input video has embedded fonts to serve the external subtitle
+                if config.fonts_dir.is_none() {
+                    if let Ok(Some(fonts_res)) = prepare_job_fonts_dir(&config.input_path, &job_id) {
+                        let _ = app.emit(
+                            "encode-log",
+                            JobLogMessage {
+                                job_id: job_id.clone(),
+                                line: format!("[FloraSubs] {} adet font video eklerinden çıkartıldı.", fonts_res.count),
+                                stream: "system".to_string(),
+                                timestamp: chrono::Local::now().format("%H:%M:%S").to_string(),
+                            },
+                        );
+                        config.fonts_dir = Some(fonts_res.temp_dir.clone());
+                        temp_fonts_dir = Some(PathBuf::from(fonts_res.temp_dir));
+                    }
+                }
+            }
         }
     }
 
@@ -416,7 +471,7 @@ pub async fn start_encoding_job(
         .ok_or_else(|| "FFmpeg ikili dosyası bulunamadı.".to_string())
         .inspect_err(|e| emit_error(e))?;
 
-    let args = build_ffmpeg_args(&config).inspect_err(|e| emit_error(e))?;
+    let mut args = build_ffmpeg_args(&config).inspect_err(|e| emit_error(e))?;
 
     let _ = app.emit(
         "encode-log",
@@ -428,15 +483,37 @@ pub async fn start_encoding_job(
         },
     );
 
-    // 4. Spawn child process
-    let mut child = Command::new(&ffmpeg_bin)
-        .args(&args)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("FFmpeg işlemi başlatılamadı: {}", e))
-        .inspect_err(|e| emit_error(e))?;
-
+    // 4. Spawn child process (with automatic CPU fallback if hardware encoder fails)
+    let mut child = match Command::new(&ffmpeg_bin).args(&args).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn() {
+        Ok(c) => c,
+        Err(e) => {
+            if config.encoder != "libx264" {
+                let _ = app.emit(
+                    "encode-log",
+                    JobLogMessage {
+                        job_id: job_id.clone(),
+                        line: format!("[FloraSubs] Donanım kodlayıcı ({}) başlatılamadı: {}. Güvenli CPU (libx264) moduna geçiliyor...", config.encoder, e),
+                        stream: "system".to_string(),
+                        timestamp: chrono::Local::now().format("%H:%M:%S").to_string(),
+                    },
+                );
+                config.encoder = "libx264".to_string();
+                config.preset = "slow".to_string();
+                args = build_ffmpeg_args(&config).inspect_err(|err| emit_error(err))?;
+                Command::new(&ffmpeg_bin)
+                    .args(&args)
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .spawn()
+                    .map_err(|err| format!("FFmpeg işlemi başlatılamadı: {}", err))
+                    .inspect_err(|err| emit_error(err))?
+            } else {
+                let msg = format!("FFmpeg işlemi başlatılamadı: {}", e);
+                emit_error(&msg);
+                return Err(msg);
+            }
+        }
+    };
     let pid = match child.id() {
         Some(p) if p > 0 => p,
         _ => {
@@ -539,9 +616,10 @@ pub async fn start_encoding_job(
             let mut reader = BufReader::new(err).lines();
             while let Ok(Some(line)) = reader.next_line().await {
                 if !line.trim().is_empty() {
+                    eprintln!("[FloraSubs-FFmpeg] {}", line);
                     let mut tail = stderr_tail_clone.lock().await;
                     tail.push(line.clone());
-                    if tail.len() > 30 {
+                    if tail.len() > 50 {
                         tail.remove(0);
                     }
 
@@ -580,6 +658,15 @@ pub async fn start_encoding_job(
         Ok(status) => {
             if status.success() {
                 let _ = app.emit(
+                    "encode-log",
+                    JobLogMessage {
+                        job_id: job_id.clone(),
+                        line: format!("[FloraSubs] Kodlama başarıyla tamamlandı! Toplam süre: {}", format_duration(total_elapsed)),
+                        stream: "system".to_string(),
+                        timestamp: chrono::Local::now().format("%H:%M:%S").to_string(),
+                    },
+                );
+                let _ = app.emit(
                     "encode-progress",
                     EncodeProgress {
                         job_id: job_id.clone(),
@@ -594,6 +681,15 @@ pub async fn start_encoding_job(
                 Ok(())
             } else if process_manager.is_cancelled(&job_id).await {
                 let _ = app.emit(
+                    "encode-log",
+                    JobLogMessage {
+                        job_id: job_id.clone(),
+                        line: "[FloraSubs] Kodlama kullanıcı tarafından iptal edildi.".to_string(),
+                        stream: "system".to_string(),
+                        timestamp: chrono::Local::now().format("%H:%M:%S").to_string(),
+                    },
+                );
+                let _ = app.emit(
                     "encode-progress",
                     EncodeProgress {
                         job_id: job_id.clone(),
@@ -605,30 +701,31 @@ pub async fn start_encoding_job(
                 );
                 Err("İşlem kullanıcı tarafından iptal edildi.".to_string())
             } else {
-                let code = status.code().unwrap_or(-1);
+                let tail = stderr_tail.lock().await;
+                let last_errors = tail.join("\n");
+                let err_msg = if !last_errors.trim().is_empty() {
+                    format!("FFmpeg kodlama hatası: {}", last_errors)
+                } else {
+                    format!("FFmpeg çıkış hatası: {:?}", status)
+                };
                 let _ = app.emit(
-                    "encode-progress",
-                    EncodeProgress {
+                    "encode-log",
+                    JobLogMessage {
                         job_id: job_id.clone(),
-                        status: "error".to_string(),
-                        error_message: Some(format!("FFmpeg çıkış kodu: {}", code)),
-                        ..Default::default()
+                        line: format!("[FloraSubs HATA] {}", err_msg),
+                        stream: "system".to_string(),
+                        timestamp: chrono::Local::now().format("%H:%M:%S").to_string(),
                     },
                 );
-                Err(format!("FFmpeg başarısız oldu (kod: {})", code))
+                emit_error(&err_msg);
+                Err(err_msg)
             }
         }
         Err(e) => {
-            let _ = app.emit(
-                "encode-progress",
-                EncodeProgress {
-                    job_id: job_id.clone(),
-                    status: "error".to_string(),
-                    error_message: Some(e.to_string()),
-                    ..Default::default()
-                },
-            );
-            Err(e.to_string())
+            let err_msg = format!("FFmpeg işlemi beklenirken hata oluştu: {}", e);
+            eprintln!("[FloraSubs-ERR] {}", err_msg);
+            emit_error(&err_msg);
+            Err(err_msg)
         }
     }
 }
