@@ -6,6 +6,7 @@ import { FileQueue } from './components/FileQueue';
 import { SubtitleView } from './components/SubtitleView';
 import { PreviewView } from './components/PreviewView';
 import { ConverterView } from './components/ConverterView';
+import { CompressorView } from './components/CompressorView';
 import { ConsoleView } from './components/ConsoleView';
 import { SettingsView } from './components/SettingsView';
 import type {
@@ -671,7 +672,7 @@ export default function App() {
             />
           )}
           {activeTab === 'converter' && <ConverterView />}
-
+          {activeTab === 'compressor' && <CompressorView hardware={hardware} />}
           {activeTab === 'console' && (
             <ConsoleView logs={logs} onClearLogs={() => setLogs([])} />
           )}

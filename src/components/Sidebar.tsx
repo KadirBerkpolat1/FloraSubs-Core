@@ -3,6 +3,7 @@ import {
   Film,
   FileText,
   RefreshCw,
+  Minimize2,
   Terminal,
   Settings,
 } from 'lucide-react';
@@ -18,6 +19,7 @@ const navItems = [
   { id: 'home', label: 'Ana Sayfa', icon: Film },
   { id: 'subtitle', label: 'Altyazı', icon: FileText },
   { id: 'converter', label: 'Dönüştürücü', icon: RefreshCw },
+  { id: 'compressor', label: 'Sıkıştırıcı', icon: Minimize2 },
   { id: 'console', label: 'Konsol', icon: Terminal },
   { id: 'settings', label: 'Ayarlar', icon: Settings },
 ] as const;
@@ -68,7 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Footer Branding info */}
       <div className="p-3 border-t border-outline-variant/40 text-[10px] font-mono text-neutral-500 flex items-center justify-between">
-        <span>v1.2.0-STABLE</span>
+        <span>v1.3.0-STABLE</span>
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="Online" />
       </div>
     </aside>

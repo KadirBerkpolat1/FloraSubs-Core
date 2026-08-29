@@ -67,6 +67,11 @@ Auto-probes host GPU hardware with fine-tuned presets:
 ### 📦 6. Portable & Self-Contained
 * Bundled static **FFmpeg 7.x** + **FFprobe** with `libass`, `libsvtav1`, `libx264/x265`, NVENC, AMF, and QSV enabled out of the box.
 
+
+### 🗜️ 7. Smart Video Compressor (Next-Gen AV1 & HEVC 10-Bit)
+* **Visually Lossless 10-Bit Compression:** Reduce high-bitrate raw videos (3 GB $\rightarrow$ 800 MB) with **%60–%75 size savings** using AV1 10-bit (`libsvtav1`) and HEVC 10-bit (`libx265`).
+* **Mathematical Bitrate Estimator:** Auto-calculates exact target bitrate for Discord Basic (25 MB), Discord Nitro (50 MB), and Telegram (100 MB).
+* **Dynamic Safety Badges:** Real-time visual quality indicators (🟢 Pristine / 🟡 Balanced / 🔴 Aggressive) based on resolution and bitrate density.
 ---
 
 ## 🏗️ System Architecture

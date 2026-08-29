@@ -482,9 +482,15 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
             if config.threads > 0 {
                 args.push("-threads:v".to_string());
                 args.push(config.threads.to_string());
-                args.push("-x265-params".to_string());
-                args.push(format!("pools={}", config.threads));
             }
+            let mut x265_opts = Vec::new();
+            if config.threads > 0 {
+                x265_opts.push(format!("pools={}", config.threads));
+            }
+            x265_opts.push("no-sao=1".to_string());
+            x265_opts.push("aq-mode=3".to_string());
+            args.push("-x265-params".to_string());
+            args.push(x265_opts.join(":"));
         }
         "libsvtav1" => {
             if is_bitrate {
@@ -909,8 +915,9 @@ mod tests {
         config.encoder = "libx265".to_string();
         let args_265 = build_ffmpeg_args(&config).unwrap();
         assert!(args_265.contains(&"-x265-params".to_string()));
-        assert!(args_265.contains(&"pools=24".to_string()));
-
+        let x265_idx = args_265.iter().position(|r| r == "-x265-params").unwrap();
+        assert!(args_265[x265_idx + 1].contains("pools=24"));
+        assert!(args_265[x265_idx + 1].contains("no-sao=1"));
         // svtav1 lp check
         config.encoder = "libsvtav1".to_string();
         let args_av1 = build_ffmpeg_args(&config).unwrap();

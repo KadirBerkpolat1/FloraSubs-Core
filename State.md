@@ -172,3 +172,24 @@ v1.0.0 sürümü ile birlikte:
   - `.github/workflows/release.yml`: `windows-latest` üzerinde NSIS Installer (`.exe`) ve taşınabilir `.zip` üreten CI/CD pipeline'ı devreye alındı.
 * **GitHub Sürümü:** Kodlar `main` dalına pushlandı ve `v1.2.1` sürüm etiketi GitHub'a gönderildi.
 * **Doğrulama:** `cargo test` 28/28 test geçti ✅ • `bun run build` 0 hata ✅ • GitHub tag `v1.2.1` yayında ✅.
+
+## 16. Akıllı Video Sıkıştırıcı (Smart Video Compressor) Modülü (2026-08-29)
+* **Bağımsız Sıkıştırıcı Sekmesi (`CompressorView.tsx` & `Sidebar.tsx`):**
+  - Sol menüye `Dönüştürücü` ile `Konsol` arasına yeni **Sıkıştırıcı** (`Minimize2` ikonu) sekmesi eklendi.
+  - Kaynak video analizi (`probeMedia`): Dosya boyutu, süre, çözünürlük, codec ve mevcut bitrate canlı okunur.
+* **Akıllı Sıkıştırma Profilleri & Otomatik Bitrate Hesaplayıcı:**
+  1. 🌟 **Kayıpsıza Yakın Akıllı AV1 (10-Bit):** Modern `libsvtav1` / GPU AV1, CRF 24, `yuv420p10le`, Opus 128k, film grain koruma ile %65-%75 boyut tasarrufu.
+  2. 🛡️ **Master Arşiv HEVC / x265 (10-Bit):** `libx265` / GPU HEVC, `no-sao=1:aq-mode=3`, CRF 22, %55-%65 tasarruf.
+  3. 💬 **Sosyal Medya / Hızlı Paylaşım (25 MB, 50 MB, 100 MB):** Hedef dosya boyutunu matematiksel olarak süreden hesaplayan otomatik bitrate motoru:
+     $$\text{Video Bitrate (kbps)} = \frac{\text{Hedef MB} \times 8192}{\text{Süre (sn)}} - \text{Ses Bitrate (128 kbps)}$$
+  4. 📱 **Ultra Kompakt Mobil:** Kısıtlı depolama alanları için optimize ultra hafif profil (~150-200 MB).
+  5. 🎯 **Özel Hedef Boyut / Yüzde Küçültme:** Kullanıcının hedef MB veya % küçültme oranı girmesini sağlayan dinamik slider alanı.
+* **Canlı Kalite Güvenlik Rozeti:**
+  - 🟢 *Mükemmel Kalite (Şeffaf / Orijinalden Farksız)*
+  - 🟡 *Dengeli Kalite (Yüksek Tasarruf)*
+  - 🔴 *Agresif Sıkıştırma (Küçük Boyut)*
+* **Canlı İlerleme, Duraklatma & İptal:**
+  - Canlı yüzde, hız (1.8x), FPS, ETA ve log akışı; Duraklat/Devam Et ve İptal Et butonları.
+* **Backend Motor İyileştirmeleri (`builder.rs`):**
+  - `libx265` için anime optimizasyonları `no-sao=1:aq-mode=3` parametreleri entegre edildi.
+* **Doğrulama:** `cargo test` 29/29 test geçti ✅ • `bun run build` 0 hata (1618 modül 1.59s) ✅.

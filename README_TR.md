@@ -63,6 +63,11 @@ Sisteminizdeki GPU donanımını otomatik tespit eder ve optimize edilmiş hazı
 ### 📦 6. Sıfır Yapılandırma & Taşınabilir (Portable)
 * Statik derlenmiş **FFmpeg 7.x** ve **FFprobe** uygulamanın içine gömülüdür. Sistem `PATH` değişkenine hiçbir şey eklemeniz gerekmez.
 
+
+### 🗜️ 7. Akıllı Video Sıkıştırıcı (Smart Video Compressor)
+* **Görsel Kayıpsız 10-Bit Sıkıştırma:** Yüksek boyutlu ham videoları (3 GB $\rightarrow$ 800 MB) **%60–%75 boyut tasarrufuyla** modern AV1 10-bit (`libsvtav1`) ve HEVC 10-bit (`libx265`) ile küçültür.
+* **Matematiksel Otomatik Bitrate Hesaplayıcı:** Discord Free (25 MB), Discord Nitro (50 MB) ve Telegram (100 MB) paylaşımları için hedef boyuta göre anlık bitrate üretir.
+* **Canlı Kalite Güvenlik Rozetleri:** Çözünürlük ve bitrate yoğunluğuna göre dinamik kalite durumunu (🟢 Mükemmel / 🟡 Dengeli / 🔴 Agresif) anında gösterir.
 ---
 
 ## 🏗️ Mimari Yapı
