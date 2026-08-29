@@ -43,13 +43,17 @@ pub fn resolve_ffmpeg_path() -> Option<PathBuf> {
     {
         if let Ok(current_exe) = std::env::current_exe() {
             if let Some(exe_dir) = current_exe.parent() {
-                let win_bin = exe_dir.join("bin").join("ffmpeg.exe");
-                if win_bin.exists() {
-                    return Some(win_bin);
-                }
-                let win_root = exe_dir.join("ffmpeg.exe");
-                if win_root.exists() {
-                    return Some(win_root);
+                let candidates = [
+                    exe_dir.join("bin").join("ffmpeg.exe"),
+                    exe_dir.join("ffmpeg.exe"),
+                    exe_dir.join("resources").join("bin").join("ffmpeg.exe"),
+                    exe_dir.join("resources").join("ffmpeg.exe"),
+                    exe_dir.join("_up_").join("bin").join("ffmpeg.exe"),
+                ];
+                for candidate in candidates {
+                    if candidate.exists() {
+                        return Some(candidate);
+                    }
                 }
             }
         }
@@ -87,13 +91,17 @@ pub fn resolve_ffprobe_path() -> Option<PathBuf> {
     {
         if let Ok(current_exe) = std::env::current_exe() {
             if let Some(exe_dir) = current_exe.parent() {
-                let win_bin = exe_dir.join("bin").join("ffprobe.exe");
-                if win_bin.exists() {
-                    return Some(win_bin);
-                }
-                let win_root = exe_dir.join("ffprobe.exe");
-                if win_root.exists() {
-                    return Some(win_root);
+                let candidates = [
+                    exe_dir.join("bin").join("ffprobe.exe"),
+                    exe_dir.join("ffprobe.exe"),
+                    exe_dir.join("resources").join("bin").join("ffprobe.exe"),
+                    exe_dir.join("resources").join("ffprobe.exe"),
+                    exe_dir.join("_up_").join("bin").join("ffprobe.exe"),
+                ];
+                for candidate in candidates {
+                    if candidate.exists() {
+                        return Some(candidate);
+                    }
                 }
             }
         }
