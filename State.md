@@ -158,3 +158,17 @@ v1.0.0 sürümü ile birlikte:
   - Teknik video bilgileri (Çözünürlük, FPS, Codec, PixFmt) ve Altyazı/Font durumu video monitörünün altına 2 sütunlu şık bir dashboard olarak yerleştirildi.
 * **Doğrulama:** `cargo test` 28/28 test geçti ✅ • `bun run build` 0 hata (1617 modül 1.37s) ✅ • Canlı sistem devrede ✅.
   - 27/27 Cargo testleri başarıyla geçti ✅ • Frontend Vite build 0 hata (1617 modül 1.39s) ✅ • Canlı UI üzerinde Kodla $\rightarrow$ Canlı Telemetry & İlerleme $\rightarrow$ İptal Et döngüsü başarıyla test edildi ✅.
+
+## 15. Çoklu Platform Dağıtımı (Pacman, DEB, RPM, Tar.zst) & Windows 10/11 Uyumluluğu (2026-08-29)
+* **Linux Paket Dağıtımları Derlendi & Hazırlandı (`dist-release/`):**
+  - **Pacman / Arch Linux:** `florasubs-reborn-bin-1.2.0-1-x86_64.pkg.tar.zst` (`makepkg` ile üretildi).
+  - **Debian / Ubuntu:** `FloraSubs-Reborn_1.2.0_amd64.deb` (`.deb` paketi).
+  - **Fedora / RHEL / openSUSE:** `FloraSubs-Reborn-1.2.0-1.x86_64.rpm` (`.rpm` paketi).
+  - **Taşınabilir Linux Arşivleri:** `FloraSubs-Reborn-1.2.0-linux-x86_64.tar.gz` ve `.tar.zst`.
+* **Windows 10 & 11 Uyumluluğu:**
+  - `gpu_probe.rs`: Windows ortamında `ffmpeg.exe` ve `ffprobe.exe` ikililerini `bin/` veya sistem PATH'inden bulan `#[cfg(target_os = "windows")]` platform izolasyonu.
+  - `runner.rs`: Windows 10/11 NT API tabanlı süreç duraklatma/devam ettirme (`NtSuspendProcessFn`) ve `taskkill /F /T` anında süreç temizliği.
+  - `builder.rs`: Windows sürücü harfleri (`C\:/...`) ve ters eğik çizgi dosya yolu kaçış motoru.
+  - `.github/workflows/release.yml`: `windows-latest` üzerinde NSIS Installer (`.exe`) ve taşınabilir `.zip` üreten CI/CD pipeline'ı devreye alındı.
+* **GitHub Sürümü:** Kodlar `main` dalına pushlandı ve `v1.2.1` sürüm etiketi GitHub'a gönderildi.
+* **Doğrulama:** `cargo test` 28/28 test geçti ✅ • `bun run build` 0 hata ✅ • GitHub tag `v1.2.1` yayında ✅.
