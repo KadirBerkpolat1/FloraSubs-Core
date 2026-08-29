@@ -89,15 +89,15 @@ const STUDIO_PRESETS: StudioPresetCard[] = [
   {
     id: 'av1_fast_master',
     title: 'Anime AV1 Hızlı Render (Preset 7 / CRF 15)',
-    badge: 'Tavsiye Edilen • Hızlı Fansub • %50 Tasarruf',
+    badge: 'Tavsiye Edilen • 1.0x-1.5x Hız • %50 Tasarruf',
     badgeVariant: 'success',
-    description: 'SVT-AV1 Preset 7 ile yüksek işlemci hızında anime çizgilerini yumuşatmadan kristal netlikte çıktı üretir.',
-    details: 'libsvtav1 • Preset 7 • CRF 15 • 10-Bit • -bf 5 • AAC 192k',
+    description: 'SVT-AV1 Preset 7 ile tam CPU hızında anime çizgilerini yumuşatmadan kristal netlikte çıktı üretir.',
+    details: 'libsvtav1 • Preset 7 • CRF 15 • 8-Bit Native • -bf 5 • AAC 192k',
     defaultEncoder: 'libsvtav1',
     defaultCrf: 15,
     defaultPreset: '7',
     defaultBf: 5,
-    default10Bit: true,
+    default10Bit: false,
     defaultAudioCodec: 'aac',
     defaultAudioBitrate: 192,
     icon: Zap,
@@ -206,7 +206,7 @@ export const CompressorView: React.FC<CompressorViewProps> = ({ hardware }) => {
   const [crf, setCrf] = useState<number>(15);
   const [encoderPreset, setEncoderPreset] = useState<string>('7');
   const [bFrames, setBFrames] = useState<number>(5);
-  const [is10Bit, setIs10Bit] = useState<boolean>(true);
+  const [is10Bit, setIs10Bit] = useState<boolean>(false);
   const [audioCodec, setAudioCodec] = useState<string>('aac');
   const [audioBitrate, setAudioBitrate] = useState<number>(192);
   const [targetBitrateKbps, setTargetBitrateKbps] = useState<number>(4500);
@@ -252,6 +252,9 @@ export const CompressorView: React.FC<CompressorViewProps> = ({ hardware }) => {
 
     try {
       const meta = await probeMedia(cleanPath);
+      if (meta.video_stream?.pix_fmt?.includes('10') || meta.video_stream?.pix_fmt?.includes('p010')) {
+        setIs10Bit(true);
+      }
       setMetadata(meta);
       if (meta.video_stream?.bitrate) {
         setTargetBitrateKbps(Math.round(meta.video_stream.bitrate / 2000));

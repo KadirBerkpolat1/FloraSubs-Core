@@ -522,9 +522,16 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
             }
             args.push("-preset".to_string());
             args.push(config.preset.clone());
+            args.push("-bf".to_string());
+            args.push(config.b_frames.to_string());
             let lp = if config.threads > 0 { config.threads } else { 16 };
+            let mut svt_params = vec!["tune=0".to_string(), format!("lp={}", lp)];
+            if config.filter_settings.grain_enabled {
+                let grain_val = (config.filter_settings.grain_value / 4).clamp(1, 16);
+                svt_params.push(format!("film-grain={}", grain_val));
+            }
             args.push("-svtav1-params".to_string());
-            args.push(format!("tune=0:film-grain=4:enable-restoration=1:lp={}", lp));
+            args.push(svt_params.join(":"));
         }
         "h264_nvenc" | "hevc_nvenc" | "av1_nvenc" => {
             if is_bitrate {
