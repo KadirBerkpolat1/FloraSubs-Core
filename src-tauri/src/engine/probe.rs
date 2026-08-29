@@ -87,13 +87,12 @@ pub fn normalize_file_path(raw: &str) -> String {
     let mut clean = raw.trim().to_string();
     if clean.starts_with("file://") {
         clean = clean.trim_start_matches("file://").to_string();
-        #[cfg(target_os = "windows")]
         if clean.starts_with('/') && clean.len() > 2 && clean.chars().nth(2) == Some(':') {
             clean = clean.trim_start_matches('/').to_string();
         }
-        if let Ok(decoded) = urlencoding::decode(&clean) {
-            clean = decoded.into_owned();
-        }
+    }
+    if let Ok(decoded) = urlencoding::decode(&clean) {
+        clean = decoded.into_owned();
     }
     clean
 }
@@ -387,5 +386,12 @@ mod tests {
         let raw = "file:///home/sevelebeci/%C4%B0ndirilenler/%5BJudas%5D%20Initial%20D.mkv";
         let norm = normalize_file_path(raw);
         assert_eq!(norm, "/home/sevelebeci/İndirilenler/[Judas] Initial D.mkv");
+    }
+
+    #[test]
+    fn test_normalize_windows_file_path() {
+        let raw = "file:///C:/Users/Berk/Downloads/%5BJudas%5D%20Initial%20D.mkv";
+        let norm = normalize_file_path(raw);
+        assert_eq!(norm, "C:/Users/Berk/Downloads/[Judas] Initial D.mkv");
     }
 }
