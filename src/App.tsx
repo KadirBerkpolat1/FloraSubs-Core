@@ -162,7 +162,7 @@ export default function App() {
           ? savedOutput
           : file.substring(0, file.lastIndexOf(/[\\/]/.exec(file)?.[0] || '/'));
         const sep = savedOutput ? '/' : (parentDir.includes('\\') ? '\\' : '/');
-        const defaultOut = `${parentDir}${sep}${baseStem}_FloraSubs.${configRef.current.container}`;
+        const defaultOut = `${parentDir}${sep}${baseStem}_KaraZurna.${configRef.current.container}`;
         const itemConfig: EncodeJobConfig = {
           ...configRef.current,
           id: itemId,
@@ -240,7 +240,7 @@ export default function App() {
       parentDir += '\\';
     }
     const sep = parentDir.endsWith('\\') || parentDir.endsWith('/') ? '' : (parentDir.includes('\\') ? '\\' : '/');
-    return `${parentDir}${sep}${baseStem}_FloraSubs.${globalConfig.container || 'mp4'}`;
+    return `${parentDir}${sep}${baseStem}_KaraZurna.${globalConfig.container || 'mp4'}`;
   };
 
   // Batch Serialization

@@ -44,7 +44,7 @@ pub fn get_models_dir() -> PathBuf {
 
     // 3. User data directory (e.g. ~/.local/share/FloraSubs/models)
     if let Some(proj_dir) = dirs::data_dir() {
-        let p = proj_dir.join("FloraSubs").join("models");
+        let p = proj_dir.join("KaraZurnaSubs").join("models");
         let _ = std::fs::create_dir_all(&p);
         p
     } else {

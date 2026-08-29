@@ -67,7 +67,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({ logs, onClearLogs }) =
             className="bg-surface-container-lowest text-white text-xs px-3 py-1.5 rounded-lg border border-outline-variant focus:outline-none focus:border-white font-mono"
           >
             <option value="all">Tüm Akışlar</option>
-            <option value="system">Sistem ([FloraSubs])</option>
+            <option value="system">Sistem ([KaraZurna])</option>
             <option value="stderr">FFmpeg Stderr</option>
             <option value="stdout">FFmpeg Stdout</option>
           </select>

@@ -38,10 +38,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-xs font-bold text-white tracking-wider uppercase font-display">
-              FloraSubs
+              KaraZurna
             </h1>
             <p className="text-[9px] text-neutral-400 font-mono tracking-widest uppercase">
-              Pro Studio
+              Subs Studio
             </p>
           </div>
         </div>

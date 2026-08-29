@@ -1,4 +1,4 @@
-# 🌸 FloraSubs Reborn
+# 🎺 KaraZurna Subs
 
 <div align="center">
 
@@ -22,9 +22,9 @@
 
 ---
 
-## 🌟 Why FloraSubs Reborn?
+## 🌟 Why KaraZurna Subs?
 
-**FloraSubs Reborn** is a modern, ultra-lightweight (~25MB RAM), zero-dependency desktop workstation designed specifically for anime fansub groups, video translators, and high-efficiency encoders.
+**KaraZurna Subs** is a modern, ultra-lightweight (~25MB RAM), zero-dependency desktop workstation designed specifically for anime fansub groups, video translators, and high-efficiency encoders.
 
 It permanently resolves common pain points found in legacy subtitle encoders:
 * ❌ **Subtitles disappearing after AI upscaling** $\rightarrow$ Fixed via resolution-aware filter chain reordering.
@@ -94,11 +94,11 @@ Pre-compiled production binaries are available on the [GitHub Releases](https://
 
 | Platform | Format | Description |
 | :--- | :--- | :--- |
-| **Windows (Installer)** | `FloraSubs-Reborn-v1.2.0-windows-x64-Setup.exe` | Recommended native NSIS installer with bundled FFmpeg 7.x |
-| **Windows (Portable)** | `FloraSubs-Reborn-v1.2.0-windows-x64-portable.zip` | Standalone portable executable with zero installation |
-| **Linux (Debian/Ubuntu)** | `FloraSubs-Reborn-v1.2.0-linux-x86_64.deb` | Native DEB package |
-| **Linux (Universal)** | `FloraSubs-Reborn-v1.2.0-linux-x86_64.AppImage` | Portable AppImage for all Linux distributions |
-| **Linux (Archive)** | `FloraSubs-Reborn-v1.2.0-linux-x86_64.tar.gz` | Portable binary + bundled FFmpeg archive |
+| **Windows (Installer)** | `KaraZurna-Subs-v1.3.0-windows-x64-Setup.exe` | Recommended native NSIS installer with bundled FFmpeg 7.x |
+| **Windows (Portable)** | `KaraZurna-Subs-v1.3.0-windows-x64-portable.zip` | Standalone portable executable with zero installation |
+| **Linux (Debian/Ubuntu)** | `KaraZurna-Subs-v1.3.0-linux-x86_64.deb` | Native DEB package |
+| **Linux (Universal)** | `KaraZurna-Subs-v1.3.0-linux-x86_64.AppImage` | Portable AppImage for all Linux distributions |
+| **Linux (Archive)** | `KaraZurna-Subs-v1.3.0-linux-x86_64.tar.gz` | Portable binary + bundled FFmpeg archive |
 ---
 
 ## ⌨️ Keyboard Shortcuts (Preview Player)

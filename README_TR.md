@@ -1,4 +1,4 @@
-# 🌸 FloraSubs Reborn (Türkçe Dokümantasyon)
+# 🎺 KaraZurna Subs (Türkçe Dokümantasyon)
 
 <div align="center">
 
@@ -22,9 +22,9 @@
 
 ---
 
-## 🌟 Neden FloraSubs Reborn?
+## 🌟 Neden KaraZurna Subs?
 
-FloraSubs Reborn; anime çeviri, fansub ve video kodlama ekipleri için özel olarak tasarlanmış, ultra hafif (~25MB RAM), bağımsız masaüstü iş istasyonudur. 
+KaraZurna Subs; anime çeviri, fansub ve video kodlama ekipleri için özel olarak tasarlanmış, ultra hafif (~25MB RAM), bağımsız masaüstü iş istasyonudur.
 
 Geleneksel araçlardaki **"upscale sonrası altyazıların kaybolması"**, **"özel yazı tiplerinin Arial'a düşmesi"**, **"sisteme FFmpeg kurma zorunluluğu"** ve **"işlemi duraklatırken çökme"** gibi tüm kronik sorunları kökten çözen taze bir mimariyle geliştirilmiştir.
 
@@ -90,11 +90,11 @@ En son kararlı sürümü [GitHub Releases](https://github.com/KadirBerkpolat1/F
 
 | Platform | Format | Açıklama |
 | :--- | :--- | :--- |
-| **Windows 10 / 11** | `FloraSubs-Reborn-v1.2.0-windows-x64-Setup.exe` | Tam NSIS Kurulum Sihirbazı |
-| **Windows Portable** | `FloraSubs-Reborn-v1.2.0-windows-x64-portable.zip` | Kurulumsuz, tıkla-çalıştır zip arşivi |
-| **Linux (Ubuntu/Debian)** | `FloraSubs-Reborn-v1.2.0-linux-x86_64.deb` | Standart Debian sistem paketi |
-| **Linux (Tüm Dağıtımlar)**| `FloraSubs-Reborn-v1.2.0-linux-x86_64.AppImage` | Taşınabilir, bağımsız çalıştırılabilir paket |
-| **Linux (Arşiv)** | `FloraSubs-Reborn-v1.2.0-linux-x86_64.tar.gz` | Ham ikili ve FFmpeg klasörü (Arch/CachyOS/Fedora) |
+| **Windows 10 / 11** | `KaraZurna-Subs-v1.3.0-windows-x64-Setup.exe` | Tam NSIS Kurulum Sihirbazı |
+| **Windows Portable** | `KaraZurna-Subs-v1.3.0-windows-x64-portable.zip` | Kurulumsuz, tıkla-çalıştır zip arşivi |
+| **Linux (Ubuntu/Debian)** | `KaraZurna-Subs-v1.3.0-linux-x86_64.deb` | Standart Debian sistem paketi |
+| **Linux (Tüm Dağıtımlar)**| `KaraZurna-Subs-v1.3.0-linux-x86_64.AppImage` | Taşınabilir, bağımsız çalıştırılabilir paket |
+| **Linux (Arşiv)** | `KaraZurna-Subs-v1.3.0-linux-x86_64.tar.gz` | Ham ikili ve FFmpeg klasörü (Arch/CachyOS/Fedora) |
 
 ---
 

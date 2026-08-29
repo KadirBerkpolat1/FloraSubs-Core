@@ -30,7 +30,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ hardware }) => {
       <div className="pb-4 border-b border-outline-variant">
         <h1 className="text-base font-bold text-white flex items-center space-x-2">
           <Settings className="w-5 h-5 text-white" />
-          <span>FloraSubs Tercihleri & Donanım Ayarları</span>
+          <span>KaraZurna Subs Tercihleri & Donanım Ayarları</span>
         </h1>
         <p className="text-xs text-neutral-400 mt-1">
           Donanım hızlandırma öncelikleri, varsayılan kayıt yolları ve motor yapılandırması.

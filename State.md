@@ -1,4 +1,4 @@
-# FloraSubs Reborn — Project State & Architectural Blueprint
+# KaraZurna Subs — Project State & Architectural Blueprint
 
 **Son Güncelleme:** 2026-08-26  
 **Mimar:** Jony (Baş Yazılım Mimarı)  
@@ -8,7 +8,7 @@
 ---
 
 ## 1. Yönetici Özeti (Executive Summary)
-FloraSubs Reborn v1.0.0; anime çeviri ve fansub ekipleri için özel olarak tasarlanmış, ultra hafif (~25MB RAM), sıfır yapılandırmalı, bağımsız bir masaüstü video kodlama, altyazı gömme (hardsub) ve yapay zeka iş istasyonudur.
+KaraZurna Subs v1.3.0; anime çeviri ve fansub ekipleri için özel olarak tasarlanmış, ultra hafif (~25MB RAM), sıfır yapılandırmalı, bağımsız bir masaüstü video kodlama, altyazı gömme (hardsub) ve yapay zeka iş istasyonudur.
 
 v1.0.0 sürümü ile birlikte:
 1. **Harici Oynatıcı (MPV) Butonu Kaldırıldı:** Dahili HTTP 206 Range yayınlayıcı ve tam altyazı senkronizasyonu devreye alındığı için önizlemedeki harici oynatıcı butonu arayüzden tamamen temizlendi.

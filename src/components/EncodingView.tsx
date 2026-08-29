@@ -196,7 +196,7 @@ export const EncodingView: React.FC<EncodingViewProps> = ({
       const separator = dir.includes('\\') ? '\\' : '/';
       setConfig((prev) => ({
         ...prev,
-        output_path: `${dir}${separator}${baseName}_FloraSubs.${ext}`,
+        output_path: `${dir}${separator}${baseName}_KaraZurna.${ext}`,
       }));
     }
   };

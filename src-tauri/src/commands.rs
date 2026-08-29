@@ -27,13 +27,13 @@ pub async fn probe_media(
     filePath: Option<String>,
 ) -> Result<MediaMetadata, String> {
     let p = file_path.or(filePath).ok_or_else(|| "Dosya yolu belirtilmedi".to_string())?;
-    eprintln!("[FloraSubs-PROBE-DEBUG] probe_media invoked with: '{}'", p);
+    eprintln!("[KaraZurna-PROBE-DEBUG] probe_media invoked with: '{}'", p);
     let res = tokio::task::spawn_blocking(move || probe_media_file(&p))
         .await
         .map_err(|e| e.to_string())?;
     match &res {
-        Ok(m) => eprintln!("[FloraSubs-PROBE-DEBUG] probe_media SUCCESS: duration={}, size={}, subs={}, fonts={}", m.duration_formatted, m.file_size, m.subtitle_streams.len(), m.font_count),
-        Err(e) => eprintln!("[FloraSubs-PROBE-DEBUG] probe_media FAILED: {}", e),
+        Ok(m) => eprintln!("[KaraZurna-PROBE-DEBUG] probe_media SUCCESS: duration={}, size={}, subs={}, fonts={}", m.duration_formatted, m.file_size, m.subtitle_streams.len(), m.font_count),
+        Err(e) => eprintln!("[KaraZurna-PROBE-DEBUG] probe_media FAILED: {}", e),
     }
     res
 }
