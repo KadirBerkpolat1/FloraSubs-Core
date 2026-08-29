@@ -110,6 +110,23 @@ pub async fn download_model(app: AppHandle, model_id: String) -> Result<String, 
 }
 
 #[tauri::command]
+pub async fn open_media_file_native(app: AppHandle) -> Result<Option<String>, String> {
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    app.dialog()
+        .file()
+        .add_filter(
+            "Video Dosyaları (.mkv, .mp4, .ts, .webm, .avi, .mov)",
+            &["mkv", "mp4", "ts", "webm", "avi", "mov", "flv", "m4v", "m2ts", "wmv", "vob"],
+        )
+        .pick_file(move |file| {
+            let _ = tx.send(file);
+        });
+
+    let file = rx.await.map_err(|e| e.to_string())?;
+    Ok(file.map(|p| crate::engine::probe::normalize_file_path(&p.to_string())))
+}
+
+#[tauri::command]
 pub async fn open_media_files_native(app: AppHandle) -> Result<Vec<String>, String> {
     let (tx, rx) = tokio::sync::oneshot::channel();
     app.dialog()

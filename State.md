@@ -192,4 +192,7 @@ v1.0.0 sürümü ile birlikte:
   - Canlı yüzde, hız (1.8x), FPS, ETA ve log akışı; Duraklat/Devam Et ve İptal Et butonları.
 * **Backend Motor İyileştirmeleri (`builder.rs`):**
   - `libx265` için anime optimizasyonları `no-sao=1:aq-mode=3` parametreleri entegre edildi.
+* **P0 Dosya Seçici (Gözat) Düzeltmesi (`commands.rs`, `lib.rs`, `tauri.ts`):**
+  - Frontend'in `selectMediaFile()` ile çağırdığı tekli dosya seçici `open_media_file_native` Rust komutu eksikti (yalnızca çoğul `open_media_files_native` vardı).
+  - `open_media_file_native` komutu tüm video uzantıları filtreleriyle (`mkv`, `mp4`, `ts`, `webm`, `avi`, `mov`, vb.) `commands.rs` ve `lib.rs` içine entegre edildi. `tauri.ts`'e de çift katmanlı fallback eklendi.
 * **Doğrulama:** `cargo test` 29/29 test geçti ✅ • `bun run build` 0 hata (1618 modül 1.59s) ✅.

@@ -285,8 +285,20 @@ export async function getPreviewSubtitles(
 }
 export async function selectMediaFile(): Promise<string | null> {
   if (!isTauri()) return null;
-  const file = await invoke<string | null>('open_media_file_native');
-  return file ? normalizeClientPath(file) : null;
+  try {
+    const file = await invoke<string | null>('open_media_file_native');
+    if (file) return normalizeClientPath(file);
+    return null;
+  } catch (err) {
+    console.warn('open_media_file_native failed, trying fallback:', err);
+    try {
+      const list = await invoke<string[]>('open_media_files_native');
+      if (list && list.length > 0) return normalizeClientPath(list[0]);
+    } catch (fallbackErr) {
+      console.error('File picker error:', fallbackErr);
+    }
+    return null;
+  }
 }
 
 export async function selectMultipleMediaFiles(): Promise<string[]> {

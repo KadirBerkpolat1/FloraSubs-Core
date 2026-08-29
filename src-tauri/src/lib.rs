@@ -27,6 +27,7 @@ pub fn run() {
             commands::preview_ffmpeg_command,
             commands::get_models_list,
             commands::download_model,
+            commands::open_media_file_native,
             commands::open_media_files_native,
             commands::add_media_files_direct,
             commands::open_subtitle_file_native,
