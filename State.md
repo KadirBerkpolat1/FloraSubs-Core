@@ -179,11 +179,12 @@ v1.0.0 sürümü ile birlikte:
   - Kaynak video analizi (`probeMedia`): Dosya boyutu, süre, çözünürlük, codec ve mevcut bitrate canlı okunur.
 * **Akıllı Sıkıştırma Profilleri & Otomatik Bitrate Hesaplayıcı:**
   1. 🌟 **Kayıpsıza Yakın Akıllı AV1 (10-Bit):** Modern `libsvtav1` / GPU AV1, CRF 24, `yuv420p10le`, Opus 128k, film grain koruma ile %65-%75 boyut tasarrufu.
-  2. 🛡️ **Master Arşiv HEVC / x265 (10-Bit):** `libx265` / GPU HEVC, `no-sao=1:aq-mode=3`, CRF 22, %55-%65 tasarruf.
-  3. 💬 **Sosyal Medya / Hızlı Paylaşım (25 MB, 50 MB, 100 MB):** Hedef dosya boyutunu matematiksel olarak süreden hesaplayan otomatik bitrate motoru:
+  2. ⚡ **Master AV1 Ultra Hızlı & Net (10-Bit):** `libsvtav1`, Preset 7, CRF 15, `-bf 5`, AAC 192k ile ultra hızlı stüdyo master render (%45-%55 tasarruf).
+  3. 🛡️ **Master Arşiv HEVC / x265 (10-Bit):** `libx265` / GPU HEVC, `no-sao=1:aq-mode=3`, CRF 22, %55-%65 tasarruf.
+  4. 💬 **Sosyal Medya / Hızlı Paylaşım (25 MB, 50 MB, 100 MB):** Hedef dosya boyutunu matematiksel olarak süreden hesaplayan otomatik bitrate motoru:
      $$\text{Video Bitrate (kbps)} = \frac{\text{Hedef MB} \times 8192}{\text{Süre (sn)}} - \text{Ses Bitrate (128 kbps)}$$
-  4. 📱 **Ultra Kompakt Mobil:** Kısıtlı depolama alanları için optimize ultra hafif profil (~150-200 MB).
-  5. 🎯 **Özel Hedef Boyut / Yüzde Küçültme:** Kullanıcının hedef MB veya % küçültme oranı girmesini sağlayan dinamik slider alanı.
+  5. 📱 **Ultra Kompakt Mobil:** Kısıtlı depolama alanları için optimize ultra hafif profil (~150-200 MB).
+  6. 🎯 **Özel Hedef Boyut / Yüzde Küçültme:** Kullanıcının hedef MB veya % küçültme oranı girmesini sağlayan dinamik slider alanı.
 * **Canlı Kalite Güvenlik Rozeti:**
   - 🟢 *Mükemmel Kalite (Şeffaf / Orijinalden Farksız)*
   - 🟡 *Dengeli Kalite (Yüksek Tasarruf)*

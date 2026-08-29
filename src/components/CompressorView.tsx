@@ -14,6 +14,7 @@ import {
   Smartphone,
   Sliders,
   Flame,
+  Zap,
   ExternalLink,
   ShieldCheck,
 } from 'lucide-react';
@@ -45,13 +46,13 @@ interface CompressorViewProps {
 
 type CompressorPresetId =
   | 'lossless_av1'
+  | 'master_av1_fast'
   | 'lossless_hevc'
   | 'social_discord_basic'
   | 'social_discord_nitro'
   | 'social_telegram'
   | 'compact_mobile'
   | 'custom';
-
 interface PresetCard {
   id: CompressorPresetId;
   title: string;
@@ -73,6 +74,15 @@ const PRESET_CARDS: PresetCard[] = [
     details: 'libsvtav1 / GPU AV1 • CRF 24 • Opus 128k • Anime Tune & Film Grain',
     icon: Sparkles,
     isRecommended: true,
+  },
+  {
+    id: 'master_av1_fast',
+    title: 'Master AV1 Hızlı & Ultra Net (CRF 15 / Preset 7)',
+    badge: 'CRF 15 • Preset 7 • 5 B-Frame • AAC',
+    badgeVariant: 'ai',
+    description: 'SVT-AV1 Preset 7 ve CRF 15 ile ultra hızlı render ve stüdyo master netliği.',
+    details: 'libsvtav1 • Preset 7 • CRF 15 • -bf 5 • AAC 192k',
+    icon: Zap,
   },
   {
     id: 'lossless_hevc',
@@ -170,7 +180,7 @@ export const CompressorView: React.FC<CompressorViewProps> = ({ hardware }) => {
       (e) => (e.id === 'hevc_nvenc' || e.id === 'hevc_amf' || e.id === 'hevc_vaapi' || e.id === 'hevc_qsv') && e.is_available
     );
 
-    if (selectedPreset === 'lossless_av1') {
+    if (selectedPreset === 'lossless_av1' || selectedPreset === 'master_av1_fast') {
       if (hasAv1Gpu) {
         const gpuAv1 = hardware.supported_encoders.find((e) => e.id.startsWith('av1_') && e.is_available);
         setSelectedEncoder(gpuAv1 ? gpuAv1.id : 'libsvtav1');
@@ -274,6 +284,14 @@ export const CompressorView: React.FC<CompressorViewProps> = ({ hardware }) => {
         isBitrate = false;
         crf = 24;
         const ratio = 0.32; // ~68% savings
+        estimatedMb = originalSizeMB * ratio;
+        videoBitrate = Math.round(((estimatedMb * 8192) / durationSec) - audioBitrate);
+        break;
+      }
+      case 'master_av1_fast': {
+        isBitrate = false;
+        crf = 15;
+        const ratio = 0.50; // ~50% savings with master clarity
         estimatedMb = originalSizeMB * ratio;
         videoBitrate = Math.round(((estimatedMb * 8192) / durationSec) - audioBitrate);
         break;
@@ -469,13 +487,15 @@ export const CompressorView: React.FC<CompressorViewProps> = ({ hardware }) => {
       setFinalOutputPath(outPath);
 
       // Determine pixel format and audio codec
-      const is10Bit = selectedPreset === 'lossless_av1' || selectedPreset === 'lossless_hevc';
+      const is10Bit = selectedPreset === 'lossless_av1' || selectedPreset === 'lossless_hevc' || selectedPreset === 'master_av1_fast';
       const pixFmt = is10Bit ? 'yuv420p10le' : 'yuv420p';
       const audioCodec = selectedPreset === 'lossless_av1' || selectedPreset === 'compact_mobile' ? 'libopus' : 'aac';
+      const bFrames = selectedPreset === 'master_av1_fast' ? 5 : 4;
 
       // Encoder preset determination
       let encPreset = 'medium';
-      if (selectedEncoder === 'libsvtav1') encPreset = '6';
+      if (selectedPreset === 'master_av1_fast') encPreset = '7';
+      else if (selectedEncoder === 'libsvtav1') encPreset = '6';
       else if (selectedEncoder === 'libx265') encPreset = 'slow';
       else if (selectedEncoder.includes('nvenc')) encPreset = 'p5';
       else if (selectedEncoder.includes('amf')) encPreset = 'balanced';
@@ -492,7 +512,7 @@ export const CompressorView: React.FC<CompressorViewProps> = ({ hardware }) => {
         crf: crfValue,
         preset: encPreset,
         pixel_format: pixFmt,
-        b_frames: 4,
+        b_frames: bFrames,
         custom_video_args: null,
         audio_track_index: 0,
         audio_codec: audioCodec,
