@@ -11,11 +11,14 @@ src-tauri/bin/*.zip
 src-tauri/bin/ffmpeg
 src-tauri/bin/ffprobe
 release-package/
+dist-release/
 *.tar.gz
+*.tar.zst
 *.zip
 *.deb
+*.rpm
+*.pkg.tar.zst
 *.AppImage
-
 # Backups & Logs
 Backups/
 *.log

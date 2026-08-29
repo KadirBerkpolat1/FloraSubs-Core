@@ -51,6 +51,16 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
 
   const meta = selectedItem?.metadata;
   const activeFilePath = selectedItem?.filePath || '';
+  useEffect(() => {
+    if (meta && meta.subtitle_streams && meta.subtitle_streams.length > 0) {
+      setActiveSubTrack(meta.subtitle_streams[0].subtitle_index.toString());
+    } else if (previewExternalSubPath || config.external_subtitle_path) {
+      setActiveSubTrack('external');
+    } else {
+      setActiveSubTrack('none');
+    }
+  }, [selectedItem?.id, meta?.subtitle_streams?.length, previewExternalSubPath, config.external_subtitle_path]);
+
   // Load video stream URL
   useEffect(() => {
     setIsPlaying(false);
@@ -70,18 +80,14 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
           setStreamUrl(convertMediaSrc(activeFilePath));
         });
     }
-  }, [selectedItem?.id, activeFilePath, meta?.duration_secs]);
-
-  // Load subtitle dialogues for the active subtitle track
-  useEffect(() => {
-    if (!activeFilePath || activeSubTrack === 'none') {
+    const isExternal = activeSubTrack === 'external';
+    if (activeSubTrack === 'none' || (!isExternal && meta && meta.subtitle_streams && meta.subtitle_streams.length === 0)) {
       setSubtitleDialogues([]);
-      setCurrentCueText(null);
+      setLoadingSubs(false);
       return;
     }
 
     setLoadingSubs(true);
-    const isExternal = activeSubTrack === 'external';
     const subIdx = isExternal ? 0 : parseInt(activeSubTrack, 10) || 0;
     const targetFile = isExternal
       ? previewExternalSubPath || config.external_subtitle_path || activeFilePath
@@ -394,9 +400,13 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
 
               {/* Active Filter Badges */}
               <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 pointer-events-none z-10">
-                {activeSubTrack !== 'none' ? (
+                {activeSubTrack !== 'none' && subtitleDialogues.length > 0 ? (
                   <span className="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-mono border border-white/20 backdrop-blur-sm">
                     📝 Altyazı Aktif {loadingSubs ? '(Yükleniyor...)' : `(${subtitleDialogues.length} Satır)`}
+                  </span>
+                ) : meta && meta.subtitle_streams && meta.subtitle_streams.length === 0 ? (
+                  <span className="px-2 py-0.5 rounded bg-white/5 text-neutral-300 text-[10px] font-mono border border-white/10 backdrop-blur-sm">
+                    🎥 Piksele Gömülü (Hardsub)
                   </span>
                 ) : (
                   <span className="px-2 py-0.5 rounded bg-surface-container-high text-neutral-400 text-[10px] font-mono border border-outline-variant backdrop-blur-sm">
@@ -548,12 +558,14 @@ export const PreviewView: React.FC<PreviewViewProps> = ({ selectedItem, config }
                       >
                         {meta && meta.subtitle_streams.length > 0 ? (
                           meta.subtitle_streams.map((sub) => (
-                            <option key={sub.index} value={sub.subtitle_index} className="bg-surface-container-high text-white">
+                            <option key={sub.index} value={sub.subtitle_index.toString()} className="bg-surface-container-high text-white">
                               {sub.title || `Altyazı #${sub.subtitle_index + 1}`} [{sub.language.toUpperCase()}]
                             </option>
                           ))
                         ) : (
-                          <option value="0" className="bg-surface-container-high text-white">Gömülü Track #1</option>
+                          <option value="none" className="bg-surface-container-high text-neutral-400">
+                            Altyazı Yok (Hardsub)
+                          </option>
                         )}
                         {(previewExternalSubPath || config.external_subtitle_path) && (
                           <option value="external" className="bg-surface-container-high text-white">

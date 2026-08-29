@@ -42,24 +42,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: --bundles deb,appimage
+          args: --bundles deb,appimage,rpm
 
       - name: Package Linux release
         if: success()
         run: |
           cd src-tauri/target/release/bundle
-          # Create tar.gz for Linux
+          # Copy deb
           if [ -d "deb" ]; then
             find deb -name "*.deb" -exec cp {} FloraSubs-Reborn-${{ github.ref_name }}-linux-x86_64.deb \;
           fi
+          # Copy rpm
+          if [ -d "rpm" ]; then
+            find rpm -name "*.rpm" -exec cp {} FloraSubs-Reborn-${{ github.ref_name }}-linux-x86_64.rpm \;
+          fi
+          # Copy AppImage
           if [ -d "appimage" ]; then
             find appimage -name "*.AppImage" -exec cp {} FloraSubs-Reborn-${{ github.ref_name }}-linux-x86_64.AppImage \;
           fi
           # Create a combined tarball with binaries
           mkdir -p release-package
           cp ../florasubs-core release-package/
-          cp -r ../../../bin release-package/bin
+          cp -r ../../../bin release-package/bin 2>/dev/null || true
           tar -czf FloraSubs-Reborn-${{ github.ref_name }}-linux-x86_64.tar.gz -C release-package .
+          tar --zstd -cf FloraSubs-Reborn-${{ github.ref_name }}-linux-x86_64.tar.zst -C release-package .
 
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
@@ -67,11 +73,13 @@ jobs:
           name: linux-release
           path: |
             src-tauri/target/release/bundle/FloraSubs-Reborn-*-linux-x86_64.deb
+            src-tauri/target/release/bundle/FloraSubs-Reborn-*-linux-x86_64.rpm
             src-tauri/target/release/bundle/FloraSubs-Reborn-*-linux-x86_64.AppImage
             src-tauri/target/release/bundle/FloraSubs-Reborn-*-linux-x86_64.tar.gz
+            src-tauri/target/release/bundle/FloraSubs-Reborn-*-linux-x86_64.tar.zst
             src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/rpm/*.rpm
             src-tauri/target/release/bundle/appimage/*.AppImage
-
   build-windows:
     name: Build Windows
     runs-on: windows-latest
@@ -172,20 +180,26 @@ jobs:
             - **Linux Packages**: DEB, AppImage, and portable tarball
             - **Hardware Acceleration**: AMD AMF, NVIDIA NVENC, Intel QSV, Linux VAAPI
             - **FFmpeg 7.x**: Bundled static builds with libass, AMF, NVENC, QSV support
-            - **Windows**: `FloraSubs-Reborn-${{ github.ref_name }}-windows-x64-Setup.exe` (NSIS Installer)
+            - **Windows 10 & 11**: `FloraSubs-Reborn-${{ github.ref_name }}-windows-x64-Setup.exe` (NSIS Installer)
             - **Windows Portable**: `FloraSubs-Reborn-${{ github.ref_name }}-windows-x64-portable.zip`
             - **Linux DEB**: `FloraSubs-Reborn-${{ github.ref_name }}-linux-x86_64.deb`
+            - **Linux RPM**: `FloraSubs-Reborn-${{ github.ref_name }}-linux-x86_64.rpm`
             - **Linux AppImage**: `FloraSubs-Reborn-${{ github.ref_name }}-linux-x86_64.AppImage`
             - **Linux Tarball**: `FloraSubs-Reborn-${{ github.ref_name }}-linux-x86_64.tar.gz`
+            - **Linux Zstandard**: `FloraSubs-Reborn-${{ github.ref_name }}-linux-x86_64.tar.zst`
           draft: false
           prerelease: false
           files: |
             ./linux-artifacts/**/*.deb
+            ./linux-artifacts/**/*.rpm
             ./linux-artifacts/**/*.AppImage
             ./linux-artifacts/**/*.tar.gz
+            ./linux-artifacts/**/*.tar.zst
             ./linux-artifacts/*.deb
+            ./linux-artifacts/*.rpm
             ./linux-artifacts/*.AppImage
             ./linux-artifacts/*.tar.gz
+            ./linux-artifacts/*.tar.zst
             ./windows-artifacts/**/*.exe
             ./windows-artifacts/**/*.zip
             ./windows-artifacts/*.exe

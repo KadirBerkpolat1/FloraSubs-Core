@@ -44,9 +44,12 @@ pub fn run() {
             commands::has_active_jobs,
         ])
         .on_window_event(|window, event| {
-            if let tauri::WindowEvent::Destroyed = event {
-                let pm = window.state::<Arc<ProcessManager>>();
-                let _ = tauri::async_runtime::block_on(pm.kill_all_jobs());
+            match event {
+                tauri::WindowEvent::CloseRequested { .. } | tauri::WindowEvent::Destroyed => {
+                    let pm = window.state::<Arc<ProcessManager>>();
+                    let _ = tauri::async_runtime::block_on(pm.kill_all_jobs());
+                }
+                _ => {}
             }
         })
         .run(tauri::generate_context!())
