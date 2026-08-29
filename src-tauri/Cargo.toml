@@ -1,6 +1,6 @@
 [package]
 name = "florasubs-core"
-version = "1.2.0"
+version = "1.2.1"
 description = "High Performance Fansub & Anime Video Encoding Station"
 authors = ["Jony & Berk"]
 edition = "2021"
