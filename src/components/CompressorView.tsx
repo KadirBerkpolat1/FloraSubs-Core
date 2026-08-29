@@ -315,68 +315,36 @@ export const CompressorView: React.FC<CompressorViewProps> = ({ hardware }) => {
     fidelityLevel,
   } = useMemo(() => {
     let videoBitrate = 3500;
-    let sizeRatio = 0.50;
 
     const isAv1 = encoder.includes('av1') || encoder === 'libsvtav1';
     const isHevc = encoder.includes('hevc') || encoder === 'libx265';
 
+    // Source Bitrate & Resolution Density Factor
+    const sourceBitrateKbps = Math.max(500, Math.round((originalSizeMB * 8192) / durationSec - audioBitrate));
+    const resolutionFactor =
+      Math.pow((width * height) / (1920 * 1080), 0.75) * Math.pow(Math.max(12, fps) / 24, 0.5);
+
     if (rateControlMode === 'crf') {
-      // Dynamic Bitrate Estimation based on CRF and Codec efficiency
+      // Continuous Precision Bitrate Scaling based on Codec and Quantization Curve
       if (isAv1) {
-        if (crf <= 15) {
-          sizeRatio = 0.82; // CRF 15 is near-lossless (~18% savings)
-          videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
-        } else if (crf <= 18) {
-          sizeRatio = 0.65; // ~35% savings
-          videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
-        } else if (crf <= 21) {
-          sizeRatio = 0.48; // ~52% savings (e.g. 3.2 GB -> ~1.5 GB)
-          videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
-        } else if (crf <= 25) {
-          sizeRatio = 0.35; // ~65% savings
-          videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
-        } else if (crf <= 30) {
-          sizeRatio = 0.24; // ~76% savings
-          videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
-        } else {
-          sizeRatio = 0.15;
-          videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
-        }
+        // AV1 empirical curve calibrated against SVT-AV1 anime dataset
+        const baseBitrate = 14500 * Math.pow(0.895, crf - 15) * resolutionFactor;
+        videoBitrate = Math.min(Math.round(sourceBitrateKbps * 0.96), Math.max(100, Math.round(baseBitrate)));
       } else if (isHevc) {
-        if (crf <= 18) {
-          sizeRatio = 0.58;
-          videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
-        } else if (crf <= 23) {
-          sizeRatio = 0.42;
-          videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
-        } else if (crf <= 28) {
-          sizeRatio = 0.30;
-          videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
-        } else {
-          sizeRatio = 0.18;
-          videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
-        }
+        // HEVC x265 curve
+        const baseBitrate = 15500 * Math.pow(0.88, crf - 15) * resolutionFactor;
+        videoBitrate = Math.min(Math.round(sourceBitrateKbps * 0.96), Math.max(120, Math.round(baseBitrate)));
       } else {
-        // H.264
-        if (crf <= 18) {
-          sizeRatio = 0.70;
-          videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
-        } else if (crf <= 23) {
-          sizeRatio = 0.52;
-          videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
-        } else {
-          sizeRatio = 0.35;
-          videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
-        }
+        // H.264 curve
+        const baseBitrate = 17500 * Math.pow(0.86, crf - 15) * resolutionFactor;
+        videoBitrate = Math.min(Math.round(sourceBitrateKbps * 0.98), Math.max(150, Math.round(baseBitrate)));
       }
     } else {
-      // Bitrate mode
+      // Explicit ABR Bitrate mode
       videoBitrate = targetBitrateKbps;
-      const totalMb = ((videoBitrate + audioBitrate) * durationSec) / 8192;
-      sizeRatio = totalMb / originalSizeMB;
     }
 
-    videoBitrate = Math.max(100, videoBitrate);
+    videoBitrate = Math.max(64, videoBitrate);
     const estMb = Math.max(1, ((videoBitrate + audioBitrate) * durationSec) / 8192);
     const savings = Math.max(0, Math.round(((originalSizeMB - estMb) / originalSizeMB) * 100));
 
