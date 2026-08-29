@@ -73,7 +73,7 @@ const STUDIO_PRESETS: StudioPresetCard[] = [
   {
     id: 'av1_master_archive',
     title: 'Anime Master AV1 (10-Bit Transparan)',
-    badge: 'Cel-Shading & Grain Koruma • CRF 15',
+    badge: 'Saf Master Kalite • CRF 15 • %15-%25 Tasarruf',
     badgeVariant: 'ai',
     description: 'Anime çizgi hatları, gökyüzü renk geçişleri ve film-grain dokusunu %100 koruyan stüdyo master standardı.',
     details: 'libsvtav1 • Preset 6 • CRF 15 • 10-Bit • -bf 5 • tune=0 & film-grain • AAC 192k',
@@ -89,12 +89,12 @@ const STUDIO_PRESETS: StudioPresetCard[] = [
   {
     id: 'av1_fast_master',
     title: 'Anime AV1 Hızlı Render (Preset 7 / CRF 15)',
-    badge: 'Tavsiye Edilen • 1.0x-1.5x Hız • %50 Tasarruf',
+    badge: 'Tavsiye Edilen • CRF 20 • %45-%55 Tasarruf',
     badgeVariant: 'success',
     description: 'SVT-AV1 Preset 7 ile tam CPU hızında anime çizgilerini yumuşatmadan kristal netlikte çıktı üretir.',
     details: 'libsvtav1 • Preset 7 • CRF 15 • 8-Bit Native • -bf 5 • AAC 192k',
     defaultEncoder: 'libsvtav1',
-    defaultCrf: 15,
+    defaultCrf: 20,
     defaultPreset: '7',
     defaultBf: 5,
     default10Bit: false,
@@ -203,7 +203,7 @@ export const CompressorView: React.FC<CompressorViewProps> = ({ hardware }) => {
   const [selectedPresetId, setSelectedPresetId] = useState<StudioPresetId>('av1_fast_master');
   const [rateControlMode, setRateControlMode] = useState<'crf' | 'bitrate'>('crf');
   const [encoder, setEncoder] = useState<string>('libsvtav1');
-  const [crf, setCrf] = useState<number>(15);
+  const [crf, setCrf] = useState<number>(20);
   const [encoderPreset, setEncoderPreset] = useState<string>('7');
   const [bFrames, setBFrames] = useState<number>(5);
   const [is10Bit, setIs10Bit] = useState<boolean>(false);
@@ -323,18 +323,20 @@ export const CompressorView: React.FC<CompressorViewProps> = ({ hardware }) => {
     if (rateControlMode === 'crf') {
       // Dynamic Bitrate Estimation based on CRF and Codec efficiency
       if (isAv1) {
-        // AV1 curve
         if (crf <= 15) {
-          sizeRatio = 0.52;
+          sizeRatio = 0.82; // CRF 15 is near-lossless (~18% savings)
           videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
-        } else if (crf <= 20) {
-          sizeRatio = 0.42;
+        } else if (crf <= 18) {
+          sizeRatio = 0.65; // ~35% savings
+          videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
+        } else if (crf <= 21) {
+          sizeRatio = 0.48; // ~52% savings (e.g. 3.2 GB -> ~1.5 GB)
           videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
         } else if (crf <= 25) {
-          sizeRatio = 0.32;
+          sizeRatio = 0.35; // ~65% savings
           videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
         } else if (crf <= 30) {
-          sizeRatio = 0.23;
+          sizeRatio = 0.24; // ~76% savings
           videoBitrate = Math.round((originalSizeMB * sizeRatio * 8192) / durationSec - audioBitrate);
         } else {
           sizeRatio = 0.15;
