@@ -39,6 +39,7 @@ pub fn run() {
             commands::start_encode,
             commands::pause_encode,
             commands::resume_encode,
+            commands::cancel_encode,
             commands::cancel_all_jobs,
             commands::get_active_jobs,
             commands::has_active_jobs,

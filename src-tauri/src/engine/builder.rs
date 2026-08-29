@@ -505,6 +505,8 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
                 args.push("-b:v".to_string());
                 args.push(format!("{}k", config.average_bitrate_kbps));
             } else {
+                args.push("-rc".to_string());
+                args.push("vbr".to_string());
                 args.push("-cq".to_string());
                 args.push(crf.to_string());
             }

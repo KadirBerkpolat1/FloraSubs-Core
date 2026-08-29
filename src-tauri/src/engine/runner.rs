@@ -179,6 +179,8 @@ impl ProcessManager {
                             if !handle.is_null() {
                                 nt_suspend(handle);
                                 CloseHandle(handle);
+                            } else {
+                                return Err("Windows süreç tutamacı açılamadı.".to_string());
                             }
                         }
                     }
@@ -223,12 +225,13 @@ impl ProcessManager {
                             if !handle.is_null() {
                                 nt_resume(handle);
                                 CloseHandle(handle);
+                            } else {
+                                return Err("Windows süreç tutamacı açılamadı.".to_string());
                             }
                         }
                     }
                 }
             }
-
             job.is_paused = false;
             Ok(())
         } else {
@@ -237,9 +240,12 @@ impl ProcessManager {
     }
 
     pub async fn cancel_job(&self, job_id: &str) -> Result<(), String> {
-        let mut cancelled = self.cancelled_jobs.lock().await;
-        cancelled.insert(job_id.to_string());
-        let job_opt = self.unregister_job(job_id).await;
+        let job_opt = {
+            let mut map = self.jobs.lock().await;
+            let mut cancelled = self.cancelled_jobs.lock().await;
+            cancelled.insert(job_id.to_string());
+            map.remove(job_id)
+        };
         if let Some(job) = job_opt {
             #[cfg(target_os = "linux")]
             {
@@ -251,7 +257,7 @@ impl ProcessManager {
             {
                 let _ = std::process::Command::new("taskkill").args(["/F", "/T", "/PID", &job.pid.to_string()]).output();
             }
-            if let Some(ref fonts_dir) = job.fonts_temp_dir {
+            if let Some(fonts_dir) = &job.fonts_temp_dir {
                 cleanup_fonts_dir(fonts_dir);
             }
         }
@@ -680,6 +686,10 @@ pub async fn start_encoding_job(
                 );
                 Ok(())
             } else if process_manager.is_cancelled(&job_id).await {
+                let out_p = Path::new(&config.output_path);
+                if out_p.exists() {
+                    let _ = std::fs::remove_file(out_p);
+                }
                 let _ = app.emit(
                     "encode-log",
                     JobLogMessage {
@@ -701,6 +711,10 @@ pub async fn start_encoding_job(
                 );
                 Err("İşlem kullanıcı tarafından iptal edildi.".to_string())
             } else {
+                let out_p = Path::new(&config.output_path);
+                if out_p.exists() {
+                    let _ = std::fs::remove_file(out_p);
+                }
                 let tail = stderr_tail.lock().await;
                 let last_errors = tail.join("\n");
                 let err_msg = if !last_errors.trim().is_empty() {

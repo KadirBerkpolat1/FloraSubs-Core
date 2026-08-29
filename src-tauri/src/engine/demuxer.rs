@@ -178,7 +178,8 @@ pub fn extract_and_parse_subtitles(
         });
     }
 
-    let temp_sub = std::env::temp_dir().join(format!("florasubs_preview_{}.ass", subtitle_index));
+    let unique_id = format!("{}_{}_{}", std::process::id(), subtitle_index, chrono::Utc::now().timestamp_nanos_opt().unwrap_or(0));
+    let temp_sub = std::env::temp_dir().join(format!("florasubs_preview_{}.ass", unique_id));
     extract_subtitle_track(input_path, subtitle_index, &temp_sub)?;
 
     let content = std::fs::read_to_string(&temp_sub)

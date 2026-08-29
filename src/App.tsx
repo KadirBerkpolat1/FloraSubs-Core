@@ -36,11 +36,24 @@ import {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('home');
+  // Batch state
   const [isBatchRunning, setIsBatchRunning] = useState<boolean>(false);
   const [currentBatchJobId, setCurrentBatchJobId] = useState<string | null>(null);
+  const isBatchRunningRef = useRef<boolean>(false);
+  const currentBatchJobIdRef = useRef<string | null>(null);
+
+  // Hardware & Presets
   const [hardware, setHardware] = useState<HardwareProfile | null>(null);
   const [presets, setPresets] = useState<PresetProfile[]>([]);
-  const [selectedPresetId, setSelectedPresetId] = useState<string>('anime_web_x264');
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('web_anime');
+
+  useEffect(() => {
+    isBatchRunningRef.current = isBatchRunning;
+  }, [isBatchRunning]);
+
+  useEffect(() => {
+    currentBatchJobIdRef.current = currentBatchJobId;
+  }, [currentBatchJobId]);
 
   // Queue and Selection
   const [queue, setQueue] = useState<QueueItem[]>([]);
@@ -215,8 +228,17 @@ export default function App() {
     }
     const fileName = item.fileName;
     const baseStem = fileName.replace(/\.[^/.]+$/, '');
-    const parentDir = item.filePath.substring(0, item.filePath.lastIndexOf(/[\\/]/.exec(item.filePath)?.[0] || '/'));
-    const sep = parentDir.includes('\\') ? '\\' : '/';
+    let parentDir = '';
+    const lastSlash = Math.max(item.filePath.lastIndexOf('/'), item.filePath.lastIndexOf('\\'));
+    if (lastSlash > 0) {
+      parentDir = item.filePath.substring(0, lastSlash);
+    } else {
+      parentDir = '.';
+    }
+    if (parentDir.endsWith(':')) {
+      parentDir += '\\';
+    }
+    const sep = parentDir.endsWith('\\') || parentDir.endsWith('/') ? '' : (parentDir.includes('\\') ? '\\' : '/');
     return `${parentDir}${sep}${baseStem}_FloraSubs.${globalConfig.container || 'mp4'}`;
   };
 
@@ -224,9 +246,9 @@ export default function App() {
   const startNextInBatch = (currentQueue: QueueItem[]) => {
     const nextItem = currentQueue.find((i) => i.status === 'waiting');
     if (nextItem) {
-      const targetOut = resolveItemOutput(nextItem, config);
+      const targetOut = resolveItemOutput(nextItem, configRef.current);
       const jobConfig: EncodeJobConfig = {
-        ...config,
+        ...configRef.current,
         id: nextItem.id,
         input_path: nextItem.filePath,
         output_path: targetOut,
@@ -235,13 +257,18 @@ export default function App() {
         prev.map((i) => (i.id === nextItem.id ? { ...i, status: 'encoding', config: jobConfig } : i))
       );
       setCurrentBatchJobId(nextItem.id);
+      currentBatchJobIdRef.current = nextItem.id;
+      isBatchRunningRef.current = true;
+      setIsBatchRunning(true);
       startEncode(jobConfig).catch((err) => {
         console.error('Batch job start error:', err);
         setTimeout(() => startNextInBatch(currentQueue), 100);
       });
     } else {
       setIsBatchRunning(false);
+      isBatchRunningRef.current = false;
       setCurrentBatchJobId(null);
+      currentBatchJobIdRef.current = null;
     }
   };
 
@@ -325,8 +352,12 @@ export default function App() {
           return item;
         });
 
-        if (isBatchRunning && currentBatchJobId === progress.job_id && (progress.status === 'completed' || progress.status === 'error' || progress.status === 'cancelled')) {
-           setTimeout(() => startNextInBatch(newQueue), 100);
+        if (
+          isBatchRunningRef.current &&
+          currentBatchJobIdRef.current === progress.job_id &&
+          (progress.status === 'completed' || progress.status === 'error' || progress.status === 'cancelled')
+        ) {
+          setTimeout(() => startNextInBatch(newQueue), 100);
         }
         
         return newQueue;
