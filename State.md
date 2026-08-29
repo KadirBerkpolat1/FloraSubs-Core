@@ -177,18 +177,23 @@ v1.0.0 sürümü ile birlikte:
 * **Bağımsız Sıkıştırıcı Sekmesi (`CompressorView.tsx` & `Sidebar.tsx`):**
   - Sol menüye `Dönüştürücü` ile `Konsol` arasına yeni **Sıkıştırıcı** (`Minimize2` ikonu) sekmesi eklendi.
   - Kaynak video analizi (`probeMedia`): Dosya boyutu, süre, çözünürlük, codec ve mevcut bitrate canlı okunur.
-* **Akıllı Sıkıştırma Profilleri & Otomatik Bitrate Hesaplayıcı:**
-  1. 🌟 **Kayıpsıza Yakın Akıllı AV1 (10-Bit):** Modern `libsvtav1` / GPU AV1, CRF 24, `yuv420p10le`, Opus 128k, film grain koruma ile %65-%75 boyut tasarrufu.
-  2. ⚡ **Master AV1 Ultra Hızlı & Net (10-Bit):** `libsvtav1`, Preset 7, CRF 15, `-bf 5`, AAC 192k ile ultra hızlı stüdyo master render (%45-%55 tasarruf).
-  3. 🛡️ **Master Arşiv HEVC / x265 (10-Bit):** `libx265` / GPU HEVC, `no-sao=1:aq-mode=3`, CRF 22, %55-%65 tasarruf.
-  4. 💬 **Sosyal Medya / Hızlı Paylaşım (25 MB, 50 MB, 100 MB):** Hedef dosya boyutunu matematiksel olarak süreden hesaplayan otomatik bitrate motoru:
-     $$\text{Video Bitrate (kbps)} = \frac{\text{Hedef MB} \times 8192}{\text{Süre (sn)}} - \text{Ses Bitrate (128 kbps)}$$
-  5. 📱 **Ultra Kompakt Mobil:** Kısıtlı depolama alanları için optimize ultra hafif profil (~150-200 MB).
-  6. 🎯 **Özel Hedef Boyut / Yüzde Küçültme:** Kullanıcının hedef MB veya % küçültme oranı girmesini sağlayan dinamik slider alanı.
-* **Canlı Kalite Güvenlik Rozeti:**
-  - 🟢 *Mükemmel Kalite (Şeffaf / Orijinalden Farksız)*
-  - 🟡 *Dengeli Kalite (Yüksek Tasarruf)*
-  - 🔴 *Agresif Sıkıştırma (Küçük Boyut)*
+* **Profesyonel Stüdyo Master Profilleri & Dinamik Parametre Motoru:**
+  1. 🌟 **AV1 Stüdyo Master (10-Bit):** `libsvtav1`, Preset 6, CRF 15, `-bf 5`, `yuv420p10le`, AAC 192k ile en yüksek görsel arşiv standardı (%45-%55 tasarruf).
+  2. ⚡ **AV1 Hızlı Kodlama & Master:** `libsvtav1`, Preset 7, CRF 15, `-bf 5`, AAC 192k ile ultra hızlı CPU render ve stüdyo netliği.
+  3. 🎯 **AV1 Yüksek Verimli Fansub:** `libsvtav1`, Preset 7, CRF 24, `-bf 5`, Opus 128k ile %65-%75 maksimum sıkıştırma verimi.
+  4. 🛡️ **HEVC / x265 10-Bit Master:** `libx265`, Preset Slow, CRF 21, `no-sao=1:aq-mode=3`, AAC 192k ile evrensel TV ve cihaz uyumu.
+  5. 🎛️ **Özel Stüdyo Yapılandırması (Full Custom):** Tüm parametreler ve donanım kodlayıcıları serbest kontrol.
+* **Gelişmiş Kodlayıcı & Sıkıştırma Kontrolleri:**
+  - **SVT-AV1 Preset Seçici (0 - 13):** Preset 0 (Ultra Ağır Arşiv) $\rightarrow$ Preset 7 (Hızlı Master) $\rightarrow$ Preset 13 (Gerçek Zamanlı) açıklamalı seçim.
+  - **CRF Kalite Slider (0 - 45):** Canlı kalite durum etiketi ile (Stüdyo Master / Transparan, Mükemmel, Standart, Kompakt).
+  - **B-Frames Slider (0 - 16):** Sahne geçişleri tahmin derinliği.
+  - **10-Bit HDR / Banding Önleme:** `yuv420p10le` vs `yuv420p` anlık geçiş.
+  - **Ses Akışı Seçici:** AAC, Opus, Passthrough/Copy (Kayıpsız), FLAC ve 96 - 320 kbps bitrate ayarı.
+* **Canlı Görsel Kayıp & VMAF Telemetri Paneli:**
+  - **Tahmini VMAF Skoru (0 - 100):** Dinamik renkli görsel kalite çubuğu (Örn: `98.4 / 100`).
+  - **Görsel Kayıp Oranı:** Yüzdesel doğrudan kayıp tahmini (Örn: `< %1.2 - Transparan`).
+  - **Piksel Başına Bit (bpp):** $\text{bpp} = \frac{\text{Bitrate}}{\text{Width} \times \text{Height} \times \text{FPS}}$ yoğunluk metriği.
+  - **Sıkıştırma Oranı:** Orijinal $\rightarrow$ Tahmini Çıktı Boyutu (`-%54 Tasarruf`, `2.15x Sıkıştırma`).
 * **Canlı İlerleme, Duraklatma & İptal:**
   - Canlı yüzde, hız (1.8x), FPS, ETA ve log akışı; Duraklat/Devam Et ve İptal Et butonları.
 * **Backend Motor İyileştirmeleri (`builder.rs`):**
