@@ -72,11 +72,11 @@ interface StudioPresetCard {
 const STUDIO_PRESETS: StudioPresetCard[] = [
   {
     id: 'av1_master_archive',
-    title: 'AV1 Stüdyo Master (10-Bit)',
-    badge: 'Maksimum Netlik • CRF 15 • %45-%55 Tasarruf',
+    title: 'Anime Master AV1 (10-Bit Transparan)',
+    badge: 'Cel-Shading & Grain Koruma • CRF 15',
     badgeVariant: 'ai',
-    description: 'En yüksek görsel netlik ve film grain koruması ile stüdyo master arşiv standardı.',
-    details: 'libsvtav1 • Preset 6 • CRF 15 • 10-Bit • -bf 5 • AAC 192k',
+    description: 'Anime çizgi hatları, gökyüzü renk geçişleri ve film-grain dokusunu %100 koruyan stüdyo master standardı.',
+    details: 'libsvtav1 • Preset 6 • CRF 15 • 10-Bit • -bf 5 • tune=0 & film-grain • AAC 192k',
     defaultEncoder: 'libsvtav1',
     defaultCrf: 15,
     defaultPreset: '6',
@@ -88,10 +88,10 @@ const STUDIO_PRESETS: StudioPresetCard[] = [
   },
   {
     id: 'av1_fast_master',
-    title: 'AV1 Hızlı Kodlama & Master (Preset 7)',
-    badge: 'Tavsiye Edilen • Ultra Hızlı • %50 Tasarruf',
+    title: 'Anime AV1 Hızlı Render (Preset 7 / CRF 15)',
+    badge: 'Tavsiye Edilen • Hızlı Fansub • %50 Tasarruf',
     badgeVariant: 'success',
-    description: 'SVT-AV1 Preset 7 ile yüksek işlemci hızında kristal netlikte video üretimi.',
+    description: 'SVT-AV1 Preset 7 ile yüksek işlemci hızında anime çizgilerini yumuşatmadan kristal netlikte çıktı üretir.',
     details: 'libsvtav1 • Preset 7 • CRF 15 • 10-Bit • -bf 5 • AAC 192k',
     defaultEncoder: 'libsvtav1',
     defaultCrf: 15,
@@ -105,10 +105,10 @@ const STUDIO_PRESETS: StudioPresetCard[] = [
   },
   {
     id: 'av1_balanced_fansub',
-    title: 'AV1 Yüksek Verimli Fansub',
-    badge: 'CRF 24 • %65-%75 Boyut Tasarrufu',
+    title: 'Anime AV1 Web & Fansub Dağıtım',
+    badge: 'CRF 24 • %65-%75 Maksimum Tasarruf',
     badgeVariant: 'primary',
-    description: 'İnsan gözü için kayıpsıza yakın kalitede maksimum dosya boyutu küçültme.',
+    description: 'Fansub siteleri ve web dağıtımları için gözle ayırt edilemez kalitede maksimum dosya boyutu küçültme.',
     details: 'libsvtav1 • Preset 7 • CRF 24 • 10-Bit • -bf 5 • Opus 128k',
     defaultEncoder: 'libsvtav1',
     defaultCrf: 24,
@@ -121,10 +121,10 @@ const STUDIO_PRESETS: StudioPresetCard[] = [
   },
   {
     id: 'hevc_master_10bit',
-    title: 'HEVC / x265 10-Bit Master',
-    badge: 'Evrensel Cihaz Uyumluluğu • %55-%65 Tasarruf',
+    title: 'Anime Master HEVC / x265 10-Bit',
+    badge: 'no-sao & Dark AQ • TV & Oynatıcı Uyumu',
     badgeVariant: 'warning',
-    description: 'Eski TV ve medya oynatıcılarla tam uyumlu, no-sao filtreli 10-bit x265 arşivi.',
+    description: 'no-sao=1 ile çizgi hatlarını yumuşatmayan (blur yapmayan), karanlık sahnelerde banding önleyen 10-bit HEVC arşivi.',
     details: 'libx265 • Preset Slow • CRF 21 • no-sao=1 & aq-mode=3 • AAC 192k',
     defaultEncoder: 'libx265',
     defaultCrf: 21,
@@ -137,13 +137,13 @@ const STUDIO_PRESETS: StudioPresetCard[] = [
   },
   {
     id: 'custom_studio',
-    title: 'Özel Stüdyo Yapılandırması (Full Custom)',
+    title: 'Özel Anime Parametreleri (Full Custom)',
     badge: 'Tam Manuel Kontrol',
     badgeVariant: 'ai',
-    description: 'Preset (0-13), CRF, B-Frame, Bitrate ve Ses ayarlarını serbestçe yönetin.',
-    details: 'Tüm parametreler ve donanım kodlayıcıları serbest',
+    description: 'Anime türüne göre Preset (0-13), CRF, B-Frame, 10-Bit ve Ses ayarlarını serbestçe yönetin.',
+    details: 'Tüm parametreler ve GPU donanım kodlayıcıları serbest',
     defaultEncoder: 'libsvtav1',
-    defaultCrf: 18,
+    defaultCrf: 16,
     defaultPreset: '7',
     defaultBf: 5,
     default10Bit: true,
@@ -397,27 +397,27 @@ export const CompressorView: React.FC<CompressorViewProps> = ({ hardware }) => {
 
     if (vmaf >= 96.5) {
       level = {
-        text: 'Stüdyo Master (Gözle Ayırt Edilemez Transparan)',
+        text: 'Anime Stüdyo Master (Çizgiler & Renkler Orijinalle Özdeş)',
         color: 'emerald',
-        desc: 'İnsan gözüyle orijinal master dosya arasında sıfır fark. Çizgiler ve renk geçişleri kusursuz.',
+        desc: 'Anime çizgi hatları, gökyüzü renk geçişleri ve cel-shading dokusunda sıfır bozulma (Kayıpsıza yakın).',
       };
     } else if (vmaf >= 92.0) {
       level = {
-        text: 'Mükemmel Görsel Kalite (Fansub Standardı)',
+        text: 'Yüksek Kalite Fansub Standardı (Banding Yok)',
         color: 'cyan',
-        desc: 'Görsel kalite çok yüksek, sıkıştırma verimliliği mükemmel.',
+        desc: '10-Bit derinlikle renk şeritlenmesi (banding) engellenir, yüksek görsel netlik ve yüksek sıkıştırma.',
       };
     } else if (vmaf >= 85.0) {
       level = {
-        text: 'Dengeli Kalite (Yüksek Tasarruf, Hafif Kayıp)',
+        text: 'Dengeli Anime Sıkıştırması (Yüksek Tasarruf)',
         color: 'amber',
-        desc: 'Karanlık veya çok hızlı aksiyon sahnelerinde çok hafif detay kaybı olabilir.',
+        desc: 'Karanlık gece sahnelerinde veya çok hızlı dövüş/aksiyon anlarında çok hafif detay kaybı olabilir.',
       };
     } else {
       level = {
-        text: 'Agresif Sıkıştırma (Görsel Kayıp Mevcut)',
+        text: 'Agresif Sıkıştırma (Çizgilerde Detay Kaybı Olası)',
         color: 'rose',
-        desc: 'Dosya boyutu minimuma iner, ince çizgilerde ve gradientlerde kayıplar oluşabilir.',
+        desc: 'Dosya boyutu minimuma iner, ince çizgi hatlarında ve duman/sis efektlerinde artefaktlar oluşabilir.',
       };
     }
 

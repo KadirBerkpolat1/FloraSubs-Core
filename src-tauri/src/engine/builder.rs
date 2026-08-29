@@ -474,6 +474,8 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
             }
             args.push("-preset".to_string());
             args.push(config.preset.clone());
+            args.push("-tune".to_string());
+            args.push("animation".to_string());
             args.push("-bf".to_string());
             args.push(config.b_frames.to_string());
             if config.threads > 0 {
@@ -505,6 +507,8 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
             }
             x265_opts.push("no-sao=1".to_string());
             x265_opts.push("aq-mode=3".to_string());
+            x265_opts.push("aq-strength=0.8".to_string());
+            x265_opts.push("qcomp=0.70".to_string());
             args.push("-x265-params".to_string());
             args.push(x265_opts.join(":"));
         }
@@ -520,7 +524,7 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
             args.push(config.preset.clone());
             let lp = if config.threads > 0 { config.threads } else { 16 };
             args.push("-svtav1-params".to_string());
-            args.push(format!("tune=0:film-grain=4:lp={}", lp));
+            args.push(format!("tune=0:film-grain=4:enable-restoration=1:lp={}", lp));
         }
         "h264_nvenc" | "hevc_nvenc" | "av1_nvenc" => {
             if is_bitrate {
@@ -545,6 +549,8 @@ pub fn build_ffmpeg_args(config: &EncodeJobConfig) -> Result<Vec<String>, String
             args.push("-preset".to_string());
             args.push(nvenc_preset.to_string());
             args.push("-spatial_aq".to_string());
+            args.push("1".to_string());
+            args.push("-temporal_aq".to_string());
             args.push("1".to_string());
             args.push("-bf".to_string());
             args.push(config.b_frames.to_string());
